@@ -48,8 +48,104 @@ let last_product_id = () => {
   });
 };
 
+let verify_master_styles = ({ product_id, data }) => {
+  var verify_product_styles = ({ result, product_id, data }) => {
+    return new Promise(async (resolve, reject) => {
+      if (result) {
+        models.product_styles
+          .findOne({
+            attributes: ["id"],
+            where: {
+              product_id,
+              style_name: { [models.Sequelize.Op.iLike]: result.name },
+            },
+          })
+          .then(async (res) => {
+            if (res) {
+              await models.product_styles.update(
+                {
+                  product_id,
+                  style_name: result.name,
+                },
+                {
+                  where: { id: res.id },
+                }
+              );
+            } else {
+              await models.product_styles.create({
+                id: uuidv4(),
+                product_id,
+                style_name: result.name,
+                is_active: true,
+              });
+            }
+            resolve("Added/Updated product_genders");
+          })
+          .catch((err) => {
+            console.log("Error", err);
+            reject(err);
+          });
+      }
+    });
+  };
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      var style;
+      [
+        "EarringStyle",
+        "RingStyle",
+        "PendantStyle",
+        "BangleStyle",
+        "NecklaceStyle",
+        "BraceletStyle",
+      ].forEach((item) => {
+        if (data[item] && data[item].length > 0) {
+          style = data[item];
+        }
+      });
+
+      if (style) {
+        models.master_styles
+          .findOne({
+            where: {
+              name: { [models.Sequelize.Op.iLike]: style },
+            },
+          })
+          .then(async (result) => {
+            if (result) {
+              await verify_product_styles({ result, product_id, data });
+            } else {
+              models.master_styles
+                .create({
+                  id: uuidv4(),
+                  name: capitalize_Words(style),
+                  is_filter: true,
+                  is_active: true,
+                })
+                .then(async (result) => {
+                  await verify_product_styles({
+                    result,
+                    product_id,
+                    data,
+                  });
+                });
+            }
+          })
+          .catch((err) => {
+            console.log("Error", err);
+            reject(err);
+          });
+      }
+      resolve("Completed master_styles sync");
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 let verify_product_purities = ({ product_id, data }) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (data["PURITY"]) {
       models.product_purities
         .findOne({
@@ -84,8 +180,7 @@ let verify_product_purities = ({ product_id, data }) => {
           reject(err);
         });
     }
-    console.log(`Completed ${data.TAGNO}`);
-    resolve(`Completed ${data.TAGNO}`);
+    resolve("Completed product_purities sync");
   });
 };
 
@@ -120,6 +215,7 @@ let verify_master_genders = ({ product_id, data }) => {
                 is_active: true,
               });
             }
+            resolve("Added/Updated product_genders");
           })
           .catch((err) => {
             console.log("Error", err);
@@ -157,7 +253,6 @@ let verify_master_genders = ({ product_id, data }) => {
                     });
                   });
               }
-              resolve("Added/Updated product_genders");
             })
             .catch((err) => {
               console.log("Error", err);
@@ -165,7 +260,7 @@ let verify_master_genders = ({ product_id, data }) => {
             });
         });
       }
-      resolve(await verify_product_purities({ product_id, data }));
+      resolve("Completed master_genders sync");
     } catch (error) {
       reject(error);
     }
@@ -248,7 +343,7 @@ let verify_master_hash_tags = ({ product_id, data }) => {
             });
         });
       }
-      resolve(await verify_master_genders({ product_id, data }));
+      resolve("Completed master_hashtags sync");
     } catch (error) {
       reject(error);
     }
@@ -326,7 +421,7 @@ let verify_master_occassions = ({ product_id, data }) => {
             reject(err);
           });
       }
-      resolve(await verify_master_hash_tags({ product_id, data }));
+      resolve("Completed master_occassions sync");
     } catch (error) {
       reject(error);
     }
@@ -410,7 +505,7 @@ let verify_master_collections = ({ product_id, data }) => {
             reject(err);
           });
       }
-      resolve(await verify_master_occassions({ product_id, data }));
+      resolve("Completed master_collections sync");
     } catch (error) {
       reject(error);
     }
@@ -484,7 +579,7 @@ let verify_pricing_sku_metals = ({ product_id, data }) => {
             reject(err);
           });
       }
-      resolve(await verify_master_collections({ product_id, data }));
+      resolve("Completed pricing_sku_metals sync");
     } catch (error) {
       reject(error);
     }
@@ -554,7 +649,7 @@ let verify_product_stones = ({ product_id, data }) => {
         });
       }
     }
-    resolve(await verify_pricing_sku_metals({ product_id, data }));
+    resolve("Completed product_stones sync");
   });
 };
 
@@ -584,7 +679,7 @@ let verify_trans_sku_description = ({ product_id, data }) => {
             sku_description: data.ProductDescription,
           });
         }
-        resolve(await verify_product_stones({ product_id, data }));
+        resolve("Completed trans_sku_description sync");
       })
       .catch((err) => {
         console.log("Error", err);
@@ -646,7 +741,7 @@ let verify_trans_sku = ({ product_id, data }) => {
             isdefault: true,
           });
         }
-        resolve(await verify_trans_sku_description({ product_id, data }));
+        resolve("Completed trans_sku sync");
       })
       .catch((err) => {
         console.log("Error", err);
@@ -654,6 +749,19 @@ let verify_trans_sku = ({ product_id, data }) => {
       });
   });
 };
+
+var all_process = [
+  verify_trans_sku,
+  verify_trans_sku_description,
+  verify_product_stones,
+  verify_pricing_sku_metals,
+  verify_master_collections,
+  verify_master_occassions,
+  verify_master_genders,
+  verify_master_hash_tags,
+  verify_product_purities,
+  verify_master_styles,
+];
 
 let verify_product = ({ product_id, data }) => {
   return new Promise(async (resolve, reject) => {
@@ -685,8 +793,19 @@ let verify_product = ({ product_id, data }) => {
                 },
                 { where: { product_id } }
               )
-              .then(async () => {
-                resolve(await verify_trans_sku({ product_id, data }));
+              .then(() => {
+                Promise.all(
+                  all_process.map(async (item) => {
+                    await item({ product_id, data });
+                  })
+                )
+                  .then((_) => {
+                    //console.log(`Completed ${data.TAGNO}`);
+                    resolve(`Completed ${data.TAGNO}`);
+                  })
+                  .catch((err) => {
+                    throw err;
+                  });
               })
               .catch((err) => {
                 console.log("Error", err);
@@ -718,9 +837,18 @@ let verify_product = ({ product_id, data }) => {
           is_active: false,
         })
         .then(async () => {
-          resolve(
-            await verify_trans_sku({ product_id: product_id.toString(), data })
-          );
+          Promise.all(
+            all_process.map(async (item) => {
+              await item({ product_id, data });
+            })
+          )
+            .then((_) => {
+              //console.log(`Completed ${data.TAGNO}`);
+              resolve(`Completed ${data.TAGNO}`);
+            })
+            .catch((err) => {
+              throw err;
+            });
         })
         .catch((err) => {
           console.log("Error", err);

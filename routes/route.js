@@ -614,10 +614,10 @@ module.exports = function (app) {
   });
   app.post("/product_upload", async (req, res) => {
     try {
-      var i,
+      /* var i,
         j,
         temparray,
-        chunk = 100;
+        chunk = 50;
       for (i = 0, j = req.body.length; i < j; i += chunk) {
         temparray = req.body.slice(i, i + chunk);
         await Promise.all(
@@ -625,11 +625,11 @@ module.exports = function (app) {
             await require("../controller/productsync").productSync(item);
           })
         );
-      }
-      /* for (let index = 0; index < req.body.length; index++) {
-        const item = req.body[index];
-        await require("../controller/productsync").productSync(item);
       } */
+      for (let index = 0; index < 50; index++) {
+        const item = req.body[index];
+        console.log(await require("../controller/productsync").productSync(item));
+      }
       res.send("Completed Sync!");
     } catch (error) {
       console.log(error);
