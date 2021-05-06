@@ -1,3 +1,4 @@
+"use strict";
 const authJwt = require("./verifyJwtToken");
 const axios = require("axios");
 const BASE_URL = "http://localhost:8000";
@@ -11,6 +12,7 @@ let {
   initMapping,
   initIndex,
 } = require("../controller/elasticServices");
+const { fstat } = require("fs");
 const turl = process.env.apibaseurl + "/productesearch";
 
 module.exports = function (app) {
@@ -613,24 +615,49 @@ module.exports = function (app) {
       });
   });
   app.post("/product_upload", async (req, res) => {
-    try {
-      var i,
-        j,
-        temparray,
-        chunk = 50;
-      for (i = 0, j = req.body.length; i < j; i += chunk) {
-        temparray = req.body.slice(i, i + chunk);
-        await Promise.all(
-          temparray.map(async (item) => {
-            await require("../controller/productsync").productSync(item);
-          })
-        );
+    const io = require("../socket");
+
+    let sendStatus = ({ token_val, processed_data }) => {
+      try {
+        io.emit(token_val, { ...processed_data });
+      } catch (e) {
+        console.log(e);
       }
-     /*  for (let index = 0; index < req.body.length; index++) {
-        const item = req.body[index];
-        console.log(await require("../controller/productsync").productSync(item));
-      } */
-      res.send("Completed Sync!");
+    };
+
+    try {
+      var { action_type, Product_lists, new_tagno } = req.body;
+      if (action_type == "price_sync") {
+        var i,
+          j,
+          temparray,
+          chunk = 50;
+        for (i = 0, j = Product_lists.length; i < j; i += chunk) {
+          temparray = Product_lists.slice(i, i + chunk);
+          await Promise.all(
+            temparray.map(async (item) => {
+              await require("../controller/productsync").productSync({
+                product: item,
+                type: action_type,
+              });
+            })
+          );
+          sendStatus(Math.random(10), { completed: temparray.length });
+        }
+        res.send("Completed Sync!");
+      } else if (action_type == "new_uploads") {
+        for (let index = 0; index < Product_lists.length; index++) {
+          const item = Product_lists[index];
+          if (new_tagno.includes(item.TAGNO)) {
+            await require("../controller/productsync").productSync({
+              product: item,
+              type: action_type,
+            });
+            sendStatus(Math.random(10), { completed: index + 1 });
+          }
+        }
+        res.send("Completed Sync!");
+      }
     } catch (error) {
       console.log(error);
       res.status(400).send({ error: true, message: error.message });

@@ -79,7 +79,7 @@ let verify_master_styles = ({ product_id, data }) => {
                 is_active: true,
               });
             }
-            resolve("Added/Updated product_genders");
+            resolve("Added/Updated product_styles");
           })
           .catch((err) => {
             console.log("Error", err);
@@ -688,7 +688,7 @@ let verify_trans_sku_description = ({ product_id, data }) => {
   });
 };
 
-let verify_trans_sku = ({ product_id, data }) => {
+let verify_trans_sku = ({ product_id, data, type }) => {
   var metal_color = null;
   if (data["Material"])
     metal_color = data.Material.toLowerCase().includes("gold")
@@ -704,22 +704,30 @@ let verify_trans_sku = ({ product_id, data }) => {
         },
       })
       .then(async (result) => {
+        var updateData = {};
+        if (type == "price_sync") {
+          updateData = {
+            selling_price: data.AMOUNT,
+            selling_price_tax: data.TAX,
+          };
+        } else {
+          updateData = {
+            purity: get_purity(data["PURITY"]),
+            metal_color,
+            product_id,
+            generated_sku: data.TAGNO,
+            sku_id: data.TAGNO,
+            gross_weight: data.GRSWT,
+            net_weight: data.NETWT,
+            sku_weight: data.NETWT,
+            selling_price: data.AMOUNT,
+            selling_price_tax: data.TAX,
+            isdefault: true,
+          };
+        }
         if (result) {
           await models.trans_sku_lists.update(
-            {
-              purity: get_purity(data["PURITY"]),
-              metal_color,
-              product_id,
-              isdefault: true,
-              generated_sku: data.TAGNO,
-              sku_id: data.TAGNO,
-              gross_weight: data.GRSWT,
-              net_weight: data.NETWT,
-              sku_weight: data.NETWT,
-              selling_price: data.AMOUNT,
-              selling_price_tax: data.TAX,
-              isdefault: true,
-            },
+            { ...updateData },
             {
               where: { id: result.id },
             }
@@ -730,7 +738,6 @@ let verify_trans_sku = ({ product_id, data }) => {
             purity: get_purity(data["PURITY"]),
             metal_color,
             product_id,
-            isdefault: true,
             generated_sku: data.TAGNO,
             sku_id: data.TAGNO,
             gross_weight: data.GRSWT,
@@ -763,7 +770,9 @@ var all_process = [
   verify_master_styles,
 ];
 
-let verify_product = ({ product_id, data }) => {
+var price_sync = [verify_trans_sku, verify_pricing_sku_metals];
+
+let verify_product = ({ product_id, data, type }) => {
   return new Promise(async (resolve, reject) => {
     var colour_varient = null;
     if (data["Material"])
@@ -771,53 +780,65 @@ let verify_product = ({ product_id, data }) => {
         ? "yellow"
         : "white";
 
-    if (product_id) {
-      models.product_lists
-        .findOne({ attributes: ["id"], where: { product_id } })
-        .then(async (product) => {
-          if (product) {
-            models.product_lists
-              .update(
-                {
-                  product_name: data.ProductName,
-                  gender: data.Gender
-                    ? data.Gender.split(",")
-                        .map((item) => {
-                          return item.capitalize();
-                        })
-                        .join(",")
-                    : null,
-                  prod_description: data.ProductDescription,
-                  product_type: data.ProductCategory,
-                  colour_varient: colour_varient,
-                },
-                { where: { product_id } }
-              )
-              .then(() => {
-                Promise.all(
-                  all_process.map(async (item) => {
-                    await item({ product_id, data });
-                  })
-                )
-                  .then((_) => {
-                    //console.log(`Completed ${data.TAGNO}`);
-                    resolve(`Completed ${data.TAGNO}`);
-                  })
-                  .catch((err) => {
-                    throw err;
-                  });
-              })
-              .catch((err) => {
-                console.log("Error", err);
-                reject(err);
-              });
-          }
+    if (product_id && type == "price_sync") {
+      Promise.all(
+        price_sync.map(async (item) => {
+          await item({ product_id, data, type });
+        })
+      )
+        .then((_) => {
+          //console.log(`Completed ${data.TAGNO}`);
+          resolve(`Completed ${data.TAGNO}`);
         })
         .catch((err) => {
-          console.log("Error", err);
-          reject(err);
+          throw err;
         });
-    } else {
+      // models.product_lists
+      //   .findOne({ attributes: ["id"], where: { product_id } })
+      //   .then(async (product) => {
+      //     if (product) {
+      //       models.product_lists
+      //         .update(
+      //           {
+      //             product_name: data.ProductName,
+      //             gender: data.Gender
+      //               ? data.Gender.split(",")
+      //                   .map((item) => {
+      //                     return item.capitalize();
+      //                   })
+      //                   .join(",")
+      //               : null,
+      //             prod_description: data.ProductDescription,
+      //             product_type: data.ProductCategory,
+      //             colour_varient: colour_varient,
+      //           },
+      //           { where: { product_id } }
+      //         )
+      //         .then(() => {
+      //           Promise.all(
+      //             all_process.map(async (item) => {
+      //               await item({ product_id, data });
+      //             })
+      //           )
+      //             .then((_) => {
+      //               //console.log(`Completed ${data.TAGNO}`);
+      //               resolve(`Completed ${data.TAGNO}`);
+      //             })
+      //             .catch((err) => {
+      //               throw err;
+      //             });
+      //         })
+      //         .catch((err) => {
+      //           console.log("Error", err);
+      //           reject(err);
+      //         });
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     console.log("Error", err);
+      //     reject(err);
+      //   });
+    } else if (!product_id && type == "new_uploads") {
       product_id = (await last_product_id()) + 1;
       models.product_lists
         .create({
@@ -858,7 +879,7 @@ let verify_product = ({ product_id, data }) => {
   });
 };
 
-export let productSync = (product) => {
+export let productSync = ({ product, type }) => {
   return new Promise((resolve, reject) => {
     //Fetching product_id from trans_sku lists with product TAGNO
     models.trans_sku_lists
@@ -875,6 +896,7 @@ export let productSync = (product) => {
             await verify_product({
               product_id: result["product_id"],
               data: product,
+              type,
             })
           );
         } else {
@@ -882,6 +904,7 @@ export let productSync = (product) => {
             await verify_product({
               product_id: null,
               data: product,
+              type,
             })
           );
         }

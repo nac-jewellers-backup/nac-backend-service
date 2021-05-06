@@ -38,6 +38,7 @@
     "sequelize": "^5.9.4",
     "sequelize-cli": "^5.5.1",
     "sha256": "^0.2.0",
+    "socket.io": "^4.0.2",
     "split-array": "^1.0.1",
     "uuid": "^3.3.3"
   },
