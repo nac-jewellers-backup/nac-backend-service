@@ -106,5 +106,10 @@ const io = require("./socket");
 io.attach(
   app.listen(process.env.PORT, () =>
     console.log(`NAC Ecommerce running ${process.env.PORT}!`)
-  )
+  ),
+  {
+    cors: {
+      origin: "*",
+    },
+  }
 );

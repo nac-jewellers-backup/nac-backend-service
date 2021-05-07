@@ -617,9 +617,9 @@ module.exports = function (app) {
   app.post("/product_upload", async (req, res) => {
     const io = require("../socket");
 
-    let sendStatus = ({ token_val, processed_data }) => {
+    let sendStatus = (token_val, processed_data) => {
       try {
-        io.emit(token_val, { ...processed_data });
+        io.emit(token_val, processed_data);
       } catch (e) {
         console.log(e);
       }
@@ -642,7 +642,9 @@ module.exports = function (app) {
               });
             })
           );
-          sendStatus(Math.random(10), { completed: temparray.length });
+          sendStatus("sync_data", {
+            completed: temparray.length / Product_lists.length,
+          });
         }
         res.send("Completed Sync!");
       } else if (action_type == "new_uploads") {
@@ -653,7 +655,9 @@ module.exports = function (app) {
               product: item,
               type: action_type,
             });
-            sendStatus(Math.random(10), { completed: index + 1 });
+            sendStatus("sync_data", {
+              completed: (index + 1) / new_tagno.length,
+            });
           }
         }
         res.send("Completed Sync!");
