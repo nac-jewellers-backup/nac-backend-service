@@ -14,6 +14,7 @@ let {
 } = require("../controller/elasticServices");
 const { fstat } = require("fs");
 const turl = process.env.apibaseurl + "/productesearch";
+const upload = require("../middlewares/multer").single("file");
 
 module.exports = function (app) {
   const configurationcontroller = require("../controller/master_configuration.js");
@@ -614,57 +615,96 @@ module.exports = function (app) {
         return res.json(err);
       });
   });
+
   app.post("/product_upload", async (req, res) => {
-    const io = require("../socket");
-
-    let sendStatus = (token_val, processed_data) => {
-      try {
-        io.emit(token_val, processed_data);
-      } catch (e) {
-        console.log(e);
+    upload(req, res, (err) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send({
+          message: err.message || "Some error occurred while adding document.",
+        });
+        return;
       }
-    };
 
-    try {
-      var { action_type, Product_lists, new_tagno } = req.body;
-      if (action_type == "price_sync") {
-        var i,
-          j,
-          temparray,
-          chunk = 50;
-        for (i = 0, j = Product_lists.length; i < j; i += chunk) {
-          temparray = Product_lists.slice(i, i + chunk);
-          await Promise.all(
-            temparray.map(async (item) => {
-              await require("../controller/productsync").productSync({
-                product: item,
-                type: action_type,
-              });
-            })
-          );
-          sendStatus("sync_data", {
-            completed: temparray.length / Product_lists.length,
-          });
+      const io = require("../socket");
+
+      let sendStatus = (token_val, processed_data) => {
+        console.log(token_val, processed_data);
+        try {
+          io.emit(token_val, processed_data);
+        } catch (e) {
+          console.log(e);
         }
-        res.send("Completed Sync!");
-      } else if (action_type == "new_uploads") {
-        for (let index = 0; index < Product_lists.length; index++) {
-          const item = Product_lists[index];
-          if (new_tagno.includes(item.TAGNO)) {
-            await require("../controller/productsync").productSync({
-              product: item,
-              type: action_type,
+      };
+
+      var fs = require("fs");
+      var jsonStream = require("JSONStream");
+      var totalCount = 0;
+      const { productSync } = require("../controller/productsync");
+      var { action_type, new_tagno } = req.body;
+
+      fs.createReadStream(req.file.path, { encoding: "utf-8" }).pipe(
+        jsonStream
+          .parse("Product_lists.*")
+          .on("data", (_) => totalCount++)
+          .on("end", () => {
+            let index = 0;
+            const processData = async (data) => {
+              if (action_type == "price_sync") {
+                await productSync({
+                  product: data,
+                  type: action_type,
+                });
+                sendStatus("sync_data", {
+                  completed: (index + 1) / totalCount,
+                });
+              }
+              if (
+                action_type == "new_uploads" &&
+                new_tagno.includes(item.TAGNO)
+              ) {
+                await productSync({
+                  product: data,
+                  type: action_type,
+                });
+                sendStatus("sync_data", {
+                  completed: (index + 1) / new_tagno.length,
+                });
+              }
+              index++;
+            };
+
+            var stream = fs.createReadStream(req.file.path, {
+              encoding: "utf-8",
             });
-            sendStatus("sync_data", {
-              completed: (index + 1) / new_tagno.length,
-            });
-          }
-        }
-        res.send("Completed Sync!");
-      }
-    } catch (error) {
-      console.log(error);
-      res.status(400).send({ error: true, message: error.message });
-    }
+            var tempArray = [];
+            stream.pipe(
+              jsonStream
+                .parse("Product_lists.*")
+                .on("data", async (data) => {
+                  tempArray.push(data);
+                  if (tempArray.length == 50) {
+                    try {
+                      stream.pause();
+                      await Promise.all(
+                        tempArray.map(async (item) => {
+                          await processData(item);
+                        })
+                      );
+                    } catch (error) {
+                      console.log(error);
+                    } finally {
+                      tempArray = [];
+                      stream.resume();
+                    }
+                  }
+                })
+                .on("end", () => {
+                  res.send({ status: "completed" });
+                })
+            );
+          })
+      );
+    });
   });
 };
