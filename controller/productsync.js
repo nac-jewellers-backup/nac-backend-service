@@ -875,6 +875,8 @@ let verify_product = ({ product_id, data, type }) => {
           console.log("Error", err);
           reject(err);
         });
+    } else if (!product_id && type == "price_sync") {
+      resolve("No Such Product, Please sync it first");
     }
   });
 };

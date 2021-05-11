@@ -538,8 +538,7 @@ module.exports = function (app) {
     };
     const _obj = {
       method: "post",
-      url:
-        "https://search-elastic-server-uguyslt53rg63cttm2b4hgwkb4.ap-south-1.es.amazonaws.com/sku_search/_delete_by_query",
+      url: "https://search-elastic-server-uguyslt53rg63cttm2b4hgwkb4.ap-south-1.es.amazonaws.com/sku_search/_delete_by_query",
       data: datapaylod,
     };
     axios(_obj)
@@ -616,95 +615,75 @@ module.exports = function (app) {
       });
   });
 
-  app.post("/product_upload", async (req, res) => {
-    upload(req, res, (err) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send({
-          message: err.message || "Some error occurred while adding document.",
-        });
-        return;
+  app.post("/product_sync", async (req, res) => {
+    var { action_type, new_tagno, Product_lists } = req.body;
+
+    const io = require("../socket");
+
+    let sendStatus = (token_val, processed_data) => {
+      console.log(token_val, processed_data);
+      try {
+        io.emit(token_val, processed_data);
+      } catch (e) {
+        console.log(e);
       }
+    };
 
-      const io = require("../socket");
-
-      let sendStatus = (token_val, processed_data) => {
-        console.log(token_val, processed_data);
-        try {
-          io.emit(token_val, processed_data);
-        } catch (e) {
-          console.log(e);
+    var totalCount = Product_lists.length;
+    var startTime = require("moment")();
+    try {
+      if (action_type == "price_sync") {
+        res.send({
+          status: true,
+          message: `Process Started!`,
+        });
+        var i,
+          j,
+          temparray,
+          chunk = 200;
+        for (i = 0, j = totalCount; i < j; i += chunk) {
+          temparray = Product_lists.slice(i, i + chunk);
+          await Promise.all(
+            temparray.map(async (item) => {
+              await require("../controller/productsync").productSync({
+                product: item,
+                type: action_type,
+              });
+            })
+          );
+          sendStatus("sync_data", {
+            completed: i + chunk < totalCount ? (i + chunk) / totalCount : 1,
+          });
         }
-      };
-
-      var fs = require("fs");
-      var jsonStream = require("JSONStream");
-      var totalCount = 0;
-      const { productSync } = require("../controller/productsync");
-      var { action_type, new_tagno } = req.body;
-
-      fs.createReadStream(req.file.path, { encoding: "utf-8" }).pipe(
-        jsonStream
-          .parse("Product_lists.*")
-          .on("data", (_) => totalCount++)
-          .on("end", () => {
-            let index = 0;
-            const processData = async (data) => {
-              if (action_type == "price_sync") {
-                await productSync({
-                  product: data,
-                  type: action_type,
-                });
-                sendStatus("sync_data", {
-                  completed: (index + 1) / totalCount,
-                });
-              }
-              if (
-                action_type == "new_uploads" &&
-                new_tagno.includes(item.TAGNO)
-              ) {
-                await productSync({
-                  product: data,
-                  type: action_type,
-                });
-                sendStatus("sync_data", {
-                  completed: (index + 1) / new_tagno.length,
-                });
-              }
-              index++;
-            };
-
-            var stream = fs.createReadStream(req.file.path, {
-              encoding: "utf-8",
+      }
+      if (action_type == "new_uploads") {
+        res.send({
+          status: true,
+          message: `Process Started!`,
+        });
+        for (let index = 0; index < totalCount; index++) {
+          const item = Product_lists[index];
+          if (new_tagno.includes(item.TAGNO)) {
+            await require("../controller/productsync").productSync({
+              product: item,
+              type: action_type,
             });
-            var tempArray = [];
-            stream.pipe(
-              jsonStream
-                .parse("Product_lists.*")
-                .on("data", async (data) => {
-                  tempArray.push(data);
-                  if (tempArray.length == 50) {
-                    try {
-                      stream.pause();
-                      await Promise.all(
-                        tempArray.map(async (item) => {
-                          await processData(item);
-                        })
-                      );
-                    } catch (error) {
-                      console.log(error);
-                    } finally {
-                      tempArray = [];
-                      stream.resume();
-                    }
-                  }
-                })
-                .on("end", () => {
-                  res.send({ status: "completed" });
-                })
-            );
-          })
-      );
-    });
+            sendStatus("sync_data", {
+              completed: (index + 1) / new_tagno.length,
+            });
+          }
+        }
+      }
+      sendStatus("sync_data", {
+        status: "completed",
+        timeElapsed: startTime.fromNow(),
+      });
+    } catch (error) {
+      console.log(error);
+      res.status.send({
+        error: true,
+        message: error.message,
+      });
+    }
   });
 };
