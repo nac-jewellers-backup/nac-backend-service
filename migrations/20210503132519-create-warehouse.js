@@ -1,40 +1,36 @@
 "use strict";
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable("master_tax_settings", {
+    return queryInterface.createTable("warehouses", {
       id: {
         allowNull: false,
+        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
       },
-      hsn_number: {
+      name: {
         type: Sequelize.STRING,
       },
-      tax_name: {
-        type: Sequelize.STRING,
+      shipping_in_days: {
+        type: Sequelize.INTEGER,
       },
-      IGST: {
-        type: Sequelize.DOUBLE,
+      is_active: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true,
       },
-      CGST: {
-        type: Sequelize.DOUBLE,
-      },
-      SGST: {
-        type: Sequelize.DOUBLE,
-      },
-
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.fn("now"),
       },
-      IGST: Sequelize.DOUBLE,
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.fn("now"),
       },
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable("master_tax_settings");
+    return queryInterface.dropTable("warehouses");
   },
 };

@@ -1,40 +1,34 @@
 "use strict";
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable("master_tax_settings", {
+    return queryInterface.createTable("holiday_managers", {
       id: {
         allowNull: false,
+        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
       },
-      hsn_number: {
+      holiday: {
         type: Sequelize.STRING,
+        unique: true,
       },
-      tax_name: {
-        type: Sequelize.STRING,
+      date: {
+        type: Sequelize.DATEONLY,
+        unique: true,
       },
-      IGST: {
-        type: Sequelize.DOUBLE,
-      },
-      CGST: {
-        type: Sequelize.DOUBLE,
-      },
-      SGST: {
-        type: Sequelize.DOUBLE,
-      },
-
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.fn("now"),
       },
-      IGST: Sequelize.DOUBLE,
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.fn("now"),
       },
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable("master_tax_settings");
+    return queryInterface.dropTable("holiday_managers");
   },
 };

@@ -22,6 +22,8 @@ let get_purity = (purity) => {
 let differentiate_stone = ({ ITEMNAME, SUBITEMNAME, DESCRIP }) => {
   if (
     (ITEMNAME && ITEMNAME.toLowerCase().includes("diamond")) ||
+    (ITEMNAME && ITEMNAME.toLowerCase().includes("forever mark")) ||
+    (ITEMNAME && ITEMNAME.toLowerCase().includes("solitare")) ||
     (SUBITEMNAME && SUBITEMNAME.toLowerCase().includes("dia")) ||
     (DESCRIP && DESCRIP.toLowerCase().includes("dia"))
   )
@@ -46,6 +48,10 @@ let last_product_id = () => {
         reject(err);
       });
   });
+};
+
+let add_to_inventory = ({ data, warehouse }) => {
+  
 };
 
 let verify_master_styles = ({ product_id, data }) => {
@@ -881,7 +887,7 @@ let verify_product = ({ product_id, data, type }) => {
   });
 };
 
-export let productSync = ({ product, type }) => {
+export let productSync = ({ product, type, warehouse }) => {
   return new Promise((resolve, reject) => {
     //Fetching product_id from trans_sku lists with product TAGNO
     models.trans_sku_lists
@@ -893,23 +899,14 @@ export let productSync = ({ product, type }) => {
         },
       })
       .then(async (result) => {
-        if (result) {
-          resolve(
-            await verify_product({
-              product_id: result["product_id"],
-              data: product,
-              type,
-            })
-          );
-        } else {
-          resolve(
-            await verify_product({
-              product_id: null,
-              data: product,
-              type,
-            })
-          );
-        }
+        resolve(
+          await verify_product({
+            product_id: result["product_id"] ? result["product_id"] : null,
+            data: product,
+            type,
+            warehouse,
+          })
+        );
       })
       .catch((err) => {
         console.log("Error", err);

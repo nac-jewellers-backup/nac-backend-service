@@ -34,6 +34,7 @@ module.exports = function (app) {
   const productfetchController_esearch = require("../controller/productfetchController_esearch.js");
 
   const productFetchController = require("../controller/productfetchController.js");
+  const inventoryController = require("../controller/inventorycontroller");
 
   app.post("/componentpriceupdate", component_price_update.priceupdate);
 
@@ -683,6 +684,81 @@ module.exports = function (app) {
       res.status.send({
         error: true,
         message: error.message,
+      });
+    }
+  });
+
+  app.post("/addholidays", (req, res) => {
+    upload(req, res, (err) => {
+      if (err) {
+        res.status(400).send({
+          error: err.message,
+        });
+      }
+      const csv = require("csvtojson");
+
+      csv()
+        .fromFile(req.file.path)
+        .then(async (data) => {
+          try {
+            res.status(200).send(await inventoryController.addHolidays(data));
+          } catch (err) {
+            res.status(400).send({
+              error: err.message,
+            });
+          }
+        })
+        .catch((err) => {
+          res.status(400).send({
+            error: err.message,
+          });
+        });
+    });
+  });
+  app.post("/addinventories", (req, res) => {
+    upload(req, res, async (err) => {
+      if (err) {
+        res.status(400).send({
+          error: err.message,
+        });
+      }
+      res.send({ status: true, message: "File processing started!" });
+
+      const csv = require("csvtojson");
+
+      var warehouses = await require("../models").warehouse.findAll({
+        attributes: ["id", "name"],
+        raw: true,
+      });
+
+      csv()
+        .fromFile(req.file.path)
+        .subscribe(
+          async (data) => {
+            return await inventoryController.addInventories(data, warehouses);
+          },
+          (err) => {
+            console.log(err);
+          },
+          () => {
+            console.log("Success", req.file.path);
+            try {
+              require("fs").unlink(req.file.path);
+            } catch (error) {
+              console.log(error);
+            }
+          }
+        );
+    });
+  });
+
+  app.post("/getshippingdate", async (req, res) => {
+    try {
+      res.status(200).send(await inventoryController.getShippingDate(req.body));
+    } catch (error) {
+      console.log(error);
+      res.status(400).send({
+        error: error.message,
       });
     }
   });
