@@ -51,7 +51,40 @@ let last_product_id = () => {
 };
 
 let add_to_inventory = ({ data, warehouse }) => {
-  
+  return new Promise((resolve, reject) => {
+    models.inventory
+      .findOne({
+        attributes: ["id"],
+        where: {
+          generated_sku: data.TAGNO,
+          warehouse_id: warehouse,
+        },
+      })
+      .then(async (result) => {
+        if (result) {
+          await models.inventory.update(
+            {
+              generated_sku: data.TAGNO,
+              number_of_items: data.Inventory,
+              warehouse_id: warehouse,
+            },
+            { where: { id: result.id } }
+          );
+        } else {
+          await models.inventory.create({
+            id: uuidv4(),
+            generated_sku: data.TAGNO,
+            number_of_items: data.Inventory,
+            warehouse_id: warehouse,
+          });
+        }
+        resolve("Inventory Added!");
+      })
+      .catch((err) => {
+        console.log(err);
+        reject(err);
+      });
+  });
 };
 
 let verify_master_styles = ({ product_id, data }) => {
@@ -774,11 +807,12 @@ var all_process = [
   verify_master_hash_tags,
   verify_product_purities,
   verify_master_styles,
+  add_to_inventory,
 ];
 
 var price_sync = [verify_trans_sku, verify_pricing_sku_metals];
 
-let verify_product = ({ product_id, data, type }) => {
+let verify_product = ({ product_id, data, type, warehouse }) => {
   return new Promise(async (resolve, reject) => {
     var colour_varient = null;
     if (data["Material"])
@@ -789,7 +823,7 @@ let verify_product = ({ product_id, data, type }) => {
     if (product_id && type == "price_sync") {
       Promise.all(
         price_sync.map(async (item) => {
-          await item({ product_id, data, type });
+          await item({ product_id, data, type, warehouse });
         })
       )
         .then((_) => {
@@ -866,7 +900,7 @@ let verify_product = ({ product_id, data, type }) => {
         .then(async () => {
           Promise.all(
             all_process.map(async (item) => {
-              await item({ product_id, data });
+              await item({ product_id, data, warehouse });
             })
           )
             .then((_) => {
@@ -883,6 +917,8 @@ let verify_product = ({ product_id, data, type }) => {
         });
     } else if (!product_id && type == "price_sync") {
       resolve("No Such Product, Please sync it first");
+    } else {
+      resolve("no action");
     }
   });
 };
@@ -901,7 +937,8 @@ export let productSync = ({ product, type, warehouse }) => {
       .then(async (result) => {
         resolve(
           await verify_product({
-            product_id: result["product_id"] ? result["product_id"] : null,
+            product_id:
+              result && result["product_id"] ? result["product_id"] : null,
             data: product,
             type,
             warehouse,

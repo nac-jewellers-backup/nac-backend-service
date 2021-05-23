@@ -617,7 +617,7 @@ module.exports = function (app) {
   });
 
   app.post("/product_sync", async (req, res) => {
-    var { action_type, new_tagno, Product_lists } = req.body;
+    var { action_type, new_tagno, Product_lists, warehouse } = req.body;
 
     const io = require("../socket");
 
@@ -649,6 +649,7 @@ module.exports = function (app) {
               await require("../controller/productsync").productSync({
                 product: item,
                 type: action_type,
+                warehouse,
               });
             })
           );
@@ -668,6 +669,7 @@ module.exports = function (app) {
             await require("../controller/productsync").productSync({
               product: item,
               type: action_type,
+              warehouse,
             });
             sendStatus("sync_data", {
               completed: (index + 1) / new_tagno.length,

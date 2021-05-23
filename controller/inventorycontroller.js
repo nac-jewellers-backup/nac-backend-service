@@ -1,6 +1,6 @@
 const moment = require("moment");
 const models = require("./../models");
-const { findIndex } = require("lodash");
+const { findIndex, sumBy, filter } = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 
 let addHolidays = (holidays) => {
@@ -77,7 +77,6 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
   var warehouse = await models.warehouse.findAll({
     attributes: ["shipping_in_days"],
     order: [["shipping_in_days", "asc"]],
-    where: { is_active: true },
   });
 
   var getHolidayCount = (currentDate, shippingDate) => {
@@ -108,6 +107,9 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
             include: {
               model: models.warehouse,
               attributes: ["shipping_in_days"],
+              where: {
+                is_active: true,
+              },
             },
           },
         ],
@@ -152,10 +154,28 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
           resolve({ status: "Enquire Now", shipping_date: shippingDate });
         }
         if (result.is_active && Array.isArray(result.inventories)) {
+          if (sumBy(result.inventories, "number_of_items") == 0) {
+            var totalDaysToShip =
+              result.inventories[0].warehouse.shipping_in_days + duration > 10
+                ? 0
+                : 1;
+            var shippingDate = moment().set("date", totalDaysToShip);
+            var holidayCount = getHolidayCount(
+              moment(current_datetime),
+              shippingDate
+            );
+            if (holidayCount > 0) {
+              shippingDate.set("date", holidayCount);
+            }
+            resolve({ status: "Enquire Now", shipping_date: shippingDate });
+          }
+        }
+        if (result.is_active && Array.isArray(result.inventories)) {
+          let inventory = filter(result.inventories, (item) => {
+            return item.number_of_items > 0;
+          });
           var totalDaysToShip =
-            result.inventories[0].warehouse.shipping_in_days + duration > 10
-              ? 0
-              : 1;
+            inventory[0].warehouse.shipping_in_days + duration > 10 ? 0 : 1;
           var shippingDate = moment().set("date", totalDaysToShip);
           var holidayCount = getHolidayCount(
             moment(current_datetime),
@@ -164,6 +184,7 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
           if (holidayCount > 0) {
             shippingDate.set("date", holidayCount);
           }
+          resolve({ status: "Buy Now", shipping_date: shippingDate });
         }
       })
       .catch((err) => reject(err));

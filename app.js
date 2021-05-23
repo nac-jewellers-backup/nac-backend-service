@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
 import { postgraphile, makePluginHook } from "postgraphile";
+import PgAggregatesPlugin from "@graphile/pg-aggregates";
 //import Myusers from '../controller/sortbyprice.js';
 const MySchemaExtensionPlugin = require("./controller/sortbyprice.js");
 const user = require("./controller/notify/Emailtemplate");
@@ -93,9 +94,11 @@ app.use(
       MySchemaExtensionPlugin,
       ConnectionFilterPlugin,
       PgOrderByRelatedPlugin,
+      PgAggregatesPlugin,
     ],
     graphileBuildOptions: {
       connectionFilterRelations: true,
+      connectionFilterAllowNullInput: true,
       // default: false
     },
     // ownerConnectionString: `postgres://${connString.user}:${connString.password}@${connString.host}/${connString.database}`,
