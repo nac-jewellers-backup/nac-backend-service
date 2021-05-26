@@ -8,10 +8,10 @@ const uuidv1 = require("uuid/v1");
 var splitArray = require("split-array");
 var silverpricerange = [
   { label: "Below 10000", min: 1000, max: 10000 },
-  { label: "10001 - 20000", min: 10001, max: 20000 },
-  { label: "20001 - 30000", min: 20001, max: 30000 },
-  { label: "30001 - 40000", min: 30001, max: 40000 },
-  { label: "40001 - 50000", min: 40001, max: 50000 },
+  { label: "10001 - 25000", min: 10001, max: 20000 },
+  { label: "25001 - 50000", min: 20001, max: 30000 },
+  //{ label: "30001 - 40000", min: 30001, max: 40000 },
+  //{ label: "40001 - 50000", min: 40001, max: 50000 },
   { label: "Above 50001", min: 50001, max: 200000 },
 ];
 exports.filteroptions = async (req, res) => {
@@ -423,7 +423,6 @@ exports.filteroptions = async (req, res) => {
   });
   var mastervalues = [];
   var product_type_masters = [];
-
   master_product_type.forEach((product__type_obj) => {
     mastervalues.push(product__type_obj.product_type);
   });
