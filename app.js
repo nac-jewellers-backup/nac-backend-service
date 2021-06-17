@@ -89,7 +89,7 @@ app.use(
   postgraphile(connString, {
     graphiql: true,
     live: true,
-
+    watchPg: true,
     appendPlugins: [
       MySchemaExtensionPlugin,
       ConnectionFilterPlugin,
