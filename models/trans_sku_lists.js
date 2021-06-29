@@ -89,6 +89,12 @@ module.exports = (sequelize, DataTypes) => {
       margin_on_sale_percentage: {
         type: DataTypes.DOUBLE,
       },
+      min_order_qty: {
+        type: DataTypes.INTEGER,
+      },
+      max_order_qty: {
+        type: DataTypes.INTEGER,
+      },
     },
     {
       timestamps: true,
