@@ -12,10 +12,10 @@ function capitalize_Words(str) {
 }
 
 let get_purity = (purity) => {
-  if (purity.includes("58.3")) return "14 KT";
-  if (purity.includes("75")) return "18 KT";
-  if (purity.includes("87.5")) return "21 KT";
-  if (purity.includes("91.6")) return "22 KT";
+  if (purity.includes("58.3")) return "14KT";
+  if (purity.includes("75")) return "18KT";
+  if (purity.includes("87.5")) return "21KT";
+  if (purity.includes("91.6")) return "22KT";
   return null;
 };
 
@@ -154,22 +154,23 @@ let verify_master_styles = ({ product_id, data }) => {
           .then(async (result) => {
             if (result) {
               await verify_product_styles({ result, product_id, data });
-            } else {
-              models.master_styles
-                .create({
-                  id: uuidv4(),
-                  name: capitalize_Words(style),
-                  is_filter: true,
-                  is_active: true,
-                })
-                .then(async (result) => {
-                  await verify_product_styles({
-                    result,
-                    product_id,
-                    data,
-                  });
-                });
             }
+            // else {
+            //   models.master_styles
+            //     .create({
+            //       id: uuidv4(),
+            //       name: capitalize_Words(style),
+            //       is_filter: true,
+            //       is_active: true,
+            //     })
+            //     .then(async (result) => {
+            //       await verify_product_styles({
+            //         result,
+            //         product_id,
+            //         data,
+            //       });
+            //     });
+            // }
           })
           .catch((err) => {
             console.log("Error", err);
@@ -186,30 +187,34 @@ let verify_master_styles = ({ product_id, data }) => {
 let verify_product_purities = ({ product_id, data }) => {
   return new Promise(async (resolve, reject) => {
     if (data["PURITY"]) {
+      let purity = get_purity(data["PURITY"]);
+      if (data.METALID == "P" && purity == "22KT") {
+        purity = "950";
+      }
       models.product_purities
         .findOne({
           attributes: ["id"],
           where: {
             product_id,
-            purity: get_purity(data["PURITY"]),
+            purity,
           },
         })
         .then(async (res) => {
           if (res) {
-            await models.product_gender.update(
+            await models.product_purities.update(
               {
                 product_id,
-                purity: get_purity(data["PURITY"]),
+                purity,
               },
               {
                 where: { id: res.id },
               }
             );
           } else {
-            await models.product_gender.create({
+            await models.product_purities.create({
               id: uuidv4(),
               product_id,
-              purity: get_purity(data["PURITY"]),
+              purity,
               is_active: true,
             });
           }
@@ -277,21 +282,22 @@ let verify_master_genders = ({ product_id, data }) => {
             .then(async (result) => {
               if (result) {
                 await verify_product_genders({ result, product_id, data });
-              } else {
-                models.master_genders
-                  .create({
-                    name: item,
-                    is_filter: true,
-                    is_active: true,
-                  })
-                  .then(async (result) => {
-                    await verify_product_genders({
-                      result,
-                      product_id,
-                      data,
-                    });
-                  });
               }
+              // else {
+              //   models.master_genders
+              //     .create({
+              //       name: item,
+              //       is_filter: true,
+              //       is_active: true,
+              //     })
+              //     .then(async (result) => {
+              //       await verify_product_genders({
+              //         result,
+              //         product_id,
+              //         data,
+              //       });
+              //     });
+              // }
             })
             .catch((err) => {
               console.log("Error", err);
@@ -360,21 +366,22 @@ let verify_master_hash_tags = ({ product_id, data }) => {
             .then(async (result) => {
               if (result) {
                 await verify_product_hash_tags({ result, product_id, data });
-              } else {
-                models.master_hash_tags
-                  .create({
-                    name: item,
-                    is_filter: true,
-                    is_active: true,
-                  })
-                  .then(async (result) => {
-                    await verify_product_hash_tags({
-                      result,
-                      product_id,
-                      data,
-                    });
-                  });
               }
+              // else {
+              //   models.master_hash_tags
+              //     .create({
+              //       name: item,
+              //       is_filter: true,
+              //       is_active: true,
+              //     })
+              //     .then(async (result) => {
+              //       await verify_product_hash_tags({
+              //         result,
+              //         product_id,
+              //         data,
+              //       });
+              //     });
+              // }
             })
             .catch((err) => {
               console.log("Error", err);
@@ -442,18 +449,19 @@ let verify_master_occassions = ({ product_id, data }) => {
           .then(async (result) => {
             if (result) {
               await verify_product_occassions({ result, product_id, data });
-            } else {
-              models.master_occasions
-                .create({
-                  id: uuidv4(),
-                  name: data["Occasion"],
-                  is_filter: true,
-                  is_active: true,
-                })
-                .then(async (result) => {
-                  await verify_product_occassions({ result, product_id, data });
-                });
             }
+            // else {
+            //   models.master_occasions
+            //     .create({
+            //       id: uuidv4(),
+            //       name: data["Occasion"],
+            //       is_filter: true,
+            //       is_active: true,
+            //     })
+            //     .then(async (result) => {
+            //       await verify_product_occassions({ result, product_id, data });
+            //     });
+            // }
           })
           .catch((err) => {
             console.log("Error", err);
@@ -522,22 +530,23 @@ let verify_master_collections = ({ product_id, data }) => {
           .then(async (result) => {
             if (result) {
               await verify_product_collections({ result, product_id, data });
-            } else {
-              models.master_collections
-                .create({
-                  id: uuidv4(),
-                  name: capitalize_Words(data["Collections"]),
-                  is_filter: true,
-                  is_active: true,
-                })
-                .then(async (result) => {
-                  await verify_product_collections({
-                    result,
-                    product_id,
-                    data,
-                  });
-                });
             }
+            // else {
+            //   models.master_collections
+            //     .create({
+            //       id: uuidv4(),
+            //       name: capitalize_Words(data["Collections"]),
+            //       is_filter: true,
+            //       is_active: true,
+            //     })
+            //     .then(async (result) => {
+            //       await verify_product_collections({
+            //         result,
+            //         product_id,
+            //         data,
+            //       });
+            //     });
+            // }
           })
           .catch((err) => {
             console.log("Error", err);
@@ -727,12 +736,225 @@ let verify_trans_sku_description = ({ product_id, data }) => {
   });
 };
 
+let verify_product_materials = ({ product_id, data }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let materials = [];
+      if (data.METALID == "G") {
+        materials.push("gold");
+      }
+      if (data.METALID == "P") {
+        materials.push("platinum");
+      }
+      if (data.METALID == "S") {
+        materials.push("silver");
+      }
+      if (data["tagstone"]) {
+        if (data.tagstone["stone"] && data.tagstone["stone"].length > 0) {
+          var stones = data.tagstone.stone;
+          stones.forEach((element) => {
+            if (
+              differentiate_stone(element) == "product_diamonds" &&
+              materials.findIndex((i) => i == "diamond") < 0
+            ) {
+              materials.push("diamond");
+            }
+            if (
+              differentiate_stone(element) == "product_gemstones" &&
+              materials.findIndex((i) => i == "gemstone") < 0
+            ) {
+              materials.push("gemstone");
+            }
+          });
+        }
+      }
+      let product_materials = await models.product_materials.findAll({
+        attributes: ["material_name"],
+        where: {
+          product_sku: product_id,
+        },
+        raw: true,
+      });
+      product_materials = product_materials.map((i) => i.material_name);
+      if (materials.length) {
+        for (let index = 0; index < materials.length; index++) {
+          const element = materials[index];
+          if (!product_materials.includes(element)) {
+            await models.product_materials.create({
+              id: uuidv4(),
+              material_name: element,
+              product_sku: product_id,
+              is_active: true,
+            });
+          }
+        }
+        resolve("Completed product materials sync!");
+      } else {
+        resolve("No Materials to sync!");
+      }
+    } catch (error) {
+      console.log(error);
+      reject(error);
+    }
+  });
+};
+
+let getAttributes = ({ data }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      //Default Attribute
+      let attributes = ["category-jewellery"];
+      //materials from data source
+      let materials = [];
+      if (data.METALID == "G") {
+        materials.push("gold");
+      }
+      if (data.METALID == "P") {
+        materials.push("platinum");
+      }
+      if (data.METALID == "S") {
+        materials.push("silver");
+      }
+      if (data["tagstone"]) {
+        if (data.tagstone["stone"] && data.tagstone["stone"].length > 0) {
+          var stones = data.tagstone.stone;
+          stones.forEach((element) => {
+            if (
+              differentiate_stone(element) == "product_diamonds" &&
+              materials.findIndex((i) => i == "diamond") < 0
+            ) {
+              materials.push("diamond");
+            }
+            if (
+              differentiate_stone(element) == "product_gemstones" &&
+              materials.findIndex((i) => i == "gemstone") < 0
+            ) {
+              materials.push("gemstone");
+            }
+          });
+        }
+      }
+      let purity = get_purity(data["PURITY"]);
+      if (data.METALID == "P") {
+        purity = "950";
+      }
+      let condition = [];
+      if (data["Collections"]) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Collection",
+            name: capitalize_Words(data["Collections"]),
+          },
+        });
+      }
+      if (data["Occasion"]) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Occasion",
+            name: data["Occasion"],
+          },
+        });
+      }
+      if (data["Gender"]) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Gender",
+            name: {
+              [models.Sequelize.Op.in]: data["Gender"]
+                .split(",")
+                .map((i) => capitalize_Words(i) || ""),
+            },
+          },
+        });
+      }
+      if (data["ProductCategory"]) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Product Type",
+            name: capitalize_Words(data["ProductCategory"]),
+          },
+        });
+      }
+      if (
+        data["EarringStyle"] ||
+        data["RingStyle"] ||
+        data["PendantStyle"] ||
+        data["BangleStyle"] ||
+        data["NecklaceStyle"] ||
+        data["BraceletStyle"]
+      ) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Style",
+            name: capitalize_Words(
+              data["EarringStyle"] ||
+                data["RingStyle"] ||
+                data["PendantStyle"] ||
+                data["BangleStyle"] ||
+                data["NecklaceStyle"] ||
+                data["BraceletStyle"]
+            ),
+          },
+        });
+      }
+      if (purity) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Metal Purity",
+            name: purity,
+          },
+        });
+      }
+      if (materials) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Material",
+            name: {
+              [models.Sequelize.Op.in]: materials,
+            },
+          },
+        });
+      }
+      //Fetching attribute short_code
+      if (condition.length) {
+        let attributeShortCodes = await models.Attribute_master.findAll({
+          attributes: ["short_code"],
+          where: {
+            [models.Sequelize.Op.or]: condition,
+          },
+          order: ["type"],
+          raw: true,
+        });
+        attributes.push(...attributeShortCodes.map((i) => i.short_code));
+      }
+      //returning attributes
+      resolve(attributes);
+    } catch (error) {
+      console.log(error);
+      reject(error);
+    }
+  });
+};
+
 let verify_trans_sku = ({ product_id, data, type }) => {
   var metal_color = null;
   if (data["Material"])
     metal_color = data.Material.toLowerCase().includes("gold")
       ? "yellow"
       : "white";
+  let purity = get_purity(data["PURITY"]);
+  if (data.METALID == "P") {
+    purity = "950";
+  }
+  let sku_url = `jewellery${
+    data.ProductCategory
+      ? `/${data.ProductCategory.toLowerCase().trim().replace(" ", "-")}`
+      : ""
+  }${data["Material"] ? `/${data["Material"]}` : ""}${
+    data["ProductName"]
+      ? `/${data["ProductName"].toLowerCase().trim().replace(/ /g, "-")}`
+      : ""
+  }?skuid=${data.TAGNO}`;
   return new Promise((resolve, reject) => {
     models.trans_sku_lists
       .findOne({
@@ -751,7 +973,7 @@ let verify_trans_sku = ({ product_id, data, type }) => {
           };
         } else {
           updateData = {
-            purity: get_purity(data["PURITY"]),
+            purity,
             metal_color,
             product_id,
             generated_sku: data.TAGNO,
@@ -762,6 +984,8 @@ let verify_trans_sku = ({ product_id, data, type }) => {
             selling_price: data.AMOUNT,
             selling_price_tax: data.TAX,
             isdefault: true,
+            attributes: await getAttributes({ data }),
+            sku_url,
           };
         }
         if (result) {
@@ -774,7 +998,7 @@ let verify_trans_sku = ({ product_id, data, type }) => {
         } else {
           await models.trans_sku_lists.create({
             id: uuidv4(),
-            purity: get_purity(data["PURITY"]),
+            purity,
             metal_color,
             product_id,
             generated_sku: data.TAGNO,
@@ -785,6 +1009,8 @@ let verify_trans_sku = ({ product_id, data, type }) => {
             selling_price: data.AMOUNT,
             selling_price_tax: data.TAX,
             isdefault: true,
+            attributes: await getAttributes({ data }),
+            sku_url,
           });
         }
         resolve("Completed trans_sku sync");
@@ -807,10 +1033,15 @@ var all_process = [
   verify_master_hash_tags,
   verify_product_purities,
   verify_master_styles,
-  add_to_inventory,
+  verify_product_materials,
+  //add_to_inventory,
 ];
 
-var price_sync = [verify_trans_sku, verify_pricing_sku_metals];
+var price_sync = [
+  verify_trans_sku,
+  verify_pricing_sku_metals,
+  verify_product_materials,
+];
 
 let verify_product = ({ product_id, data, type, warehouse }) => {
   return new Promise(async (resolve, reject) => {
@@ -827,7 +1058,7 @@ let verify_product = ({ product_id, data, type, warehouse }) => {
         })
       )
         .then((_) => {
-          //console.log(`Completed ${data.TAGNO}`);
+          console.log(`Completed ${data.TAGNO}`);
           resolve(`Completed ${data.TAGNO}`);
         })
         .catch((err) => {
@@ -879,12 +1110,12 @@ let verify_product = ({ product_id, data, type, warehouse }) => {
       //     reject(err);
       //   });
     } else if (!product_id && type == "new_uploads") {
-      product_id = (await last_product_id()) + 1;
+      product_id = ((await last_product_id()) + 1).toString();
       models.product_lists
         .create({
           id: uuidv4(),
           product_id,
-          product_name: data.ProductName,
+          product_name: data.ProductName || null,
           gender: data.Gender
             ? data.Gender.split(",")
                 .map((item) => {
@@ -892,24 +1123,18 @@ let verify_product = ({ product_id, data, type, warehouse }) => {
                 })
                 .join(",")
             : null,
-          prod_description: data.ProductDescription,
+          prod_description: data.ProductDescription || null,
           product_type: data.ProductCategory,
           colour_varient: colour_varient,
           is_active: false,
         })
         .then(async () => {
-          Promise.all(
-            all_process.map(async (item) => {
-              await item({ product_id, data, warehouse });
-            })
-          )
-            .then((_) => {
-              //console.log(`Completed ${data.TAGNO}`);
-              resolve(`Completed ${data.TAGNO}`);
-            })
-            .catch((err) => {
-              throw err;
-            });
+          for (let index = 0; index < all_process.length; index++) {
+            const item = all_process[index];
+            await item({ product_id, data, warehouse });
+          }
+          console.log(`Completed ${data.TAGNO}`);
+          resolve(`Completed ${data.TAGNO}`);
         })
         .catch((err) => {
           console.log("Error", err);
