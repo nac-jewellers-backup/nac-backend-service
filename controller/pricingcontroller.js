@@ -2098,7 +2098,7 @@ exports.addmarkup = async (req, res) => {
   if (producttype) {
     if (Array.isArray(producttype)) {
       producttype.forEach((puobj) => {
-        producttypes.push(puobj.name);
+        producttypes.push(puobj.name.toLowerCase());
       });
     } else {
       producttypes.push(producttype);
@@ -2483,47 +2483,77 @@ exports.getdistinctproduct = async (req, res) => {
 };
 
 exports.getaliasproductlist = async (req, res) => {
-  const { category, product_types } = req.body;
-  let bodyobj = req.body;
+  // const { category, product_types } = req.body;
+  // let bodyobj = req.body;
+  let type_mapper = {
+    category: "Category",
+    product_types: "Product Type",
+    materials: "Material",
+    occations: "Occasion",
+    styles: "Style",
+    collections: "Collection",
+  };
   let whereclause = {};
   let attrs = [];
   let keys = Object.keys(req.body);
-  keys.forEach((key) => {
-    let attributeobj = bodyobj[key];
-    if (Array.isArray(attributeobj)) {
-      let componentarr = [];
-      attributeobj.forEach((attr) => {
-        if (attr.alias) {
-          let attr_where = {
-            attributes: {
-              [Op.contains]: [attr.alias],
-            },
-          };
-          componentarr.push(attr_where);
-        }
-      });
-      if (componentarr.length > 0) {
-        let attrobj = {
-          [Op.or]: componentarr,
-        };
-        attrs.push(attrobj);
-      }
-    }
-  });
+  console.log(keys);
+  for (let i = 0; i < keys.length; i++) {
+    let element = keys[i];
+    let attribute_masters = await models.Attribute_master.findAll({
+      attributes: ["short_code"],
+      where: {
+        name: {
+          [Op.iLike]: { [Op.any]: req.body[element].map((i) => i.name) },
+        },
+        type: {
+          [models.Sequelize.Op.iLike]: type_mapper[element],
+        },
+      },
+      raw: true,
+    });
+    attribute_masters.forEach((item) => {
+      attrs.push(item.short_code);
+    });
+  }
+
+  // keys.forEach((key) => {
+  //   let attributeobj = bodyobj[key];
+  //   if (Array.isArray(attributeobj)) {
+  //     let componentarr = [];
+  //     attributeobj.forEach((attr) => {
+  //       if (attr.alias) {
+  //         let attr_where = {
+  //           attributes: {
+  //             [Op.contains]: [attr.alias],
+  //           },
+  //         };
+  //         componentarr.push(attr_where);
+  //       }
+  //     });
+  //     if (componentarr.length > 0) {
+  //       let attrobj = {
+  //         [Op.or]: componentarr,
+  //       };
+  //       attrs.push(attrobj);
+  //     }
+  //   }
+  // });
 
   whereclause = {
-    [Op.and]: attrs,
+    attributes: {
+      [Op.contains]: attrs,
+    },
   };
-
+  console.log(whereclause);
   let productlists = await models.product_lists.findAll({
     attributes: ["product_id"],
     include: [
       {
         attributes: ["generated_sku"],
         model: models.trans_sku_lists,
+        where: whereclause,
       },
     ],
-    where: whereclause,
   });
   let prodlist = [];
   let skulist = [];

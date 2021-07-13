@@ -710,7 +710,7 @@ exports.priceupdate = (req, res) => {
     let product_type = [];
     let purities = [];
     if (product_val.product_type) {
-      product_type.push(product_val.product_type);
+      product_type.push(product_val.product_type.toLowerCase());
       whereclause["product_type"] = {
         [Op.contains]: product_type,
       };
@@ -742,8 +742,9 @@ exports.priceupdate = (req, res) => {
       // }
     }
     try {
-      const priceMarkup = models.pricing_markup.findAll({
+      const priceMarkup = await models.pricing_markup.findAll({
         where: whereclause,
+        raw: true,
       });
       return priceMarkup;
     } catch (error) {
@@ -1746,9 +1747,8 @@ exports.priceupdate = (req, res) => {
                   "/100)) where product_sku ='" +
                   productskus[skucount].generated_sku +
                   "' and material_name = 'goldprice'";
-                await models.sequelize
-                  .query(query)
-                  .then(([results, metadata]) => {});
+                await models.sequelize.query(query);
+                // .then(([results, metadata]) => {});
 
                 makingchargemarkupvalue =
                   makingsellingprice +
@@ -1762,9 +1762,8 @@ exports.priceupdate = (req, res) => {
                   "/100)) where product_sku ='" +
                   productskus[skucount].generated_sku +
                   "' and material_name = 'makingcharge'";
-                await models.sequelize
-                  .query(query)
-                  .then(([results, metadata]) => {});
+                await models.sequelize.query(query);
+                // .then(([results, metadata]) => {});
 
                 gemstonemarkupvalue =
                   gemstonesellingprice +
@@ -1777,11 +1776,10 @@ exports.priceupdate = (req, res) => {
                   "/100)) where product_sku ='" +
                   productskus[skucount].generated_sku +
                   "' and component LIKE 'gemstone%'";
-                await models.sequelize
-                  .query(query)
-                  .then(([results, metadata]) => {
-                    // Results will be an empty array and metadata will contain the number of affected rows.
-                  });
+                await models.sequelize.query(query);
+                // .then(([results, metadata]) => {
+                //   // Results will be an empty array and metadata will contain the number of affected rows.
+                // });
 
                 diamondmarkupvalue =
                   diamondsellingprice +
@@ -1798,11 +1796,10 @@ exports.priceupdate = (req, res) => {
                   productskus[skucount].generated_sku +
                   "' and component LIKE 'diamond%'";
 
-                await models.sequelize
-                  .query(query)
-                  .then(([results, metadata]) => {
-                    // Results will be an empty array and metadata will contain the number of affected rows.
-                  });
+                await models.sequelize.query(query);
+                // .then(([results, metadata]) => {
+                //   // Results will be an empty array and metadata will contain the number of affected rows.
+                // });
               }
             }
           } else {
