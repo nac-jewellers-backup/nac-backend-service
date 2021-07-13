@@ -693,7 +693,7 @@ exports.priceupdate = (req, res) => {
   }
 
   /********** Material Markup calculation */
-  function materialmarkupval(sellingprice_val, product_val, sku_val) {
+  async function materialmarkupval(sellingprice_val, product_val, sku_val) {
     console.log("==============");
     console.log(product_val.product_type);
     console.log(product_val.product_materials[0].material_name);
@@ -717,12 +717,18 @@ exports.priceupdate = (req, res) => {
     }
     if (sku_val.purity) {
       let pur = sku_val.purity;
-      purities.push(pur.replace(".", "").replace("K", ""));
+      let attribute = await models.Attribute_master.findOne({
+        attributes: ["short_code"],
+        where: { name: pur, type: "Metal Purity" },
+        raw: true,
+      });
+      // purities.push(pur.replace(".", "").replace("K", ""));
+      purities.push(attribute.short_code);
       whereclause["purities"] = {
         [Op.contains]: purities,
       };
     }
-    purities;
+    // purities;
     if (
       product_val.product_materials &&
       product_val.product_materials.length > 0

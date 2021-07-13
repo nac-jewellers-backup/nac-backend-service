@@ -2039,20 +2039,87 @@ exports.addmarkup = async (req, res) => {
     markuptype,
     category,
     producttype,
+    material_list,
+    purity_list,
   } = req.body;
+  let purities = [];
+  let producttypes = [];
+  let produc_materials = [];
+  let condition = { type: [], name: [] };
+  if (material_list) {
+    condition.type.push("Material");
+    material_list.forEach((item) => {
+      condition.name.push(item.name);
+    });
+  }
+  if (Array.isArray(purity_list)) {
+    condition.type.push("Metal Purity");
+    purity_list.forEach((item) => {
+      condition.name.push(item.name);
+    });
+  } else {
+    if (purity_list) {
+      purities.push(purity_list);
+    }
+  }
+  let attributes = await models.Attribute_master.findAll({
+    attributes: ["short_code", "type"],
+    where: {
+      type: { [models.Sequelize.Op.in]: condition.type },
+      name: { [models.Sequelize.Op.in]: condition.name },
+    },
+    raw: true,
+  });
+  if (attributes.length) {
+    attributes.forEach((item) => {
+      if (item.type == "Material") {
+        produc_materials.push(item.short_code);
+      }
+      if (item.type == "Metal Purity") {
+        purities.push(item.short_code);
+      }
+    });
+  }
+  // if (material_list) {
+  //   material_list.forEach((matobj) => {
+  //     produc_materials = matobj.shortCode;
+  //   });
+  // }
+  // if (purity_list) {
+  //   if (Array.isArray(purity_list)) {
+  //     purity_list.forEach((puobj) => {
+  //       purities.push(puobj.shortCode);
+  //     });
+  //   } else {
+  //     purities.push(purity_list);
+  //   }
+  // }
+
+  if (producttype) {
+    if (Array.isArray(producttype)) {
+      producttype.forEach((puobj) => {
+        producttypes.push(puobj.name);
+      });
+    } else {
+      producttypes.push(producttype);
+    }
+  }
+
   let response = await models.pricing_markup.create({
     id: uuidv1(),
     selling_price_min: sellingPriceMin,
     selling_price_max: sellingPriceMax,
     markup_type: markuptype,
     category: category,
-    product_type: producttype,
+    product_type: producttypes,
     markup_value: markupValue,
     material: material,
+    product_material: produc_materials.join(","),
+    purities: purities,
     updatedAt: new Date(),
   });
   if (response) {
-    res.send(200, { message: "success" });
+    res.send(200, { message: "success", response: material_list });
   } else {
     res.send(402, { message: "Try again later" });
   }
@@ -2366,13 +2433,14 @@ exports.getdistinctproduct = async (req, res) => {
 
   if (product_type) {
     whereclause["product_type"] = {
-      [Op.in]: product_type,
+      [Op.in]: product_type.map((i) => i.toLowerCase()),
     };
   }
   let productids = [];
   let products = await models.product_lists.findAll({
     attributes: ["product_id"],
     where: whereclause,
+    raw: true,
   });
   products.forEach((pid) => {
     productids.push(pid.product_id);
