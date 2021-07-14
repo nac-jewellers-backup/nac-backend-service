@@ -1532,16 +1532,33 @@ exports.getproductvarient = async (req, res) => {
   // var purityarr = []
 };
 exports.editproductdiamond = async (req, res) => {
-  const { diamondid, diamondSettings, diamondShape, stoneCount, stoneWeight } =
-    req.body;
+  const {
+    itemname,
+    subitemname,
+    description,
+    diamondid,
+    diamondSettings,
+    diamondShape,
+    stoneCount,
+    stoneWeight,
+    color,
+    clarity,
+    diamondtype,
+  } = req.body;
   console.log(diamondid);
   let response_obj1 = await models.product_diamonds.update(
     // Values to update
     {
+      item_name: itemname,
+      sub_item_name: subitemname,
+      description: description,
       diamond_settings: diamondSettings,
       diamond_shape: diamondShape,
       stone_count: stoneCount,
       stone_weight: stoneWeight,
+      diamond_colour: color,
+      diamond_clarity: clarity,
+      diamond_type: diamondtype,
     },
     {
       // Clause
@@ -1559,16 +1576,24 @@ exports.editproductdiamond = async (req, res) => {
 exports.editproductgemstone = async (req, res) => {
   const {
     id,
+    gemstonetype,
     gemstoneSetting,
     gemstoneShape,
     gemstoneSize,
     stoneCount,
     stoneWeight,
+    itemname,
+    subitemname,
+    description,
   } = req.body;
   console.log(id);
   let response_obj1 = await models.product_gemstones.update(
     // Values to update
     {
+      gemstone_type: gemstonetype,
+      item_name: itemname,
+      sub_item_name: subitemname,
+      description: description,
       gemstone_setting: gemstoneSetting,
       gemstone_shape: gemstoneShape,
       gemstone_size: gemstoneSize,
@@ -1672,6 +1697,11 @@ exports.editproduct = async (req, res) => {
     description,
     minOrderQty,
     maxOrderQty,
+    productType,
+    productMetalColor,
+    vendorCode,
+    earingBacking,
+    productSize,
   } = req.body;
   try {
     var product_object = await models.product_lists.findOne({
