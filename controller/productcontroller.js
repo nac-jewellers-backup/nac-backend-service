@@ -2027,6 +2027,7 @@ exports.editproduct = async (req, res) => {
         },
       }
     );
+    
     await models.product_metalcolours.bulkCreate(tempMetalColor, {
       individualHooks: true,
     });
