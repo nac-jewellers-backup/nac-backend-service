@@ -1735,6 +1735,10 @@ exports.editproduct = async (req, res) => {
           model: models.product_gender,
           attributes: ["gender_name"],
         },
+        {
+          model: models.product_metalcolours,
+          attributes: ["product_color"],
+        },
       ],
       where: {
         product_id: productId,
@@ -1747,6 +1751,7 @@ exports.editproduct = async (req, res) => {
     let product_stones = product_object.product_stonecounts;
     let product_stonecolor = product_object.product_stonecolors;
     let product_gender = product_object.product_genders;
+    let product_metalcolours = product_object.product_metalcolours;
 
     await models.product_collections.update(
       // Values to update
@@ -1780,6 +1785,7 @@ exports.editproduct = async (req, res) => {
     let prev_stones = [];
     let prev_stonecolors = [];
     let prev_genders = [];
+    let prev_metalcolors = [];
     product_themes.forEach((element) => {
       prev_themes.push(element.theme_name);
     });
@@ -1804,7 +1810,9 @@ exports.editproduct = async (req, res) => {
     product_gender.forEach((element) => {
       prev_genders.push(element.gender_name);
     });
-
+    product_metalcolours.forEach((element) => {
+      prev_metalcolors.push(element.product_color);
+    });
     let theme_names = [];
     let reactive_themes = [];
     themes.forEach((element) => {
@@ -1986,10 +1994,48 @@ exports.editproduct = async (req, res) => {
       individualHooks: true,
     });
 
+    let tempMetalColor = [],
+      tempReactiveMetalColor = [];
+    productMetalColor.forEach((element) => {
+      if (prev_metalcolors.indexOf(element.productColor) === -1) {
+        let metalColorObj = {
+          id: uuidv1(),
+          product_color: element.productColor,
+          product_id: productId,
+          is_active: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        tempMetalColor.push(metalColorObj);
+      } else {
+        tempReactiveMetalColor.push(element.productColor);
+      }
+    });
+
+    await models.product_metalcolours.update(
+      // Values to update
+      {
+        is_active: true,
+      },
+      {
+        // Clause
+        where: {
+          style_name: {
+            [Op.in]: tempReactiveMetalColor,
+          },
+          product_id: productId,
+        },
+      }
+    );
+    await models.product_metalcolours.bulkCreate(tempMetalColor, {
+      individualHooks: true,
+    });
+
     let trans_sku_lists = await models.trans_sku_lists.update(
       {
         min_order_qty: minOrderQty,
         max_order_qty: maxOrderQty,
+        sku_size: productSize,
       },
       {
         returning: true,
@@ -2017,6 +2063,9 @@ exports.editproduct = async (req, res) => {
         gender: genders_arr.join(),
         length,
         height,
+        product_type: productType.toLowerCase(),
+        vendor_code: vendorCode,
+        earring_backing: earingBacking,
       },
       {
         // Clause
