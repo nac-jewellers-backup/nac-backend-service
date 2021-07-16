@@ -120,8 +120,13 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
       })
       .then(async (result) => {
         // resolve(result);
+        if (!result) {
+          resolve({ status: "Enquire Now", shipping_date: null });
+        }
         var duration = moment
-          .duration(moment(current_datetime).diff(moment({ hour: 14 })))
+          .duration(
+            moment(new Date(current_datetime)).diff(moment({ hour: 14 }))
+          )
           .as("minutes");
 
         if (!result.is_active) {

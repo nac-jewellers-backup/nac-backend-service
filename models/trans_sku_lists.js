@@ -129,6 +129,10 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "purity",
       targetKey: "name",
     });
+    models.trans_sku_lists.hasMany(models.inventory, {
+      foreignKey: "generated_sku",
+      sourceKey: "generated_sku",
+    });
   };
   return trans_sku_lists;
 };
