@@ -2020,14 +2020,14 @@ exports.editproduct = async (req, res) => {
       {
         // Clause
         where: {
-          style_name: {
+          product_color: {
             [Op.in]: tempReactiveMetalColor,
           },
           product_id: productId,
         },
       }
     );
-    
+
     await models.product_metalcolours.bulkCreate(tempMetalColor, {
       individualHooks: true,
     });
