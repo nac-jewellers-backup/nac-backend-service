@@ -660,7 +660,7 @@ module.exports = function (app) {
           var i,
             j,
             temparray,
-            chunk = 1;
+            chunk = 200;
           for (i = 0, j = totalCount; i < j; i += chunk) {
             temparray = Product_lists.slice(i, i + chunk);
             await Promise.all(
