@@ -617,73 +617,93 @@ module.exports = function (app) {
   });
 
   app.post("/product_sync", async (req, res) => {
-    var { action_type, new_tagno, Product_lists, warehouse } = req.body;
+    var { action_type, new_tagno, warehouse } = req.body;
+    let Product_lists = [];
 
-    const io = require("../socket");
+    require("http").get(req.body.sync_url, (response) => {
+      let body = "";
+      response.on("data", (chunk) => {
+        body += chunk;
+      });
+      response.on("end", () => {
+        try {
+          Product_lists = JSON.parse(body).Product_lists;
+          console.log("===========> Processing", Product_lists.length);
+          start_sync();
+        } catch (error) {
+          console.log(error);
+          res.status(500).send({ error: error.message });
+        }
+      });
+    });
 
-    let sendStatus = (token_val, processed_data) => {
-      console.log(token_val, processed_data);
+    let start_sync = async () => {
+      const io = require("../socket");
+
+      let sendStatus = (token_val, processed_data) => {
+        console.log(token_val, processed_data);
+        try {
+          io.emit(token_val, processed_data);
+        } catch (e) {
+          console.log(e);
+        }
+      };
+
+      var totalCount = Product_lists.length;
+      var startTime = require("moment")();
       try {
-        io.emit(token_val, processed_data);
-      } catch (e) {
-        console.log(e);
-      }
-    };
-
-    var totalCount = Product_lists.length;
-    var startTime = require("moment")();
-    try {
-      if (action_type == "price_sync") {
-        res.send({
-          status: true,
-          message: `Process Started!`,
-        });
-        var i,
-          j,
-          temparray,
-          chunk = 200;
-        for (i = 0, j = totalCount; i < j; i += chunk) {
-          temparray = Product_lists.slice(i, i + chunk);
-          await Promise.all(
-            temparray.map(async (item) => {
+        if (action_type == "price_sync") {
+          res.send({
+            status: true,
+            message: `Process Started!`,
+          });
+          var i,
+            j,
+            temparray,
+            chunk = 1;
+          for (i = 0, j = totalCount; i < j; i += chunk) {
+            temparray = Product_lists.slice(i, i + chunk);
+            await Promise.all(
+              temparray.map(async (item) => {
+                await require("../controller/productsync").productSync({
+                  product: item,
+                  type: action_type,
+                  warehouse,
+                });
+              })
+            );
+            sendStatus("sync_data", {
+              completed: i + chunk < totalCount ? (i + chunk) / totalCount : 1,
+            });
+          }
+        }
+        if (action_type == "new_uploads") {
+          res.send({
+            status: true,
+            message: `Process Started!`,
+          });
+          for (let index = 0; index < totalCount; index++) {
+            const item = Product_lists[index];
+            if (new_tagno.includes(item.TAGNO)) {
               await require("../controller/productsync").productSync({
                 product: item,
                 type: action_type,
                 warehouse,
               });
-            })
-          );
-          sendStatus("sync_data", {
-            completed: i + chunk < totalCount ? (i + chunk) / totalCount : 1,
-          });
-        }
-      }
-      if (action_type == "new_uploads") {
-        res.send({
-          status: true,
-          message: `Process Started!`,
-        });
-        for (let index = 0; index < totalCount; index++) {
-          const item = Product_lists[index];
-          if (new_tagno.includes(item.TAGNO)) {
-            await require("../controller/productsync").productSync({
-              product: item,
-              type: action_type,
-              warehouse,
-            });
-            sendStatus("sync_data", {
-              completed: (index + 1) / new_tagno.length,
-            });
+              sendStatus("sync_data", {
+                completed: (index + 1) / new_tagno.length,
+              });
+            }
           }
         }
+        sendStatus("sync_data", {
+          status: "completed",
+          timeElapsed: startTime.fromNow(),
+        });
+      } catch (error) {
+        console.log(error);
       }
-      sendStatus("sync_data", {
-        status: "completed",
-        timeElapsed: startTime.fromNow(),
-      });
-    } catch (error) {
-      console.log(error);
-    }
+    };
   });
 
   app.post("/addholidays", (req, res) => {
