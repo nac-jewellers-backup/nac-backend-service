@@ -1597,7 +1597,7 @@ exports.priceupdate = (req, res) => {
         }
       });
       console.log("==============");
-      console.log(total_costprice);
+      console.log("total_costprice", total_costprice);
       console.log(productskus[skucount].purity);
       console.log("==============");
 
@@ -2111,7 +2111,10 @@ exports.priceupdate = (req, res) => {
       let skudiscount = materialsum.discount_price + matalsum.discount_price;
       const markuppricetax = (skumarkup * taxval) / 100;
       const discountpricetax = (skudiscount * taxval) / 100;
-      if (total_costprice > 0) {
+      if (total_costprice == 0) {
+        sku_margin = 0;
+      }
+      if (total_sellingprice > 0) {
         let transskuobj = {
           cost_price: total_costprice + costpricetax,
           cost_price_tax: costpricetax,
@@ -2124,7 +2127,7 @@ exports.priceupdate = (req, res) => {
           margin_on_sale_percentage: sku_margin,
           discount_desc: discounttitle,
         };
-
+        console.log("trans_sku_lists", transskuobj);
         // res.send(200,{"material":materialsum,"metal":matalsum});
         models.trans_sku_lists
           .update(transskuobj, {
