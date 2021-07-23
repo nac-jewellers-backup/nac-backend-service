@@ -535,30 +535,78 @@ exports.generatepaymenturl = async (req, res) => {
   // });
 };
 exports.sendtoairpay = async (req, res) => {
-  const {
-    buyerEmail,
-    buyerPhone,
-    buyerFirstName,
-    buyerLastName,
-    buyerAddress,
-    buyerCity,
-    buyerState,
-    buyerCountry,
-    buyerPinCode,
-    orderid,
-    amount,
-    customvar,
-    subtype,
-  } = req.body;
+  const { buyerPhone, buyerPinCode, orderid, amount, customvar, subtype } =
+    req.body;
+  var paymentid = 0;
+  var cartval = 1.0;
+  var buyerEmail = "";
+  var buyerFirstName = "";
+  var buyerLastName = "";
+  var buyerAddress = "";
+  var buyerCity = "";
+  var buyerState = "";
+  var buyerCountry = "";
+  if (orderid) {
+    let cartvalueobj = await models.orders.findOne({
+      include: [
+        {
+          model: models.shopping_cart,
+          include: [
+            {
+              model: models.cart_address,
+            },
+          ],
+        },
+        {
+          model: models.user_profiles,
+        },
+      ],
+      where: {
+        id: orderid,
+      },
+    });
+    if (cartvalueobj) {
+      if (cartvalueobj.shopping_cart) {
+        if (cartvalueobj.shopping_cart.cart_address) {
+          let cartaddres_arr = cartvalueobj.shopping_cart.cart_address;
+
+          if (cartaddres_arr.length > 0) {
+            let cartaddressobject = cartaddres_arr[0];
+            buyerEmail = cartaddressobject.email ? cartaddressobject.email : "";
+            buyerFirstName = cartaddressobject.firstname
+              ? cartaddressobject.firstname
+              : "";
+            buyerLastName = cartaddressobject.lastname
+              ? cartaddressobject.lastname
+              : "";
+            buyerAddress = cartaddressobject.addressline1
+              ? cartaddressobject.addressline1
+              : "";
+            buyerCity = cartaddressobject.city ? cartaddressobject.city : "";
+            buyerState = cartaddressobject.state ? cartaddressobject.state : "";
+
+            buyerCountry = cartaddressobject.country
+              ? cartaddressobject.country
+              : "";
+          }
+        }
+      }
+    }
+    if (cartvalueobj) {
+      paymentid = cartvalueobj.payment_id;
+    }
+    if (cartvalueobj.shopping_cart) {
+      cartval = cartvalueobj.shopping_cart.discounted_price;
+    }
+  } else {
+  }
   var md5 = require("md5");
   var sha256 = require("sha256");
   var dateformat = require("dateformat");
-  let { airpay_mid, airpay_password, airpay_secret, airpay_username } =
-    process.env;
-  var mid = airpay_mid;
-  var username = airpay_username;
-  var password = airpay_password;
-  var secret = airpay_secret;
+  var mid = process.env.airpay_mid;
+  var username = process.env.airpay_username;
+  var password = process.env.airpay_password;
+  var secret = process.env.airpay_secret;
   var now = new Date();
   let alldata =
     buyerEmail +
@@ -568,8 +616,8 @@ exports.sendtoairpay = async (req, res) => {
     buyerCity +
     buyerState +
     buyerCountry +
-    amount +
-    orderid;
+    cartval +
+    paymentid;
   let udata = username + ":|:" + password;
   let privatekey = sha256(secret + "@" + udata);
   let aldata = alldata + dateformat(now, "yyyy-mm-dd");
@@ -577,12 +625,21 @@ exports.sendtoairpay = async (req, res) => {
   let fdata = req.body;
   var bodyparams = {
     ...fdata,
+    buyerEmail,
+    buyerFirstName,
+    buyerLastName,
+    buyerAddress,
+    buyerCity,
+    buyerState,
+    buyerCountry,
     privatekey: privatekey,
     mercid: mid,
     currency: 356,
     isocurrency: "INR",
-    chmod: "pg",
+    chmod: "",
+    amount: cartval,
     checksum: checksum,
+    paymentid,
   };
   console.log(JSON.stringify(bodyparams));
   //   request({
