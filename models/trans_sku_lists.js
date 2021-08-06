@@ -95,6 +95,12 @@ module.exports = (sequelize, DataTypes) => {
       max_order_qty: {
         type: DataTypes.INTEGER,
       },
+      item_id: {
+        type: DataTypes.TEXT,
+      },
+      product_record_date: {
+        type: DataTypes.DATE,
+      },
     },
     {
       timestamps: true,

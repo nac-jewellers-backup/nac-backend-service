@@ -11,6 +11,11 @@ function capitalize_Words(str) {
   });
 }
 
+let stockStatus = {
+  inStock: "InStock",
+  noStock: "OutofStock",
+};
+
 let get_purity = (purity) => {
   if (purity.includes("58.3")) return "14KT";
   if (purity.includes("75")) return "18KT";
@@ -52,38 +57,42 @@ let last_product_id = () => {
 
 let add_to_inventory = ({ data, warehouse }) => {
   return new Promise((resolve, reject) => {
-    models.inventory
-      .findOne({
-        attributes: ["id"],
-        where: {
-          generated_sku: data.TAGNO,
-          warehouse_id: warehouse,
-        },
-      })
-      .then(async (result) => {
-        if (result) {
-          await models.inventory.update(
-            {
+    if (data.StockStatus && data.StockStatus == stockStatus.inStock) {
+      models.inventory
+        .findOne({
+          attributes: ["id"],
+          where: {
+            generated_sku: data.TAGNO,
+            warehouse_id: warehouse,
+          },
+        })
+        .then(async (result) => {
+          if (result) {
+            await models.inventory.update(
+              {
+                generated_sku: data.TAGNO,
+                number_of_items: data.Inventory,
+                warehouse_id: warehouse,
+              },
+              { where: { id: result.id } }
+            );
+          } else {
+            await models.inventory.create({
+              id: uuidv4(),
               generated_sku: data.TAGNO,
               number_of_items: data.Inventory,
               warehouse_id: warehouse,
-            },
-            { where: { id: result.id } }
-          );
-        } else {
-          await models.inventory.create({
-            id: uuidv4(),
-            generated_sku: data.TAGNO,
-            number_of_items: data.Inventory,
-            warehouse_id: warehouse,
-          });
-        }
-        resolve("Inventory Added!");
-      })
-      .catch((err) => {
-        console.log(err);
-        reject(err);
-      });
+            });
+          }
+          resolve("Inventory Added!");
+        })
+        .catch((err) => {
+          console.log(err);
+          reject(err);
+        });
+    } else {
+      resolve("No Stock Found!");
+    }
   });
 };
 
@@ -986,6 +995,9 @@ let verify_trans_sku = ({ product_id, data, type }) => {
             isdefault: true,
             attributes: await getAttributes({ data }),
             sku_url,
+            item_id: data.ITEMID,
+            product_record_date: new Date(data.PRODUCTDATE),
+            is_ready_to_ship: data.StockStatus == stockStatus.inStock,
           };
         }
         if (result) {
@@ -1011,6 +1023,9 @@ let verify_trans_sku = ({ product_id, data, type }) => {
             isdefault: true,
             attributes: await getAttributes({ data }),
             sku_url,
+            item_id: data.ITEMID,
+            product_record_date: new Date(data.PRODUCTDATE),
+            is_ready_to_ship: data.StockStatus == stockStatus.inStock,
           });
         }
         resolve("Completed trans_sku sync");

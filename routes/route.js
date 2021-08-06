@@ -663,15 +663,23 @@ module.exports = function (app) {
             chunk = 200;
           for (i = 0, j = totalCount; i < j; i += chunk) {
             temparray = Product_lists.slice(i, i + chunk);
-            await Promise.all(
-              temparray.map(async (item) => {
-                await require("../controller/productsync").productSync({
-                  product: item,
-                  type: action_type,
-                  warehouse,
-                });
-              })
-            );
+            for (let index = 0; index < temparray.length; index++) {
+              const item = temparray[index];
+              await require("../controller/productsync").productSync({
+                product: item,
+                type: action_type,
+                warehouse,
+              });
+            }
+            // await Promise.all(
+            //   temparray.map(async (item) => {
+            //     await require("../controller/productsync").productSync({
+            //       product: item,
+            //       type: action_type,
+            //       warehouse,
+            //     });
+            //   })
+            // );
             sendStatus("sync_data", {
               completed: i + chunk < totalCount ? (i + chunk) / totalCount : 1,
             });

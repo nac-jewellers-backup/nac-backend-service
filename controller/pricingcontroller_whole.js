@@ -696,7 +696,7 @@ exports.priceupdate = (req, res) => {
   async function materialmarkupval(sellingprice_val, product_val, sku_val) {
     console.log("==============");
     console.log(product_val.product_type);
-    console.log(product_val.product_materials[0].material_name);
+    //console.log(product_val.product_materials[0].material_name);
     console.log("==============");
     let whereclause = {
       selling_price_min: {
@@ -1442,7 +1442,6 @@ exports.priceupdate = (req, res) => {
               margin_percentage: makingmargin,
               product_sku: skuobj.generated_sku,
             };
-
             models.pricing_sku_metals
               .findOne({
                 where: {
@@ -1735,6 +1734,19 @@ exports.priceupdate = (req, res) => {
                 await models.sequelize
                   .query(query1)
                   .then(([results, metadata]) => {});
+                /*updating markup in pricing sku metals */
+                makingchargemarkupvalue =
+                  makingsellingprice +
+                  makingsellingprice * (markup.markup_value / 100);
+                makingchargediscountvalue =
+                  (makingchargemarkupvalue * 100) / (100 - mkcharge_discount);
+                var query =
+                  "UPDATE pricing_sku_metals SET markup = (selling_price + (selling_price *" +
+                  markup.markup_value +
+                  "/100)) where product_sku ='" +
+                  productskus[skucount].generated_sku +
+                  "' and material_name = 'makingcharge'";
+                await models.sequelize.query(query);
               } else {
                 goldmarkupvalue =
                   goldsellingprice +
@@ -1755,7 +1767,7 @@ exports.priceupdate = (req, res) => {
                   makingsellingprice * (markup.markup_value / 100);
                 makingchargediscountvalue =
                   (makingchargemarkupvalue * 100) / (100 - mkcharge_discount);
-
+                console.log("it's here", makingchargemarkupvalue);
                 var query =
                   "UPDATE pricing_sku_metals SET markup = (selling_price + (selling_price *" +
                   markup.markup_value +

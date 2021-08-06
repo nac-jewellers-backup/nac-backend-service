@@ -565,14 +565,17 @@ exports.sendtoairpay = async (req, res) => {
         id: orderid,
       },
     });
+    cartvalueobj = JSON.parse(JSON.stringify(cartvalueobj));
     if (cartvalueobj) {
+      if (cartvalueobj.user_profile) {
+        buyerEmail = cartvalueobj.user_profile.email || "";
+      }
       if (cartvalueobj.shopping_cart) {
-        if (cartvalueobj.shopping_cart.cart_address) {
-          let cartaddres_arr = cartvalueobj.shopping_cart.cart_address;
-
+        if (cartvalueobj.shopping_cart.cart_addresses) {
+          let cartaddres_arr = cartvalueobj.shopping_cart.cart_addresses;
           if (cartaddres_arr.length > 0) {
             let cartaddressobject = cartaddres_arr[0];
-            buyerEmail = cartaddressobject.email ? cartaddressobject.email : "";
+            // buyerEmail = cartaddressobject.email ? cartaddressobject.email : "";
             buyerFirstName = cartaddressobject.firstname
               ? cartaddressobject.firstname
               : "";
@@ -596,7 +599,9 @@ exports.sendtoairpay = async (req, res) => {
       paymentid = cartvalueobj.payment_id;
     }
     if (cartvalueobj.shopping_cart) {
-      cartval = cartvalueobj.shopping_cart.discounted_price;
+      if (process.env.NODE_ENV == "production") {
+        cartval = cartvalueobj.shopping_cart.discounted_price; //Cart Value To Be greater than 1 in production!
+      }
     }
   } else {
   }
@@ -618,6 +623,7 @@ exports.sendtoairpay = async (req, res) => {
     buyerCountry +
     cartval +
     paymentid;
+  console.log(alldata);
   let udata = username + ":|:" + password;
   let privatekey = sha256(secret + "@" + udata);
   let aldata = alldata + dateformat(now, "yyyy-mm-dd");
@@ -632,6 +638,8 @@ exports.sendtoairpay = async (req, res) => {
     buyerCity,
     buyerState,
     buyerCountry,
+    cartval,
+    paymentid,
     privatekey: privatekey,
     mercid: mid,
     currency: 356,
