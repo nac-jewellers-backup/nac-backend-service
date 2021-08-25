@@ -569,6 +569,60 @@ let verify_master_collections = ({ product_id, data }) => {
   });
 };
 
+let verify_pricing_sku_materials = ({ product_id, data }) => {
+  return new Promise((resolve, reject) => {
+    if (data["tagstone"]) {
+      if (data.tagstone["stone"] && data.tagstone["stone"].length > 0) {
+        var stones = data.tagstone.stone;
+        stones.forEach((element, index) => {
+          let insert_object = {
+            id: uuidv4(),
+            product_id,
+            product_sku: data.TAGNO,
+            selling_price: element.STNAMT,
+            material_name: element.ITEMNAME,
+          };
+          if (differentiate_stone(element).includes("diamond")) {
+            insert_object[
+              "component"
+            ] = `diamond_${index+1}_${product_id}_${data.TAGNO}`;
+          } else {
+            insert_object[
+              "component"
+            ] = `gemstone_${index+1}_${product_id}_${data.TAGNO}`;
+          }
+          models.pricing_sku_materials
+            .findOne({
+              where: {
+                product_id: product_id,
+                product_sku: data.TAGNO,
+                material_name: element.ITEMNAME,
+              },
+            })
+            .then(async (result) => {
+              if (result) {
+                await models.pricing_sku_materials.update(
+                  {
+                    ...insert_object,
+                    id: result.id,
+                  },
+                  { where: { id: result.id } }
+                );
+              } else {
+                await models.pricing_sku_materials.create(insert_object);
+              }
+            })
+            .catch((err) => {
+              console.log("Error", err);
+              reject(err);
+            });
+        });
+      }
+    }
+    resolve("Completed product_stones sync");
+  });
+};
+
 let verify_pricing_sku_metals = ({ product_id, data }) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1042,6 +1096,7 @@ var all_process = [
   verify_trans_sku_description,
   verify_product_stones,
   verify_pricing_sku_metals,
+  verify_pricing_sku_materials,
   verify_master_collections,
   verify_master_occassions,
   verify_master_genders,
@@ -1056,6 +1111,7 @@ var price_sync = [
   verify_trans_sku,
   verify_pricing_sku_metals,
   verify_product_materials,
+  verify_pricing_sku_materials
 ];
 
 let verify_product = ({ product_id, data, type, warehouse }) => {
