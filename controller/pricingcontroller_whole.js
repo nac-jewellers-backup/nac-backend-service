@@ -1442,6 +1442,7 @@ exports.priceupdate = (req, res) => {
               margin_percentage: makingmargin,
               product_sku: skuobj.generated_sku,
             };
+
             models.pricing_sku_metals
               .findOne({
                 where: {
@@ -1596,7 +1597,7 @@ exports.priceupdate = (req, res) => {
         }
       });
       console.log("==============");
-      console.log("total_costprice", total_costprice);
+      console.log(total_costprice);
       console.log(productskus[skucount].purity);
       console.log("==============");
 
@@ -1709,110 +1710,101 @@ exports.priceupdate = (req, res) => {
           var queryarray = "";
           if (iscontainall) {
             if (markup.material == "All") {
-              if (total_costprice == 0) {
-                let alldiscount = 0;
-                if (disscount_obj["All"]) {
-                  alldiscount = disscount_obj["All"].value
-                    ? disscount_obj["All"].value
-                    : 0;
-                }
-                var query =
-                  "UPDATE trans_sku_lists SET markup_price = (selling_price + (selling_price *" +
-                  markup.markup_value +
-                  "/100)) where generated_sku ='" +
-                  productskus[skucount].generated_sku +
-                  "'";
-                await models.sequelize
-                  .query(query)
-                  .then(([results, metadata]) => {});
-                var query1 =
-                  "UPDATE trans_sku_lists SET discount_price = (markup_price - (markup_price *" +
-                  alldiscount +
-                  "/100))  where generated_sku ='" +
-                  productskus[skucount].generated_sku +
-                  "'";
-                await models.sequelize
-                  .query(query1)
-                  .then(([results, metadata]) => {});
-                /*updating markup in pricing sku metals */
-                makingchargemarkupvalue =
-                  makingsellingprice +
-                  makingsellingprice * (markup.markup_value / 100);
-                makingchargediscountvalue =
-                  (makingchargemarkupvalue * 100) / (100 - mkcharge_discount);
-                var query =
-                  "UPDATE pricing_sku_metals SET markup = (selling_price + (selling_price *" +
-                  markup.markup_value +
-                  "/100)) where product_sku ='" +
-                  productskus[skucount].generated_sku +
-                  "' and material_name = 'makingcharge'";
-                await models.sequelize.query(query);
-              } else {
-                goldmarkupvalue =
-                  goldsellingprice +
-                  goldsellingprice * (markup.markup_value / 100);
-                var query =
-                  "UPDATE pricing_sku_metals SET markup = (selling_price + (selling_price *" +
-                  markup.markup_value +
-                  "/100)), discount_price = (selling_price + (selling_price *" +
-                  markup.markup_value +
-                  "/100)) where product_sku ='" +
-                  productskus[skucount].generated_sku +
-                  "' and material_name = 'goldprice'";
-                await models.sequelize.query(query);
-                // .then(([results, metadata]) => {});
-
-                makingchargemarkupvalue =
-                  makingsellingprice +
-                  makingsellingprice * (markup.markup_value / 100);
-                makingchargediscountvalue =
-                  (makingchargemarkupvalue * 100) / (100 - mkcharge_discount);
-                console.log("it's here", makingchargemarkupvalue);
-                var query =
-                  "UPDATE pricing_sku_metals SET markup = (selling_price + (selling_price *" +
-                  markup.markup_value +
-                  "/100)) where product_sku ='" +
-                  productskus[skucount].generated_sku +
-                  "' and material_name = 'makingcharge'";
-                await models.sequelize.query(query);
-                // .then(([results, metadata]) => {});
-
-                gemstonemarkupvalue =
-                  gemstonesellingprice +
-                  gemstonesellingprice * (markup.markup_value / 100);
-                gemstonediscountvalue =
-                  (gemstonemarkupvalue * 100) / (100 - gemstone_discount);
-                var query =
-                  "UPDATE pricing_sku_materials SET markup = (selling_price + (selling_price *" +
-                  markup.markup_value +
-                  "/100)) where product_sku ='" +
-                  productskus[skucount].generated_sku +
-                  "' and component LIKE 'gemstone%'";
-                await models.sequelize.query(query);
-                // .then(([results, metadata]) => {
-                //   // Results will be an empty array and metadata will contain the number of affected rows.
-                // });
-
-                diamondmarkupvalue =
-                  diamondsellingprice +
-                  diamondsellingprice * (markup.markup_value / 100);
-                console.log("log diamond");
-                console.log(productskus[skucount].generated_sku);
-                diamonddiscountvalue =
-                  (diamondmarkupvalue * 100) / (100 - diamond_discount);
-
-                var query =
-                  "UPDATE pricing_sku_materials SET markup = (selling_price + (selling_price *" +
-                  markup.markup_value +
-                  "/100)) where product_sku ='" +
-                  productskus[skucount].generated_sku +
-                  "' and component LIKE 'diamond%'";
-
-                await models.sequelize.query(query);
-                // .then(([results, metadata]) => {
-                //   // Results will be an empty array and metadata will contain the number of affected rows.
-                // });
+              // if (total_costprice == 0) {
+              let alldiscount = 0;
+              if (disscount_obj["All"]) {
+                alldiscount = disscount_obj["All"].value
+                  ? disscount_obj["All"].value
+                  : 0;
               }
+              var query =
+                "UPDATE trans_sku_lists SET markup_price = (selling_price + (selling_price *" +
+                markup.markup_value +
+                "/100)) where generated_sku ='" +
+                productskus[skucount].generated_sku +
+                "'";
+              await models.sequelize
+                .query(query)
+                .then(([results, metadata]) => {});
+              var query1 =
+                "UPDATE trans_sku_lists SET discount_price = (markup_price - (markup_price *" +
+                alldiscount +
+                "/100))  where generated_sku ='" +
+                productskus[skucount].generated_sku +
+                "'";
+              await models.sequelize
+                .query(query1)
+                .then(([results, metadata]) => {});
+              // } else {
+              goldmarkupvalue =
+                goldsellingprice +
+                goldsellingprice * (markup.markup_value / 100);
+              var query =
+                "UPDATE pricing_sku_metals SET markup = (selling_price + (selling_price *" +
+                markup.markup_value +
+                "/100)), discount_price = (selling_price + (selling_price *" +
+                markup.markup_value +
+                "/100)) where product_sku ='" +
+                productskus[skucount].generated_sku +
+                "' and material_name = 'goldprice'";
+              await models.sequelize
+                .query(query)
+                .then(([results, metadata]) => {});
+
+              makingchargemarkupvalue =
+                makingsellingprice +
+                makingsellingprice * (markup.markup_value / 100);
+              makingchargediscountvalue =
+                (makingchargemarkupvalue * 100) / (100 - mkcharge_discount);
+
+              var query =
+                "UPDATE pricing_sku_metals SET markup = (selling_price + (selling_price *" +
+                markup.markup_value +
+                "/100)) where product_sku ='" +
+                productskus[skucount].generated_sku +
+                "' and material_name = 'makingcharge'";
+              await models.sequelize
+                .query(query)
+                .then(([results, metadata]) => {});
+
+              gemstonemarkupvalue =
+                gemstonesellingprice +
+                gemstonesellingprice * (markup.markup_value / 100);
+              gemstonediscountvalue =
+                (gemstonemarkupvalue * 100) / (100 - gemstone_discount);
+              var query =
+                "UPDATE pricing_sku_materials SET markup = (selling_price + (selling_price *" +
+                markup.markup_value +
+                "/100)) where product_sku ='" +
+                productskus[skucount].generated_sku +
+                "' and component LIKE 'gemstone%'";
+              await models.sequelize
+                .query(query)
+                .then(([results, metadata]) => {
+                  // Results will be an empty array and metadata will contain the number of affected rows.
+                });
+
+              diamondmarkupvalue =
+                diamondsellingprice +
+                diamondsellingprice * (markup.markup_value / 100);
+              console.log("log diamond");
+              console.log(productskus[skucount].generated_sku);
+              diamonddiscountvalue =
+                (diamondmarkupvalue * 100) / (100 - diamond_discount);
+
+              var query =
+                "UPDATE pricing_sku_materials SET markup = (selling_price + (selling_price *" +
+                markup.markup_value +
+                "/100)) where product_sku ='" +
+                productskus[skucount].generated_sku +
+                "' and component LIKE 'diamond%'";
+
+              await models.sequelize
+                .query(query)
+                .then(([results, metadata]) => {
+                  // Results will be an empty array and metadata will contain the number of affected rows.
+                });
+              //}
             }
           } else {
             if (markup.material == "Gold") {
@@ -1920,7 +1912,6 @@ exports.priceupdate = (req, res) => {
         makingchargediscountvalue +
         diamonddiscountvalue +
         gemstonediscountvalue;
-
       var golddiscount_percentage = golddiscountvalue / total_sku_discountvalue;
       var makingcharge_percentage =
         makingchargediscountvalue / total_sku_discountvalue;
@@ -2123,10 +2114,7 @@ exports.priceupdate = (req, res) => {
       let skudiscount = materialsum.discount_price + matalsum.discount_price;
       const markuppricetax = (skumarkup * taxval) / 100;
       const discountpricetax = (skudiscount * taxval) / 100;
-      if (total_costprice == 0) {
-        sku_margin = 0;
-      }
-      if (total_sellingprice > 0) {
+      if (total_costprice > 0) {
         let transskuobj = {
           cost_price: total_costprice + costpricetax,
           cost_price_tax: costpricetax,
@@ -2139,7 +2127,7 @@ exports.priceupdate = (req, res) => {
           margin_on_sale_percentage: sku_margin,
           discount_desc: discounttitle,
         };
-        console.log("trans_sku_lists", transskuobj);
+
         // res.send(200,{"material":materialsum,"metal":matalsum});
         models.trans_sku_lists
           .update(transskuobj, {
@@ -2152,7 +2140,7 @@ exports.priceupdate = (req, res) => {
             console.log(reason);
           });
       } else {
-        isskuexist();
+        isskuexist(taxval);
       }
 
       //     });
@@ -2164,7 +2152,7 @@ exports.priceupdate = (req, res) => {
       return new Promise((resolve) => setTimeout(resolve, millis));
     }
 
-    async function isskuexist() {
+    async function isskuexist(taxval) {
       // Sequelize.close()
       skucount = skucount + 1;
       console.log("processsku" + skucount);
@@ -2202,11 +2190,24 @@ exports.priceupdate = (req, res) => {
 
         console.log(JSON.stringify(product_ids));
         completedproducts.push(product_obj.product_id);
-        let price_update_query =
-          "update trans_sku_lists set cost_price = ROUND(cost_price::numeric,2),selling_price = ROUND(selling_price::numeric,2), markup_price = ROUND(markup_price::numeric,2),cost_price_tax = ROUND(cost_price_tax::numeric,2),selling_price_tax = ROUND(selling_price_tax::numeric,2),markup_price_tax = ROUND(markup_price_tax::numeric,2),discount_price_tax = ROUND(discount_price_tax::numeric,2), discount_price = ROUND(discount_price::numeric,2),discount= ROUND(((discount_price-markup_price)/discount_price) * 100)   where product_id ='" +
-          product_obj.product_id +
-          "' and discount_price > 0";
-
+        let price_update_query;
+        if (taxval) {
+          price_update_query = `update trans_sku_lists 
+          set cost_price = ROUND(cost_price::numeric,2),
+          selling_price = ROUND(selling_price::numeric,2),
+          markup_price = ROUND(markup_price::numeric,2),
+          cost_price_tax = ROUND(cost_price_tax::numeric,2),
+          selling_price_tax = ROUND(selling_price_tax::numeric,2),
+          markup_price_tax = ROUND((markup_price*${taxval}/100)::numeric,2),
+          discount_price_tax = ROUND((discount_price*${taxval}/100)::numeric,2), 
+          discount_price = ROUND(discount_price::numeric,2),
+          discount= ROUND(((discount_price-markup_price)/discount_price) * 100)   where product_id ='${product_obj.product_id}' and discount_price >= 0`;
+        } else {
+          price_update_query =
+            "update trans_sku_lists set cost_price = ROUND(cost_price::numeric,2),selling_price = ROUND(selling_price::numeric,2), markup_price = ROUND(markup_price::numeric,2),cost_price_tax = ROUND(cost_price_tax::numeric,2),selling_price_tax = ROUND(selling_price_tax::numeric,2),markup_price_tax = ROUND(markup_price_tax::numeric,2),discount_price_tax = ROUND(discount_price_tax::numeric,2), discount_price = ROUND(discount_price::numeric,2),discount= ROUND(((discount_price-markup_price)/discount_price) * 100)   where product_id ='" +
+            product_obj.product_id +
+            "' and discount_price >= 0";
+        }
         await models.sequelize
           .query(price_update_query)
           .then(([results, metadata]) => {});
