@@ -788,4 +788,5 @@ module.exports = function (app) {
       });
     }
   });
+  app.post("/getcsvdata", productcontroller.csvDownload);
 };
