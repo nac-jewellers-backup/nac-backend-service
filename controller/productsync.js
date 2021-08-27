@@ -365,7 +365,13 @@ let verify_master_hash_tags = ({ product_id, data }) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (data["Hashtags"]) {
-        data.Hashtags.split(",").forEach((item) => {
+        let hashtags;
+        if (data.Hashtags.includes(",")) {
+          hashtags = data.Hashtags.split(",");
+        } else {
+          hashtags = data.Hashtags.split(" ");
+        }
+        hashtags.split(" ").forEach((item) => {
           models.master_hash_tags
             .findOne({
               where: {
@@ -583,13 +589,13 @@ let verify_pricing_sku_materials = ({ product_id, data }) => {
             material_name: element.ITEMNAME,
           };
           if (differentiate_stone(element).includes("diamond")) {
-            insert_object[
-              "component"
-            ] = `diamond_${index+1}_${product_id}_${data.TAGNO}`;
+            insert_object["component"] = `diamond_${index + 1}_${product_id}_${
+              data.TAGNO
+            }`;
           } else {
-            insert_object[
-              "component"
-            ] = `gemstone_${index+1}_${product_id}_${data.TAGNO}`;
+            insert_object["component"] = `gemstone_${index + 1}_${product_id}_${
+              data.TAGNO
+            }`;
           }
           models.pricing_sku_materials
             .findOne({
@@ -1111,7 +1117,7 @@ var price_sync = [
   verify_trans_sku,
   verify_pricing_sku_metals,
   verify_product_materials,
-  verify_pricing_sku_materials
+  verify_pricing_sku_materials,
 ];
 
 let verify_product = ({ product_id, data, type, warehouse }) => {
@@ -1243,6 +1249,106 @@ export let productSync = ({ product, type, warehouse }) => {
       })
       .catch((err) => {
         console.log("Error", err);
+        reject(err);
+      });
+  });
+};
+
+export let syncValidate = ({ product }) => {
+  let {
+    Collections,
+    ProductCategory,
+    Occasion,
+    Hashtags,
+    EarringStyle,
+    RingStyle,
+    BangleStyle,
+    NecklaceStyle,
+    BraceletStyle,
+    PendantStyle,
+  } = product;
+
+  let validate_mapper = {
+    Collections: {
+      model: "master_collections",
+      value: [Collections].filter((item) => item.length > 0),
+    },
+    Category: {
+      model: "master_product_types",
+      value: [ProductCategory].filter((item) => item.length > 0),
+    },
+    Occasion: {
+      model: "master_occasions",
+      value: [Occasion].filter((item) => item.length > 0),
+    },
+    Hashtags: {
+      model: "master_hash_tags",
+      value: Hashtags.includes(",")
+        ? Hashtags.trim().split(",")
+        : Hashtags.trim().split(" "),
+    },
+    Style: {
+      model: "master_styles",
+      value: [
+        EarringStyle,
+        RingStyle,
+        BraceletStyle,
+        NecklaceStyle,
+        BangleStyle,
+        PendantStyle,
+      ].filter((item) => item.length > 0),
+    },
+  };
+
+  return new Promise(async (resolve, reject) => {
+    Promise.all(
+      Object.keys(validate_mapper).map((item) => {
+        return new Promise((resolve, reject) => {
+          let condition = {
+            name: {
+              [models.Sequelize.Op.iLike]: {
+                [models.Sequelize.Op.any]: validate_mapper[item].value,
+              },
+            },
+          };
+          models[validate_mapper[item].model]
+            .findAll({ attributes: ["name"], where: condition })
+            .then((result) => {
+              result = result.map((item) => item.name);
+              if (result.length == validate_mapper[item].value.length) {
+                resolve(null);
+              } else {
+                resolve({
+                  [item]: validate_mapper[item].value.filter(
+                    (item) => !result.includes(item)
+                  ),
+                });
+              }
+            })
+            .catch((err) => {
+              console.error(err);
+              reject(err);
+            });
+        });
+      })
+    )
+      .then((result) => {
+        let final = {};
+        result.forEach((element) => {
+          if (element)
+            Object.keys(element).forEach((key) => {
+              if (element[key].length) {
+                final = {
+                  ...final,
+                  [key]: element[key],
+                };
+              }
+            });
+        });
+        resolve(final);
+      })
+      .catch((err) => {
+        console.error(err);
         reject(err);
       });
   });
