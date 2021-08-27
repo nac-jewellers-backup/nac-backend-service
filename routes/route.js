@@ -817,4 +817,33 @@ module.exports = function (app) {
       });
   });
   app.post("/getcsvdata", productcontroller.csvDownload);
+  app.post("/get_new_tagno", async (req, res) => {
+    const models = require("../models");
+    let result = [];
+    require("axios")
+      .get(req.body.sync_url)
+      .then(async (response) => {
+        console.log("response", response.data.Product_lists.length);
+        let Product_lists = response.data.Product_lists.map(
+          (product) => product.TAGNO
+        );
+        for (let index = 0; index < Product_lists.length; index++) {
+          const element = Product_lists[index];
+          const sku = await models.trans_sku_lists.findOne({
+            attributes: ["id"],
+            where: { generated_sku: element },
+          });
+          if (!sku) {
+            result.push(element);
+          }
+        }
+        res.status(200).send(result);
+      })
+      .catch((err) => {
+        console.log("err", err);
+        res.status(500).send({
+          message: err.response || "Some error occurred while fetching data!",
+        });
+      });
+  });
 };

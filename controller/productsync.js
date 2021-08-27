@@ -1267,25 +1267,29 @@ export let syncValidate = ({ product }) => {
     BraceletStyle,
     PendantStyle,
   } = product;
-
+  Hashtags = Hashtags ? Hashtags : "";
   let validate_mapper = {
     Collections: {
       model: "master_collections",
-      value: [Collections].filter((item) => item.length > 0),
+      value: [Collections].filter((item) => item && item.length > 0),
     },
     Category: {
       model: "master_product_types",
-      value: [ProductCategory].filter((item) => item.length > 0),
+      value: [ProductCategory].filter((item) => item && item.length > 0),
     },
     Occasion: {
       model: "master_occasions",
-      value: [Occasion].filter((item) => item.length > 0),
+      value: [Occasion].filter((item) => item && item.length > 0),
     },
     Hashtags: {
       model: "master_hash_tags",
       value: Hashtags.includes(",")
-        ? Hashtags.trim().split(",")
-        : Hashtags.trim().split(" "),
+        ? Hashtags.trim()
+            .split(",")
+            .filter((item) => item != "")
+        : Hashtags.trim()
+            .split(" ")
+            .filter((item) => item != ""),
     },
     Style: {
       model: "master_styles",
@@ -1296,7 +1300,7 @@ export let syncValidate = ({ product }) => {
         NecklaceStyle,
         BangleStyle,
         PendantStyle,
-      ].filter((item) => item.length > 0),
+      ].filter((item) => item && item.length > 0),
     },
   };
 
@@ -1304,31 +1308,37 @@ export let syncValidate = ({ product }) => {
     Promise.all(
       Object.keys(validate_mapper).map((item) => {
         return new Promise((resolve, reject) => {
-          let condition = {
-            name: {
-              [models.Sequelize.Op.iLike]: {
-                [models.Sequelize.Op.any]: validate_mapper[item].value,
+          if (validate_mapper[item].value.length > 0) {
+            let condition = {
+              name: {
+                [models.Sequelize.Op.iLike]: {
+                  [models.Sequelize.Op.any]: validate_mapper[item].value,
+                },
               },
-            },
-          };
-          models[validate_mapper[item].model]
-            .findAll({ attributes: ["name"], where: condition })
-            .then((result) => {
-              result = result.map((item) => item.name);
-              if (result.length == validate_mapper[item].value.length) {
-                resolve(null);
-              } else {
-                resolve({
-                  [item]: validate_mapper[item].value.filter(
-                    (item) => !result.includes(item)
-                  ),
-                });
-              }
-            })
-            .catch((err) => {
-              console.error(err);
-              reject(err);
+            };
+            models[validate_mapper[item].model]
+              .findAll({ attributes: ["name"], where: condition })
+              .then((result) => {
+                result = result.map((item) => item.name);
+                if (result.length == validate_mapper[item].value.length) {
+                  resolve(null);
+                } else {
+                  resolve({
+                    [item]: validate_mapper[item].value.filter(
+                      (item) => !result.includes(item)
+                    ),
+                  });
+                }
+              })
+              .catch((err) => {
+                console.error(err);
+                reject(err);
+              });
+          } else {
+            resolve({
+              [item]: `Empty data in source, Proceed with caution!`,
             });
+          }
         });
       })
     )
