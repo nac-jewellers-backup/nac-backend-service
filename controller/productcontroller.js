@@ -2224,7 +2224,7 @@ exports.getproducturl = async (req, res) => {
       product_id: productid,
     },
   });
-  let url = `${process.env.baseurl + sku_details.sku_url}`;
+  let url = `https://staging.nacjewellers.net/${sku_details.sku_url}`;
 
   res.status(200).send({ url: url });
 };
