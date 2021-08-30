@@ -620,22 +620,23 @@ module.exports = function (app) {
     var { action_type, new_tagno, warehouse } = req.body;
     let Product_lists = [];
 
-    require("http").get(req.body.sync_url, (response) => {
-      let body = "";
-      response.on("data", (chunk) => {
-        body += chunk;
+    require("axios")
+      .get(req.body.sync_url)
+      .then((response) => {
+        console.log("response", response.data.Product_lists.length);
+        Product_lists = response.data.Product_lists;
+        start_sync();
+      })
+      .catch((err) => {
+        console.log(
+          "err",
+          err.response.data || "Some error occurred while fetching data!"
+        );
+        res.status(500).send({
+          message:
+            err.response.data || "Some error occurred while fetching data!",
+        });
       });
-      response.on("end", () => {
-        try {
-          Product_lists = JSON.parse(body).Product_lists;
-          console.log("===========> Processing", Product_lists.length);
-          start_sync();
-        } catch (error) {
-          console.log(error);
-          res.status(500).send({ error: error.message });
-        }
-      });
-    });
 
     let start_sync = async () => {
       const io = require("../socket");
@@ -788,5 +789,61 @@ module.exports = function (app) {
       });
     }
   });
+
+  app.post("/preSync_validator", (req, res) => {
+    let { new_tagno } = req.body;
+    let result = {};
+    let { syncValidate } = require("../controller/productsync");
+    require("axios")
+      .get(req.body.sync_url)
+      .then(async (response) => {
+        console.log("response", response.data.Product_lists.length);
+        let Product_lists = response.data.Product_lists.filter((item) =>
+          new_tagno.includes(item.TAGNO)
+        );
+        for (let index = 0; index < Product_lists.length; index++) {
+          const element = Product_lists[index];
+          if (new_tagno.includes(element.TAGNO)) {
+            result[element.TAGNO] = await syncValidate({ product: element });
+          }
+        }
+        res.status(200).send(result);
+      })
+      .catch((err) => {
+        console.log("err", err);
+        res.status(500).send({
+          message: err.response || "Some error occurred while fetching data!",
+        });
+      });
+  });
   app.post("/getcsvdata", productcontroller.csvDownload);
+  app.post("/get_new_tagno", async (req, res) => {
+    const models = require("../models");
+    let result = [];
+    require("axios")
+      .get(req.body.sync_url)
+      .then(async (response) => {
+        console.log("response", response.data.Product_lists.length);
+        let Product_lists = response.data.Product_lists.map(
+          (product) => product.TAGNO
+        );
+        for (let index = 0; index < Product_lists.length; index++) {
+          const element = Product_lists[index];
+          const sku = await models.trans_sku_lists.findOne({
+            attributes: ["id"],
+            where: { generated_sku: element },
+          });
+          if (!sku) {
+            result.push(element);
+          }
+        }
+        res.status(200).send(result);
+      })
+      .catch((err) => {
+        console.log("err", err);
+        res.status(500).send({
+          message: err.response || "Some error occurred while fetching data!",
+        });
+      });
+  });
 };

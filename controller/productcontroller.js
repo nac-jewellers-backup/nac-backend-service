@@ -2368,7 +2368,6 @@ exports.csvDownload = (req, res) => {
             diamondSettings
             diamondShape
             diamondType
-            id
             stoneCount
             stoneWeight
           }
@@ -2380,7 +2379,6 @@ exports.csvDownload = (req, res) => {
             gemstoneSize
             gemstoneType
             gemstonsSize
-            id
             stoneCount
             stoneWeight
           }
