@@ -2225,7 +2225,7 @@ exports.getproducturl = async (req, res) => {
     },
   });
   let url = `${process.env.baseurl + sku_details.sku_url}`;
-  console.log(sku_details.sku_url, "=====================================>")
+
   res.status(200).send({ url: url });
 };
 
