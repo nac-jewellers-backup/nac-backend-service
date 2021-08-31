@@ -2224,7 +2224,8 @@ exports.getproducturl = async (req, res) => {
       product_id: productid,
     },
   });
-  let url = `https://www.stylori.com/${sku_details.sku_url}`;
+  let url = `https://staging.nacjewellers.net/${sku_details.sku_url}`;
+
   res.status(200).send({ url: url });
 };
 
@@ -2424,7 +2425,7 @@ exports.csvDownload = (req, res) => {
   const axios = require("axios");
   function loadData({ cursor }) {
     axios
-      .post("http://localhost:8080/graphql", {
+      .post(`${process.env.apiurl}/graphql`, {
         query,
         variables: { after: cursor, type },
       })
