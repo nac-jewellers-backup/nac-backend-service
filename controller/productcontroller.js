@@ -206,7 +206,9 @@ exports.updateproductattr = async (req, res) => {
     let diamonds_color_arr = [];
 
     product_object.product_diamonds.forEach((diamond_obj) => {
-      diamonds_clarity_arr.push(diamond_obj.diamond_clarity + diamond_obj.diamond_colour);
+      diamonds_clarity_arr.push(
+        diamond_obj.diamond_clarity + diamond_obj.diamond_colour
+      );
     });
     let master_diamonds = await models.master_diamond_types.findAll({});
 
@@ -1033,21 +1035,32 @@ exports.productupload = async (req, res) => {
       isdefault = true;
     }
 
-    if (apidata.product_type.shortCode.toLowerCase() === "r" || apidata.product_type.shortCode.toLowerCase() == "b") {
-      const sizedifferent = parseFloat(prodkt.sku_size) - parseFloat(default_metal_size);
+    if (
+      apidata.product_type.shortCode.toLowerCase() === "r" ||
+      apidata.product_type.shortCode.toLowerCase() == "b"
+    ) {
+      const sizedifferent =
+        parseFloat(prodkt.sku_size) - parseFloat(default_metal_size);
       console.log(">sizedifference" + sizedifferent);
       console.log(">sku_weight" + parseFloat(sku_weight));
 
-      sku_weight = parseFloat(sku_weight) + Math.round(sizedifferent * 0.1 * 100) / 100;
+      sku_weight =
+        parseFloat(sku_weight) + Math.round(sizedifferent * 0.1 * 100) / 100;
       sku_weight = Math.round(sku_weight * 100) / 100;
     } else {
       sku_weight = Math.round(parseFloat(sku_weight) * 100) / 100;
     }
     lastsku_id = lastsku_id + 1;
     let sku_urlval = sku_url + lastsku_id;
-    var sku_description = product_obj.product_type + "set in " + prodkt.purity + " " + prodkt.metal_color;
+    var sku_description =
+      product_obj.product_type +
+      "set in " +
+      prodkt.purity +
+      " " +
+      prodkt.metal_color;
     if (materials.length > 0) {
-      sku_description = sku_description + " " + materials[0] + " " + sku_weight + " gm";
+      sku_description =
+        sku_description + " " + materials[0] + " " + sku_weight + " gm";
     }
     if (diamondlist.length > 0) {
       sku_description = sku_description + "with Diamonds (";
@@ -1101,36 +1114,40 @@ exports.productupload = async (req, res) => {
   //     ]
 
   //res.json(product_skus);
-  models.trans_sku_lists.bulkCreate(uploadskus, { individualHooks: true }).then(function (response) {
-    models.trans_sku_descriptions.bulkCreate(uploaddescriptions, { individualHooks: true }).then(function (response) {
-      // Notice: There are no arguments here, as of right now you'll have to...
-      //   request({
-      //     url: 'htts://api.stylori.net/updatepricelist',
-      //     method: "POST",
-      //     headers: {"Content-Type": "application/json"},
-      //     body: JSON.stringify({req_product_id : product_id})
-      // }, function(error, response, body) {
-      //    console.log(body)
-      //    console.log(response)
+  models.trans_sku_lists
+    .bulkCreate(uploadskus, { individualHooks: true })
+    .then(function (response) {
+      models.trans_sku_descriptions
+        .bulkCreate(uploaddescriptions, { individualHooks: true })
+        .then(function (response) {
+          // Notice: There are no arguments here, as of right now you'll have to...
+          //   request({
+          //     url: 'htts://api.stylori.net/updatepricelist',
+          //     method: "POST",
+          //     headers: {"Content-Type": "application/json"},
+          //     body: JSON.stringify({req_product_id : product_id})
+          // }, function(error, response, body) {
+          //    console.log(body)
+          //    console.log(response)
 
-      // });
-      //  const _obj = {
-      //         method: "post",
-      //         url: process.env.apibaseurl+"/esearch_forceindex",
-      //         data: {
-      //             product_id : prod_obj.product_id
-      //         }
-      //     };
+          // });
+          //  const _obj = {
+          //         method: "post",
+          //         url: process.env.apibaseurl+"/esearch_forceindex",
+          //         data: {
+          //             product_id : prod_obj.product_id
+          //         }
+          //     };
 
-      // axios(_obj)
-      // 	  .then(async response => {
-      //       }).catch({
+          // axios(_obj)
+          // 	  .then(async response => {
+          //       }).catch({
 
-      //       })
+          //       })
 
-      res.json(uploadskus);
+          res.json(uploadskus);
+        });
     });
-  });
 
   //  res.send(200, { submitted: true })
 };
@@ -1169,14 +1186,27 @@ exports.updateproductimage = async (req, res) => {
   res.send(200, { message: "Success" });
 };
 exports.getproductvarient = async (req, res) => {
-  const { productPuritiesByProductId, productDiamondTypes, productSize, productId, productMetalcoloursByProductId } = req.body;
+  const {
+    productPuritiesByProductId,
+    productDiamondTypes,
+    productSize,
+    productId,
+    productMetalcoloursByProductId,
+  } = req.body;
   var product_skus = [];
   var prev_skus = [];
   var skus = product_skus;
   var skuprefix = productId + "-";
   product_skus = [];
   var product_object = await models.product_lists.findOne({
-    attributes: ["product_id", "size_varient", "product_type", "product_category", "product_name", "vendor_code"],
+    attributes: [
+      "product_id",
+      "size_varient",
+      "product_type",
+      "product_category",
+      "product_name",
+      "vendor_code",
+    ],
     include: [
       {
         model: models.trans_sku_lists,
@@ -1584,7 +1614,14 @@ exports.editproductgemstone = async (req, res) => {
   }
 };
 exports.updateskuinfo = async (req, res) => {
-  const { generatedSku, vendorDeliveryTime, discount, isdefault, isActive, isReadyToShip } = req.body;
+  const {
+    generatedSku,
+    vendorDeliveryTime,
+    discount,
+    isdefault,
+    isActive,
+    isReadyToShip,
+  } = req.body;
   let response_obj1 = await models.trans_sku_lists.update(
     // Values to update
     {
@@ -2069,8 +2106,17 @@ exports.disableproduct = async (req, res) => {
 };
 
 exports.getproductlist = async (req, res) => {
-  const { size, offset, productcategory, producttype, searchtext, order, orderby } = req.body;
+  const {
+    size,
+    offset,
+    productcategory,
+    producttype,
+    searchtext,
+    order,
+    orderby,
+  } = req.body;
   let whereclause = {};
+  let sku_whereclause = {};
   var sort = "DESC";
   var orderbycolumn = "updatedAt";
   if (orderby) {
@@ -2084,19 +2130,24 @@ exports.getproductlist = async (req, res) => {
   //     sort = 'ASC'
   //    }
   if (searchtext) {
-    whereclause = {
-      [Op.or]: [
-        {
-          product_id: {
-            [Op.iLike]: "%" + searchtext + "%",
-          },
-        },
-        {
-          product_name: {
-            [Op.iLike]: "%" + searchtext + "%",
-          },
-        },
-      ],
+    // whereclause = {
+    //   [Op.or]: [
+    //     {
+    //       product_id: {
+    //         [Op.iLike]: "%" + searchtext + "%",
+    //       },
+    //     },
+    //     {
+    //       product_name: {
+    //         [Op.iLike]: "%" + searchtext + "%",
+    //       },
+    //     },
+    //   ],
+    // };
+    sku_whereclause = {
+      generated_sku: {
+        [Op.iLike]: "%" + searchtext + "%",
+      },
     };
   }
   if (productcategory) {
@@ -2111,6 +2162,7 @@ exports.getproductlist = async (req, res) => {
     include: {
       model: models.trans_sku_lists,
       attributes: ["sku_id", "generated_sku"],
+      where: sku_whereclause,
     },
     where: whereclause,
     offset: offset,
@@ -2230,7 +2282,15 @@ exports.getproducturl = async (req, res) => {
 };
 
 exports.productdetails = async (req, res) => {
-  const { size, offset, productcategory, producttype, searchtext, order, orderby } = req.body;
+  const {
+    size,
+    offset,
+    productcategory,
+    producttype,
+    searchtext,
+    order,
+    orderby,
+  } = req.body;
   let whereclause = {
     isactive: true,
   };
@@ -2276,11 +2336,13 @@ exports.productdetails = async (req, res) => {
     });
     var res_json_obj = {
       id: prod.trans_sku_lists[0].generated_sku,
-      description: prod.trans_sku_lists[0].trans_sku_description.sku_description,
+      description:
+        prod.trans_sku_lists[0].trans_sku_description.sku_description,
       google_product_category: prod.product_category,
       product_type: prod.product_type,
       link: prod.trans_sku_lists[0].sku_url,
-      image_link: prod.product_images.length > 0 ? prod.product_images[0].image_url : "",
+      image_link:
+        prod.product_images.length > 0 ? prod.product_images[0].image_url : "",
       condition: "new",
       availability: "In Stock",
       price: "INR" + prod.trans_sku_lists[0].markup_price,
@@ -2474,13 +2536,23 @@ exports.csvDownload = (req, res) => {
                     is_default: sku.isdefault,
                     diamond_type: sku.diamondType,
                     metal_color: sku.metalColor,
-                    materials: item.materials.nodes.map((i) => i.name).join(","),
-                    collections: item.collections.nodes.map((i) => i.name).join(","),
-                    occasions: item.occasions.nodes.map((i) => i.name).join(","),
+                    materials: item.materials.nodes
+                      .map((i) => i.name)
+                      .join(","),
+                    collections: item.collections.nodes
+                      .map((i) => i.name)
+                      .join(","),
+                    occasions: item.occasions.nodes
+                      .map((i) => i.name)
+                      .join(","),
                     themes: item.themes.nodes.map((i) => i.name).join(","),
                     styles: item.styles.nodes.map((i) => i.name).join(","),
-                    stone_color: item.stoneColor.nodes.map((i) => i.color).join(","),
-                    stone_count: item.stoneCount.nodes.map((i) => i.count).join(","),
+                    stone_color: item.stoneColor.nodes
+                      .map((i) => i.color)
+                      .join(","),
+                    stone_count: item.stoneCount.nodes
+                      .map((i) => i.count)
+                      .join(","),
                     diamonds,
                     gemstones,
                     minimum_order_quantity: sku.minOrderQty,
