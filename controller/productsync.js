@@ -1336,7 +1336,7 @@ export let syncValidate = ({ product }) => {
               });
           } else {
             resolve({
-              [item]: `Empty data in source, Proceed with caution!`,
+              [item]: `Empty data in source, Please check!`,
             });
           }
         });
