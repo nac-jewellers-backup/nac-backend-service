@@ -2499,21 +2499,26 @@ exports.getaliasproductlist = async (req, res) => {
   console.log(keys);
   for (let i = 0; i < keys.length; i++) {
     let element = keys[i];
-    let attribute_masters = await models.Attribute_master.findAll({
-      attributes: ["short_code"],
-      where: {
-        name: {
-          [Op.iLike]: { [Op.any]: req.body[element].map((i) => i.name) },
+    let condition = {};
+    if (req.body[element].length > 0) {
+      condition["name"] = {
+        [Op.iLike]: { [Op.any]: req.body[element].map((i) => i.name) },
+      };
+
+      let attribute_masters = await models.Attribute_master.findAll({
+        attributes: ["short_code"],
+        where: {
+          ...condition,
+          type: {
+            [models.Sequelize.Op.iLike]: type_mapper[element],
+          },
         },
-        type: {
-          [models.Sequelize.Op.iLike]: type_mapper[element],
-        },
-      },
-      raw: true,
-    });
-    attribute_masters.forEach((item) => {
-      attrs.push(item.short_code);
-    });
+        raw: true,
+      });
+      attribute_masters.forEach((item) => {
+        attrs.push(item.short_code);
+      });
+    }
   }
 
   // keys.forEach((key) => {
