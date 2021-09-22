@@ -342,7 +342,7 @@ exports.filteroptions = async (req, res) => {
   }
   if (producttype) {
     whereclause["product_type"] = {
-      [Op.eq]: producttype,
+      [Op.iLike]: producttype,
     };
   }
   if (availability) {
