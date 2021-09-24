@@ -846,4 +846,5 @@ module.exports = function (app) {
         });
       });
   });
+  app.post("/updatecart_latestprice", cartcontroller.updatecart_latestprice);
 };
