@@ -696,6 +696,38 @@ let verify_pricing_sku_metals = ({ product_id, data }) => {
             reject(err);
           });
       }
+      if (data["WASTAGE"]) {
+        models.pricing_sku_metals
+          .findOne({
+            attributes: ["id"],
+            where: {
+              product_sku: data.TAGNO,
+              material_name: "wastage",
+            },
+          })
+          .then(async (result) => {
+            if (result) {
+              await models.pricing_sku_metals.update(
+                {
+                  product_sku: data.TAGNO,
+                  material_name: "wastage",
+                  selling_price: data["WASTAGE"],
+                },
+                { where: { id: result.id } }
+              );
+            } else {
+              await models.pricing_sku_metals.create({
+                product_sku: data.TAGNO,
+                material_name: "wastage",
+                selling_price: data["WASTAGE"],
+              });
+            }
+          })
+          .catch((err) => {
+            console.log("Error", err);
+            reject(err);
+          });
+      }
       resolve("Completed pricing_sku_metals sync");
     } catch (error) {
       reject(error);
