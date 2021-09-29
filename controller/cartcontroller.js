@@ -613,6 +613,7 @@ exports.sendtoairpay = async (req, res) => {
   var password = process.env.airpay_password;
   var secret = process.env.airpay_secret;
   var now = new Date();
+  cartval = Math.round(cartval, 2);
   let alldata =
     buyerEmail +
     buyerFirstName +
