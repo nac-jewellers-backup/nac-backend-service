@@ -350,7 +350,9 @@ exports.viewskupricesummary = async (req, res) => {
                 let diamond_name = "Diamond " + diamondcount;
 
                 materialobj["material_name"] = diamond_name;
-                materialobj["cost_price"] = materialobj.cost_price.toFixed(2);
+                materialobj["cost_price"] = materialobj.cost_price
+                  ? materialobj.cost_price.toFixed(2)
+                  : 0;
                 materialobj["selling_price"] =
                   materialobj.selling_price.toFixed(2);
               }
