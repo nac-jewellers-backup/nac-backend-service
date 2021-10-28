@@ -1148,7 +1148,6 @@ var all_process = [
 var price_sync = [
   verify_trans_sku,
   verify_pricing_sku_metals,
-  verify_product_materials,
   verify_pricing_sku_materials,
 ];
 

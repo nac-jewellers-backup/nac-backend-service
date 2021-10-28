@@ -672,15 +672,6 @@ module.exports = function (app) {
                 warehouse,
               });
             }
-            // await Promise.all(
-            //   temparray.map(async (item) => {
-            //     await require("../controller/productsync").productSync({
-            //       product: item,
-            //       type: action_type,
-            //       warehouse,
-            //     });
-            //   })
-            // );
             sendStatus("sync_data", {
               completed: i + chunk < totalCount ? (i + chunk) / totalCount : 1,
             });
@@ -847,4 +838,17 @@ module.exports = function (app) {
       });
   });
   app.post("/updatecart_latestprice", cartcontroller.updatecart_latestprice);
+  app.post("/price_run_latest", async (req, res) => {
+    let priceUpdate =
+      require("../controller/pricingcontroller_nac").priceUpdate;
+    let { product_sku } = req.body;
+    if (Array.isArray(product_sku)) {
+      for (let i = 0; i < product_sku.length; i++) {
+        await priceUpdate({ product_sku: product_sku[i] });
+      }
+      res.status(200).send({ message: "Successfully Completed!" });
+    } else {
+      res.status(200).send(await priceUpdate({ product_sku }));
+    }
+  });
 };
