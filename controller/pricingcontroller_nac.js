@@ -51,6 +51,7 @@ exports.priceUpdate = ({ product_sku }) => {
 
         let markup = await models.pricing_markup.findOne({
           where: {
+            is_active: true,
             selling_price_min: {
               [models.Sequelize.Op.lte]:
                 product.trans_sku_lists[0].selling_price,
