@@ -535,23 +535,17 @@ exports.generatepaymenturl = async (req, res) => {
   // });
 };
 exports.sendtoairpay = async (req, res) => {
-  let {
-    buyerPhone,
-    buyerEmail,
-    buyerFirstName,
-    buyerLastName,
-    buyerAddress,
-    buyerCity,
-    buyerState,
-    buyerCountry,
-    buyerPinCode,
-    orderid,
-    amount,
-    customvar,
-    subtype,
-  } = req.body;
+  const { buyerPhone, buyerPinCode, orderid, amount, customvar, subtype } =
+    req.body;
   var paymentid = 0;
   var cartval = 1.0;
+  var buyerEmail = "";
+  var buyerFirstName = "";
+  var buyerLastName = "";
+  var buyerAddress = "";
+  var buyerCity = "";
+  var buyerState = "";
+  var buyerCountry = "";
   if (orderid) {
     let cartvalueobj = await models.orders.findOne({
       include: [
@@ -619,6 +613,7 @@ exports.sendtoairpay = async (req, res) => {
   var password = process.env.airpay_password;
   var secret = process.env.airpay_secret;
   var now = new Date();
+  cartval = Math.round(cartval, 2);
   let alldata =
     buyerEmail +
     buyerFirstName +
@@ -644,8 +639,8 @@ exports.sendtoairpay = async (req, res) => {
     buyerCity,
     buyerState,
     buyerCountry,
-    orderid,
-    buyerPhone,
+    cartval,
+    paymentid,
     privatekey: privatekey,
     mercid: mid,
     currency: 356,

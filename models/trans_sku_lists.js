@@ -101,6 +101,10 @@ module.exports = (sequelize, DataTypes) => {
       product_record_date: {
         type: DataTypes.DATE,
       },
+      show_price_breakup: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
     },
     {
       timestamps: true,
