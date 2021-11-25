@@ -610,3 +610,50 @@ exports.filteroptions = async (req, res) => {
 
   res.send(200, { data: { totalCount: count, allProductLists: products_all } });
 };
+
+exports.randomProducts = ({ sku_id }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!sku_id) {
+        reject({ error: true, message: "sku_id is mandatory!" });
+      }
+      let randomSkus = await models.sequelize.query(
+        `select p.product_type,array_agg(t.sku_id ) as skus from product_lists p, trans_sku_lists t
+      where random() < 0.03 and p.product_id = t.product_id and
+      t.is_active is true and 
+      p.product_type is not null and t.sku_id not in ('${sku_id}')
+      group by p.product_type`,
+        { type: sequelize.QueryTypes.SELECT }
+      );
+
+      let result = await models.trans_sku_lists.findAll({
+        where: {
+          sku_id: {
+            [Op.in]: randomSkus.map((i) => {
+              return i.skus[0];
+            }),
+          },
+        },
+        attributes: ["sku_id", "sku_url", "product_id"],
+        include: [
+          {
+            model: models.product_lists,
+            attributes: ["product_name", "product_type"],
+            include: {
+              model: models.product_images,
+              attributes: ["image_url", "image_position"],
+            },
+          },
+          {
+            model: models.trans_sku_descriptions,
+            attributes: ["sku_description"],
+          },
+        ],
+      });
+
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};

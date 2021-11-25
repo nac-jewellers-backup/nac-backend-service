@@ -851,4 +851,16 @@ module.exports = function (app) {
       res.status(200).send(await priceUpdate({ product_sku }));
     }
   });
+  app.post("/you_may_like", async (req, res) => {
+    try {
+      res
+        .status(200)
+        .send(await productFetchController.randomProducts(req.body));
+    } catch (error) {
+      console.log("err", error);
+      res.status(500).send({
+        message: error.message || "Some error occurred while fetching data!",
+      });
+    }
+  });
 };
