@@ -1233,6 +1233,7 @@ let verify_product = ({ product_id, data, type, warehouse }) => {
             : null,
           prod_description: data.ProductDescription || null,
           product_type: data.ProductCategory,
+          product_category: "Jewellery",
           colour_varient: colour_varient,
           is_active: false,
         })

@@ -369,6 +369,12 @@ exports.paymentsuccess = async (req, res) => {
   let new_cart = await models.payment_details.create(paymentcontent, {
     returning: true,
   });
+  //update inventory post successfull payment
+  let updateInventory = await models.sequelize
+    .query(`update inventories i set number_of_items = (number_of_items - sub.qty) from 
+  (select product_sku,qty from shopping_cart_items where shopping_cart_id in (
+    select cart_id from public.orders where id = '${orderobj.id}'
+  )) as sub where i.generated_sku = sub.product_sku and i.number_of_items > 0`);
   sendorderconformationemail(req.body.oid);
   let redirectionurl = process.env.baseurl + "/paymentsuccess/" + req.body.oid;
 
@@ -689,31 +695,54 @@ exports.removecartitem = async (req, res) => {
     },
   });
 
-  let gross_amount = await models.shopping_cart_item.findOne({
-    attributes: [[squelize.literal("SUM(price)"), "price"]],
+  let totalCartItems = await models.shopping_cart_item.count({
     where: {
       shopping_cart_id: cart_id,
     },
   });
-  console.log("cartline length");
 
-  await models.shopping_cart
-    .update(
-      {
-        gross_amount: gross_amount.price,
-        discounted_price: gross_amount.price,
-        discount: 0,
+  if (totalCartItems) {
+    let gross_amount = await models.shopping_cart_item.findOne({
+      attributes: [[squelize.literal("SUM(price)"), "price"]],
+      where: {
+        shopping_cart_id: cart_id,
       },
-      {
-        where: { id: cart_id },
-      }
-    )
-    .then((price_splitup_model) => {
-      res.send(200, { message: "You removed this product successfully" });
-    })
-    .catch((reason) => {
-      console.log(reason);
     });
+    console.log("cartline length");
+
+    await models.shopping_cart
+      .update(
+        {
+          gross_amount: gross_amount.price,
+          discounted_price: gross_amount.price,
+          discount: 0,
+        },
+        {
+          where: { id: cart_id },
+        }
+      )
+      .then((price_splitup_model) => {
+        res.send(200, { message: "You removed this product successfully" });
+      })
+      .catch((reason) => {
+        console.log(reason);
+        res.status(500).send(reason);
+      });
+  } else {
+    models.shopping_cart
+      .destroy({
+        where: {
+          id: cart_id,
+        },
+      })
+      .then((price_splitup_model) => {
+        res.send(200, { message: "You removed this product successfully" });
+      })
+      .catch((reason) => {
+        console.log(reason);
+        res.status(500).send(reason);
+      });
+  }
 };
 exports.updatecartitem = async (req, res) => {
   let { cart_id, product } = req.body;
@@ -759,84 +788,104 @@ exports.updatecartitem = async (req, res) => {
     });
 };
 exports.addtocart = async (req, res) => {
-  let { user_id, products, cart_id } = req.body;
-  console.log(JSON.stringify(req.body));
-  if (!cart_id) {
-    const cartobj = {
-      id: uuidv1(),
-      userprofile_id: user_id,
-      status: "pending",
-    };
-    let new_cart = await models.shopping_cart.create(cartobj, {
-      returning: true,
-    });
-    cart_id = new_cart.id;
-  }
-  let product_in_cart = await models.shopping_cart_item.findAll({
-    where: {
-      shopping_cart_id: cart_id,
-    },
-  });
-  var cartproducts = [];
-  product_in_cart.forEach((prod_element) => {
-    cartproducts.push(prod_element.product_sku);
-  });
-  let cartlines = [];
-  products.forEach((element) => {
-    console.log("productscart");
-    console.log(product_in_cart.length);
-
-    if (cartproducts.indexOf(element.sku_id) == -1) {
-      console.log("updated");
-      if (element.sku_id) {
-        let prod_count = parseInt(element.qty);
-        const lineobj = {
+  let createNewCart = () => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cartobj = {
           id: uuidv1(),
-          shopping_cart_id: cart_id,
-          product_sku: element.sku_id,
-          qty: element.qty,
-          price: prod_count * element.price,
+          userprofile_id: user_id,
+          status: "pending",
         };
-        console.log(JSON.stringify(lineobj));
-
-        cartlines.push(lineobj);
+        let new_cart = await models.shopping_cart.create(cartobj, {
+          returning: true,
+        });
+        resolve(new_cart.id);
+      } catch (err) {
+        reject(err);
       }
+    });
+  };
+
+  let { user_id, products, cart_id } = req.body;
+
+  try {
+    if (cart_id) {
+      let cartStatus = await models.shopping_cart.findByPk(cart_id);
+      if (!cartStatus) {
+        return res.status(500).send({ message: "Something went wrong!" });
+      }
+    } else {
+      cart_id = await createNewCart();
     }
-    console.log("cartline length" + cartlines.length);
-  });
 
-  console.log("cartline length");
-  if (cartlines.length > 0) {
-    await models.shopping_cart_item.bulkCreate(cartlines, {
-      individualHooks: true,
-    });
-  }
-
-  console.log("cartline length212");
-  let gross_amount = await models.shopping_cart_item.findOne({
-    attributes: [[squelize.literal("SUM(price)"), "price"]],
-    where: {
-      shopping_cart_id: cart_id,
-    },
-  });
-  console.log("cartline length");
-
-  await models.shopping_cart
-    .update(
-      {
-        gross_amount: gross_amount.price,
-        discounted_price: gross_amount.price,
+    let product_in_cart = await models.shopping_cart_item.findAll({
+      where: {
+        shopping_cart_id: cart_id,
       },
-      {
-        where: { id: cart_id },
-      }
-    )
-    .then((price_splitup_model) => {
-      res.send(200, { cart_id });
-    })
-    .catch((reason) => {
-      console.log(reason);
     });
+    var cartproducts = [];
+    product_in_cart.forEach((prod_element) => {
+      cartproducts.push(prod_element.product_sku);
+    });
+    let cartlines = [];
+    products.forEach((element) => {
+      console.log("productscart");
+      console.log(product_in_cart.length);
+
+      if (cartproducts.indexOf(element.sku_id) == -1) {
+        console.log("updated");
+        if (element.sku_id) {
+          let prod_count = parseInt(element.qty);
+          const lineobj = {
+            id: uuidv1(),
+            shopping_cart_id: cart_id,
+            product_sku: element.sku_id,
+            qty: element.qty,
+            price: prod_count * element.price,
+          };
+          console.log(JSON.stringify(lineobj));
+
+          cartlines.push(lineobj);
+        }
+      }
+      console.log("cartline length" + cartlines.length);
+    });
+
+    console.log("cartline length");
+    if (cartlines.length > 0) {
+      await models.shopping_cart_item.bulkCreate(cartlines, {
+        individualHooks: true,
+      });
+    }
+
+    console.log("cartline length212");
+    let gross_amount = await models.shopping_cart_item.findOne({
+      attributes: [[squelize.literal("SUM(price)"), "price"]],
+      where: {
+        shopping_cart_id: cart_id,
+      },
+    });
+    console.log("cartline length");
+
+    await models.shopping_cart
+      .update(
+        {
+          gross_amount: gross_amount.price,
+          discounted_price: gross_amount.price,
+        },
+        {
+          where: { id: cart_id },
+        }
+      )
+      .then((price_splitup_model) => {
+        res.send(200, { cart_id });
+      })
+      .catch((reason) => {
+        console.log(reason);
+      });
+  } catch (error) {
+    console.log(error);
+  }
 };
 exports.uploadimage = (req, res) => {
   console.log(req.body);
