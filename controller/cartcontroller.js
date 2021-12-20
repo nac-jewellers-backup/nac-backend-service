@@ -1638,7 +1638,7 @@ exports.updatecart_latestprice = async (req, res) => {
       order: [["createdAt", "desc"]],
     });
     if (!cart) {
-      res.status(403).send({ message: "No Cart Found!" });
+      res.status(200).send({ message: "No Cart Found!" });
       return;
     }
 
