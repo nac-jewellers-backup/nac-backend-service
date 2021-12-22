@@ -1882,6 +1882,7 @@ exports.editproduct = async (req, res) => {
     });
 
     let collection_names = [];
+    let reactive_collections = [];
     collections.forEach((element) => {
       if (prev_collections.indexOf(element.collectionName) === -1) {
         var goldobj_val = {
@@ -1893,9 +1894,25 @@ exports.editproduct = async (req, res) => {
           updatedAt: new Date(),
         };
         collection_names.push(goldobj_val);
+      } else {
+        reactive_collections.push(element.collectionName);
       }
     });
-
+    await models.product_collections.update(
+      // Values to update
+      {
+        is_active: true,
+      },
+      {
+        // Clause
+        where: {
+          collection_name: {
+            [Op.in]: reactive_collections,
+          },
+          product_id: productId,
+        },
+      }
+    );
     await models.product_collections.bulkCreate(collection_names, {
       individualHooks: true,
     });
@@ -2301,7 +2318,7 @@ exports.productdetails = async (req, res) => {
     include: [
       {
         model: models.trans_sku_lists,
-        attributes: ["purity", "diamond_type", "generated_sku", "sku_url"],
+        // attributes: ["purity", "diamond_type", "generated_sku", "sku_url"],
         include: [
           {
             model: models.trans_sku_descriptions,
@@ -2345,10 +2362,10 @@ exports.productdetails = async (req, res) => {
         prod.product_images.length > 0 ? prod.product_images[0].image_url : "",
       condition: "new",
       availability: "In Stock",
-      price: "INR" + prod.trans_sku_lists[0].markup_price,
-      sale_price: "INR" + prod.trans_sku_lists[0].selling_price,
-      sale_price_effective_date: "2019-06-30T0:00",
-      brand: "Stylori",
+      price: "INR " + prod.trans_sku_lists[0].markup_price,
+      sale_price: "INR " + prod.trans_sku_lists[0].selling_price,
+      sale_price_effective_date: prod.trans_sku_lists[0].updatedAt,
+      brand: "NAC JEWELLERY",
       color: prod.trans_sku_lists[0].metal_color,
       metal: materials,
     };
