@@ -371,7 +371,7 @@ let verify_master_hash_tags = ({ product_id, data }) => {
         } else {
           hashtags = data.Hashtags.split(" ");
         }
-        hashtags.split(" ").forEach((item) => {
+        hashtags.forEach((item) => {
           models.master_hash_tags
             .findOne({
               where: {
@@ -1237,6 +1237,38 @@ let verify_product = ({ product_id, data, type, warehouse }) => {
           colour_varient: colour_varient,
           is_active: false,
         })
+        .then(async () => {
+          for (let index = 0; index < all_process.length; index++) {
+            const item = all_process[index];
+            await item({ product_id, data, warehouse });
+          }
+          console.log(`Completed ${data.TAGNO}`);
+          resolve(`Completed ${data.TAGNO}`);
+        })
+        .catch((err) => {
+          console.log("Error", err);
+          reject(err);
+        });
+    } else if (product_id && type == "new_uploads") {
+      models.product_lists
+        .update(
+          {
+            product_id,
+            product_name: data.ProductName || null,
+            gender: data.Gender
+              ? data.Gender.split(",")
+                  .map((item) => {
+                    return item.capitalize();
+                  })
+                  .join(",")
+              : null,
+            prod_description: data.ProductDescription || null,
+            product_type: data.ProductCategory,
+            product_category: "Jewellery",
+            colour_varient: colour_varient,
+          },
+          { where: { product_id } }
+        )
         .then(async () => {
           for (let index = 0; index < all_process.length; index++) {
             const item = all_process[index];
