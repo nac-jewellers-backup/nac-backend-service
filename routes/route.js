@@ -868,7 +868,7 @@ module.exports = function (app) {
     try {
       res.status(200).send(await send_sms(req.body));
     } catch (error) {
-      res.status(500).send(err);
+      res.status(500).send(error);
     }
   });
 };
