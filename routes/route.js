@@ -13,6 +13,7 @@ let {
   initIndex,
 } = require("../controller/elasticServices");
 const { fstat } = require("fs");
+const { send_sms } = require("../controller/notify/user_notify");
 const turl = process.env.apibaseurl + "/productesearch";
 const upload = require("../middlewares/multer").single("file");
 
@@ -861,6 +862,13 @@ module.exports = function (app) {
       res.status(500).send({
         message: error.message || "Some error occurred while fetching data!",
       });
+    }
+  });
+  app.post("/send_sms", async (req, res) => {
+    try {
+      res.status(200).send(await send_sms(req.body));
+    } catch (error) {
+      res.status(500).send(err);
     }
   });
 };
