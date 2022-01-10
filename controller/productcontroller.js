@@ -1830,7 +1830,9 @@ exports.editproduct = async (req, res) => {
         reactive_themes.push(element.themeName);
       }
     });
-
+    await models.product_themes.bulkCreate(theme_names, {
+      individualHooks: true,
+    });
     await models.product_themes.update(
       {
         is_active: true,
