@@ -2377,7 +2377,7 @@ exports.productdetails = async (req, res) => {
 };
 
 exports.csvDownload = (req, res) => {
-  let { type } = req.body;
+  let { type, include } = req.body;
   if (!type || type == "" || type.includes("%")) {
     return res.status(400).send({ message: "type is mandatory!" });
   }
@@ -2385,7 +2385,7 @@ exports.csvDownload = (req, res) => {
     product: allProductLists(
       first: 10000
       after: $after
-      condition: { isactive: true }
+      ${!include ? `condition: { isactive: true }` : ``}
       filter: { productType: { likeInsensitive: $type } }
       orderBy: CREATED_AT_DESC
     ) {
