@@ -1129,7 +1129,7 @@ let verify_trans_sku = ({ product_id, data, type }) => {
   });
 };
 
-var all_process = [
+export let all_process = [
   verify_trans_sku,
   verify_trans_sku_description,
   verify_product_stones,

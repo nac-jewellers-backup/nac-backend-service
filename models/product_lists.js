@@ -126,6 +126,10 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "product_id",
       targetKey: "product_id",
     });
+    models.product_lists.hasMany(models.product_hash_tags, {
+      foreignKey: "product_id",
+      targetKey: "product_id",
+    });
     models.product_lists.hasMany(models.product_by_design, {
       foreignKey: "product_id",
       targetKey: "product_id",

@@ -9,6 +9,10 @@ module.exports = {
       },
       hash_tag: {
         type: Sequelize.STRING,
+        references: {
+          model: "master_hash_tags", // name of Source model
+          key: "name",
+        },
       },
       is_active: {
         type: Sequelize.BOOLEAN,

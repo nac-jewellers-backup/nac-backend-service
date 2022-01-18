@@ -1684,6 +1684,7 @@ exports.updateskupriceinfo = async (req, res) => {
 exports.editproduct = async (req, res) => {
   const {
     productId,
+    productCategory,
     productName,
     themes,
     styles,
@@ -1691,6 +1692,7 @@ exports.editproduct = async (req, res) => {
     collections,
     stonecount,
     stonecolour,
+    hashtags,
     gender,
     length,
     height,
@@ -1704,6 +1706,54 @@ exports.editproduct = async (req, res) => {
     productSize,
   } = req.body;
   try {
+    let product_attributes = {
+      product_themes: {
+        requestBody: themes,
+        requestKey: "themeName",
+        attributes: "theme_name",
+      },
+      product_styles: {
+        requestBody: styles,
+        requestKey: "styleName",
+        attributes: "style_name",
+      },
+      product_occassions: {
+        requestBody: occassions,
+        requestKey: "occassionName",
+        attributes: "occassion_name",
+      },
+      product_collections: {
+        requestBody: collections,
+        requestKey: "collectionName",
+        attributes: "collection_name",
+      },
+      product_stonecount: {
+        requestBody: stonecount,
+        requestKey: "stonecount",
+        attributes: "stonecount",
+      },
+      product_stonecolor: {
+        requestBody: stonecolour,
+        requestKey: "stonecolor",
+        attributes: "stonecolor",
+      },
+      product_genders: {
+        requestBody: gender,
+        requestKey: "label",
+        attributes: "gender_name",
+      },
+      product_metalcolours: {
+        requestBody: productMetalColor,
+        requestKey: "productColor",
+        attributes: "product_color",
+      },
+      product_hash_tags: {
+        requestBody: hashtags,
+        requestKey: "name",
+        attributes: "hash_tag",
+      },
+    };
+
     var product_object = await models.product_lists.findOne({
       include: [
         {
@@ -1739,317 +1789,59 @@ exports.editproduct = async (req, res) => {
           model: models.product_metalcolours,
           attributes: ["product_color"],
         },
+        {
+          model: models.product_hash_tags,
+          attributes: ["hash_tag"],
+        },
       ],
       where: {
         product_id: productId,
       },
     });
-    let product_themes = product_object.product_themes;
-    let product_styles = product_object.product_styles;
-    let product_occassions = product_object.product_occassions;
-    let product_collections = product_object.product_collections;
-    let product_stones = product_object.product_stonecounts;
-    let product_stonecolor = product_object.product_stonecolors;
-    let product_gender = product_object.product_genders;
-    let product_metalcolours = product_object.product_metalcolours;
 
-    await models.product_collections.update(
-      // Values to update
-      {
-        is_active: false,
-      },
-      {
-        // Clause
-        where: {
-          product_id: productId,
-        },
-      }
+    product_object = JSON.parse(JSON.stringify(product_object));
+
+    await Promise.all(
+      Object.keys(product_attributes).map(async (item) => {
+        let { attributes, requestBody, requestKey } = product_attributes[item];
+        await models[item.includes("gender") ? "product_gender" : item].update(
+          { is_active: false },
+          {
+            where: {
+              product_id: productId,
+              [attributes]: {
+                [Op.notIn]: requestBody.map((i) => i[requestKey]),
+              },
+            },
+          }
+        );
+        let tempArray = [];
+        requestBody.forEach((element) => {
+          if (
+            product_object[item]
+              .map((i) => i[attributes])
+              .indexOf(element[requestKey]) === -1
+          ) {
+            var goldobj_val = {
+              id: uuidv1(),
+              product_id: productId,
+              [attributes]: element[requestKey],
+              is_active: true,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            tempArray.push(goldobj_val);
+          }
+        });
+        if (tempArray.length) {
+          await models[
+            item.includes("gender") ? "product_gender" : item
+          ].bulkCreate(tempArray, {
+            individualHooks: true,
+          });
+        }
+      })
     );
-    await models.product_occassions.update(
-      // Values to update
-      {
-        is_active: false,
-      },
-      {
-        // Clause
-        where: {
-          product_id: productId,
-        },
-      }
-    );
-
-    let prev_themes = [];
-    let prev_styles = [];
-    let prev_occassions = [];
-    let prev_collections = [];
-    let prev_stones = [];
-    let prev_stonecolors = [];
-    let prev_genders = [];
-    let prev_metalcolors = [];
-    product_themes.forEach((element) => {
-      prev_themes.push(element.theme_name);
-    });
-    product_occassions.forEach((element) => {
-      prev_occassions.push(element.occassion_name);
-    });
-    product_styles.forEach((element) => {
-      prev_styles.push(element.style_name);
-    });
-
-    product_collections.forEach((element) => {
-      prev_collections.push(element.collection_name);
-    });
-
-    product_stones.forEach((element) => {
-      prev_stones.push(element.stonecount);
-    });
-    product_stonecolor.forEach((element) => {
-      prev_stonecolors.push(element.stonecolor);
-    });
-
-    product_gender.forEach((element) => {
-      prev_genders.push(element.gender_name);
-    });
-    product_metalcolours.forEach((element) => {
-      prev_metalcolors.push(element.product_color);
-    });
-    let theme_names = [];
-    let reactive_themes = [];
-    themes.forEach((element) => {
-      if (prev_themes.indexOf(element.themeName) === -1) {
-        var goldobj_val = {
-          id: uuidv1(),
-          product_id: productId,
-          theme_name: element.themeName,
-          is_active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        theme_names.push(goldobj_val);
-      } else {
-        reactive_themes.push(element.themeName);
-      }
-    });
-    await models.product_themes.bulkCreate(theme_names, {
-      individualHooks: true,
-    });
-    await models.product_themes.update(
-      {
-        is_active: true,
-      },
-      {
-        where: {
-          theme_name: {
-            [Op.in]: reactive_themes,
-          },
-          product_id: productId,
-        },
-      }
-    );
-
-    let occassion_names = [];
-    let reactive_occassions = [];
-    occassions.forEach((element) => {
-      if (prev_occassions.indexOf(element.occassionName) === -1) {
-        var goldobj_val = {
-          id: uuidv1(),
-          product_id: productId,
-          occassion_name: element.occassionName,
-          is_active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        occassion_names.push(goldobj_val);
-      } else {
-        reactive_occassions.push(element.occassionName);
-      }
-    });
-    await models.product_occassions.update(
-      // Values to update
-      {
-        is_active: true,
-      },
-      {
-        // Clause
-        where: {
-          occassion_name: {
-            [Op.in]: reactive_occassions,
-          },
-          product_id: productId,
-        },
-      }
-    );
-    await models.product_occassions.bulkCreate(occassion_names, {
-      individualHooks: true,
-    });
-
-    let collection_names = [];
-    let reactive_collections = [];
-    collections.forEach((element) => {
-      if (prev_collections.indexOf(element.collectionName) === -1) {
-        var goldobj_val = {
-          id: uuidv1(),
-          product_id: productId,
-          collection_name: element.collectionName,
-          is_active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        collection_names.push(goldobj_val);
-      } else {
-        reactive_collections.push(element.collectionName);
-      }
-    });
-    await models.product_collections.update(
-      // Values to update
-      {
-        is_active: true,
-      },
-      {
-        // Clause
-        where: {
-          collection_name: {
-            [Op.in]: reactive_collections,
-          },
-          product_id: productId,
-        },
-      }
-    );
-    await models.product_collections.bulkCreate(collection_names, {
-      individualHooks: true,
-    });
-
-    let stone_counts = [];
-    stonecount.forEach((element) => {
-      if (prev_stones.indexOf(element.stonecount) === -1) {
-        var goldobj_val = {
-          id: uuidv1(),
-          product_id: productId,
-          stonecount: element.stonecount,
-          is_active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        stone_counts.push(goldobj_val);
-      }
-    });
-    await models.product_stonecount.bulkCreate(stone_counts, {
-      individualHooks: true,
-    });
-
-    let stone_colors = [];
-    stonecolour.forEach((element) => {
-      if (prev_stonecolors.indexOf(element.stonecolor) === -1) {
-        var goldobj_val = {
-          id: uuidv1(),
-          product_id: productId,
-          stonecolor: element.stonecolor,
-          is_active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        stone_colors.push(goldobj_val);
-      }
-    });
-
-    await models.product_stonecolor.bulkCreate(stone_colors, {
-      individualHooks: true,
-    });
-
-    let gender_names = [];
-    let genders_arr = [];
-    gender.forEach((element) => {
-      genders_arr.push(element.label);
-      if (prev_genders.indexOf(element.label) === -1) {
-        var goldobj_val = {
-          id: uuidv1(),
-          product_id: productId,
-          gender_name: element.label,
-          is_active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        gender_names.push(goldobj_val);
-      }
-    });
-
-    await models.product_gender.bulkCreate(gender_names, {
-      individualHooks: true,
-    });
-    let style_names = [];
-
-    let reactive_styles = [];
-    styles.forEach((element) => {
-      if (prev_styles.indexOf(element.styleName) === -1) {
-        var goldobj_val = {
-          id: uuidv1(),
-          product_id: productId,
-          style_name: element.styleName,
-          is_active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        style_names.push(goldobj_val);
-      } else {
-        reactive_styles.push(element.styleName);
-      }
-    });
-    await models.product_styles.update(
-      // Values to update
-      {
-        is_active: true,
-      },
-      {
-        // Clause
-        where: {
-          style_name: {
-            [Op.in]: reactive_styles,
-          },
-          product_id: productId,
-        },
-      }
-    );
-    await models.product_styles.bulkCreate(style_names, {
-      individualHooks: true,
-    });
-
-    let tempMetalColor = [],
-      tempReactiveMetalColor = [];
-    productMetalColor.forEach((element) => {
-      if (prev_metalcolors.indexOf(element.productColor) === -1) {
-        let metalColorObj = {
-          id: uuidv1(),
-          product_color: element.productColor,
-          product_id: productId,
-          is_active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        tempMetalColor.push(metalColorObj);
-      } else {
-        tempReactiveMetalColor.push(element.productColor);
-      }
-    });
-
-    await models.product_metalcolours.update(
-      // Values to update
-      {
-        is_active: true,
-      },
-      {
-        // Clause
-        where: {
-          product_color: {
-            [Op.in]: tempReactiveMetalColor,
-          },
-          product_id: productId,
-        },
-      }
-    );
-
-    await models.product_metalcolours.bulkCreate(tempMetalColor, {
-      individualHooks: true,
-    });
 
     let trans_sku_lists = await models.trans_sku_lists.update(
       {
@@ -2080,7 +1872,8 @@ exports.editproduct = async (req, res) => {
       // Values to update
       {
         product_name: productName,
-        gender: genders_arr.join(),
+        product_category: productCategory,
+        gender: gender.map((i) => i.label).join(","),
         length,
         height,
         product_type: productType.toLowerCase(),
@@ -2095,11 +1888,7 @@ exports.editproduct = async (req, res) => {
       }
     );
 
-    //product_object['product_name'] = "testing"
-    // await product_object.update({
-    //     product_name : productName
-    // })
-    res.status(200).send(prev_genders);
+    res.status(200).send({ message: "updated successfully!" });
   } catch (error) {
     console.log(error);
     res.status(500, { message: error.message });
@@ -2402,7 +2191,6 @@ exports.csvDownload = (req, res) => {
         colourVarient
         earringBacking
         gender
-  
         productVendorCode
         isactive
         materials: productMaterialsByProductSku {
@@ -2464,9 +2252,15 @@ exports.csvDownload = (req, res) => {
             stoneWeight
           }
         }
+        hashtags: productHashTagsByProductId(condition: { isActive: true }) {
+          nodes {
+            name: hashTag
+          }
+        }
         skus: transSkuListsByProductId {
           nodes {
             tagNo: generatedSku
+            itemId
             diamondType
             metalColor
             purity
@@ -2487,10 +2281,11 @@ exports.csvDownload = (req, res) => {
                 ringsizeImage
               }
             }
-            createdAt
+            productRecordDate
             updatedAt
             minOrderQty
             maxOrderQty
+            showPriceBreakup
           }
         }
       }
@@ -2499,9 +2294,7 @@ exports.csvDownload = (req, res) => {
         hasNextPage
       }
     }
-  }
-  
-  `;
+  }`;
   let responseArrays = [];
   const axios = require("axios");
   function loadData({ cursor }) {
@@ -2531,6 +2324,7 @@ exports.csvDownload = (req, res) => {
                     name: item.productName,
                     product_id: item.productId,
                     tag_no: sku.tagNo,
+                    item_id: sku.itemId,
                     categories: item.productCategory,
                     type: item.productType,
                     gender: item.gender,
@@ -2542,19 +2336,25 @@ exports.csvDownload = (req, res) => {
                     discount_price: sku.discountPrice,
                     discount: sku.discount,
                     discount_description: sku.discountDesc,
-                    // vendor: item.vendor.name,
                     vendor_product_code: item.productVendorCode,
                     vendor_delivery_time: item.vendorDeliveryTime,
                     height: item.height,
                     width: item.width,
                     length: item.length,
-                    created_at: moment(sku.created_at).format("DD-MM-YYYY"),
+                    record_date: moment(sku.productRecordDate).format(
+                      "DD-MM-YYYY"
+                    ),
                     last_updated_at: moment(sku.updatedAt).format("DD-MM-YYYY"),
                     is_active: item.isactive,
                     is_ready_to_ship: sku.isReadyToShip,
                     is_default: sku.isdefault,
                     diamond_type: sku.diamondType,
                     metal_color: sku.metalColor,
+                    minimum_order_quantity: sku.minOrderQty,
+                    maximum_order_quantity: sku.maxOrderQty,
+                    size_varient: item.sizeVarient,
+                    color_varient: item.colourVarient,
+                    earring_backing: item.earingBacking,
                     materials: item.materials.nodes
                       .map((i) => i.name)
                       .join(","),
@@ -2572,13 +2372,9 @@ exports.csvDownload = (req, res) => {
                     stone_count: item.stoneCount.nodes
                       .map((i) => i.count)
                       .join(","),
+                    hashtags: item.hashtags.nodes.map((i) => i.name).join(","),
                     diamonds,
                     gemstones,
-                    minimum_order_quantity: sku.minOrderQty,
-                    maximum_order_quantity: sku.maxOrderQty,
-                    size_varient: item.sizeVarient,
-                    color_varient: item.colourVarient,
-                    earring_backing: item.earingBacking,
                   });
                 }
               }
