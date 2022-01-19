@@ -2230,6 +2230,11 @@ exports.csvDownload = (req, res) => {
             count: stonecount
           }
         }
+        metal_colours: productMetalcoloursByProductId {
+          nodes {
+            name: productColor
+          }
+        }
         diamonds: productDiamondsByProductSku {
           nodes {
             diamondClarity
@@ -2371,6 +2376,9 @@ exports.csvDownload = (req, res) => {
                       .join(","),
                     stone_count: item.stoneCount.nodes
                       .map((i) => i.count)
+                      .join(","),
+                    metal_colours: item.metal_colours.nodes
+                      .map((i) => i.name)
                       .join(","),
                     hashtags: item.hashtags.nodes.map((i) => i.name).join(","),
                     diamonds,

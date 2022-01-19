@@ -871,4 +871,90 @@ module.exports = function (app) {
       res.status(500).send(error);
     }
   });
+  app.post("/file_upload_sync", (req, res) => {
+    upload(req, res, async (err) => {
+      if (err) {
+        res.status(400).send({
+          error: err.message,
+        });
+      }
+      try {
+        res.status(200).send({ message: "Success started!" });
+
+        let XLSX = require("xlsx");
+
+        let workbook = XLSX.readFile(req.file.path);
+        let sheetList = workbook.SheetNames;
+
+        const io = require("../socket");
+
+        let sendStatus = (token_val, processed_data) => {
+          console.log(token_val, processed_data);
+          try {
+            io.emit(token_val, processed_data);
+          } catch (e) {
+            console.log(e);
+          }
+        };
+
+        Promise.all(
+          sheetList.map(async (sheet) => {
+            return new Promise(async (resolve, reject) => {
+              let sampleData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
+              if (!sheet.includes("sku")) {
+                sampleData = require("lodash").groupBy(sampleData, (item) => {
+                  return item.tag_no;
+                });
+
+                let tag_no_list = Object.keys(sampleData);
+
+                for (let index = 0; index < tag_no_list.length; index++) {
+                  const tag_no = tag_no_list[index];
+                  const data = sampleData[tag_no];
+                  try {
+                    await require("../controller/product_upload_sync").product_upload_sync(
+                      {
+                        data,
+                        type: sheet.replace("_list", ""),
+                      }
+                    );
+                  } catch (error) {
+                    console.log(error);
+                  }
+                }
+              } else {
+                for (let index = 0; index < sampleData.length; index++) {
+                  const data = sampleData[index];
+                  try {
+                    await require("../controller/product_upload_sync").product_upload_sync(
+                      {
+                        data,
+                        type: sheet.replace("_list", ""),
+                      }
+                    );
+                  } catch (error) {
+                    console.log(error);
+                  }
+                }
+              }
+              sendStatus(sheet, {
+                completed: 1,
+              });
+              resolve(`Completed Sheet!`);
+            });
+          })
+        )
+          .then(() => {
+            console.log("Completed Sync!");
+            require("fs").unlink(req.file.path);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send(error);
+      }
+    });
+  });
 };
