@@ -68,8 +68,8 @@ let updateProductAttributes = ({ product_id, data }) => {
               attributes,
             } = product_attributes[item];
             let attribute_values = data[requestKey]
-              .split(",")
-              .filter((x) => x.length > 0);
+              ? data[requestKey].split(",").filter((x) => x.length > 0)
+              : [];
             if (attribute_values.length > 0) {
               /* Soft delete all attributes */
               await model.update(
@@ -202,31 +202,39 @@ let updateDiamondOrGemstones = ({ product_id, data, type }) => {
 
 let updateTransSkuLists = ({ product_id, data }) => {
   return new Promise((resolve, reject) => {
+    let updateData = {
+      item_id: data.item_id,
+      diamond_type: data.diamond_type,
+      metal_color: data.metal_color,
+      minimum_order_quantity: data?.minimum_order_quantity,
+      maximum_order_quantity: data?.maximum_order_quantity,
+      is_ready_to_ship: data.is_ready_to_ship,
+      purity: data.purity,
+      selling_price: data.selling_price,
+    };
+
+    if (data.markup_price) {
+      updateData["markup_price"] = Number(data.markup_price);
+    }
+    if (data.discount_price) {
+      updateData = {
+        ...updateData,
+        discount: Number(data.discount_price),
+        discount: Math.round(
+          ((data.discount_price - data.markup_price) * 100) /
+            data.discount_price,
+          0
+        ),
+      };
+    }
+    if (data.vendor_product_code) {
+      updateData["vendor_product_code"] = data.vendor_product_code;
+    }
+
     models.trans_sku_lists
-      .update(
-        {
-          item_id: data.item_id,
-          diamond_type: data.diamond_type,
-          metal_color: data.metal_color,
-          minimum_order_quantity: data.minimum_order_quantity,
-          maximum_order_quantity: data.maximum_order_quantity,
-          is_ready_to_ship: data.is_ready_to_ship,
-          purity: data.purity,
-          selling_price: data.selling_price,
-          markup_price: data.markup_price,
-          discount_price: data.discount_price,
-          discount: Math.round(
-            ((data.discount_price - data.markup_price) * 100) /
-              data.discount_price,
-            0
-          ),
-          discount_description: data.discount_description,
-          vendor_product_code: data.vendor_product_code,
-        },
-        {
-          where: { generated_sku: data.tag_no },
-        }
-      )
+      .update(updateData, {
+        where: { generated_sku: data.tag_no },
+      })
       .then((result) => {
         resolve(result);
       })
@@ -244,9 +252,9 @@ let updateProduct = ({ product_id, data }) => {
         {
           product_category: data["categories"],
           product_type: data["type"],
-          length: data["length"],
-          height: data["height"],
-          width: data["width"],
+          length: data["length"] ? Number(data["length"]) : null,
+          height: data["height"] ? Number(data["height"]) : null,
+          width: data["width"] ? Number(data["width"]) : null,
           size_varient: data["size_variant"],
           colour_varient: data["color_varient"],
           gender: data["gender"],

@@ -2316,7 +2316,10 @@ exports.csvDownload = (req, res) => {
             },
           },
         }) => {
-          console.log("==========================", nodes);
+          console.log(
+            "============ Total Products ==============",
+            nodes.length
+          );
           if (nodes && nodes.length > 0) {
             for (let index = 0; index < nodes.length; index++) {
               let item = nodes[index];
