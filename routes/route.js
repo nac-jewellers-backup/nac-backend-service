@@ -946,7 +946,11 @@ module.exports = function (app) {
         )
           .then(() => {
             console.log("Completed Sync!");
-            require("fs").unlink(req.file.path);
+            require("fs").unlink(req.file.path, (err) => {
+              if (err) {
+                console.log(err);
+              }
+            });
           })
           .catch((err) => {
             console.log(err);

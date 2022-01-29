@@ -46,7 +46,7 @@ let product_attributes = {
   },
   product_metalcolours: {
     models: models.product_metalcolours,
-    requestKey: "metal_colour",
+    requestKey: "metal_color",
     attributes: "product_color",
   },
   product_hash_tags: {
@@ -67,6 +67,7 @@ let updateProductAttributes = ({ product_id, data }) => {
               requestKey,
               attributes,
             } = product_attributes[item];
+            console.log(requestKey,data[requestKey]);
             let attribute_values = data[requestKey]
               ? data[requestKey].split(",").filter((x) => x.length > 0)
               : [];
