@@ -108,6 +108,7 @@ let updateProductAttributes = ({ product_id, data }) => {
                         id: uuidv1(),
                         product_id,
                         [attributes]: item,
+                        is_active: true,
                       };
                     }
                   }),
