@@ -46,7 +46,7 @@ let product_attributes = {
   },
   product_metalcolours: {
     models: models.product_metalcolours,
-    requestKey: "metal_colours",
+    requestKey: "metal_colour",
     attributes: "product_color",
   },
   product_hash_tags: {
