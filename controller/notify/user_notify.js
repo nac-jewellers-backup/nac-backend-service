@@ -75,22 +75,21 @@ let send_sms = ({ mobile_no, msg_txt, sender_id }) => {
     const axios = require("axios");
     axios({
       method: "POST",
-      url: "https://dmzotp.aclgateway.com/OTP_ACL_Web/otpjsonlistener",
+      url: "https://staging.stylori.com/nac_api/send_sms",
       data: {
-        enterpriseid: "nacjotp",
-        subEnterpriseid: "nacjotp",
-        pusheid: "nacjotp",
-        pushepwd: "nacjotp27",
-        contenttype: "1",
-        sender: sender_id,
-        alert: "1",
-        msisdn: mobile_no,
-        intflag: "false",
-        msgtext: msg_txt,
+        sender_id,
+        mobile_no,
+        msg_txt,
       },
     })
-      .then(resolve)
-      .catch(reject);
+      .then(({ data }) => {
+        console.log(mobile_no, data);
+        resolve(data);
+      })
+      .catch((err) => {
+        console.log(err);
+        reject(err);
+      });
   });
 };
 

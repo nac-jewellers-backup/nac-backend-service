@@ -66,8 +66,7 @@ let updateProductAttributes = ({ product_id, data }) => {
               models: model,
               requestKey,
               attributes,
-            } = product_attributes[item];
-            console.log(requestKey,data[requestKey]);
+            } = product_attributes[item];            
             let attribute_values = data[requestKey]
               ? data[requestKey].split(",").filter((x) => x.length > 0)
               : [];

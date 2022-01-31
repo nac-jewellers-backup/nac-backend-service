@@ -329,203 +329,253 @@ module.exports = function (app) {
     if (req.body.product_id) {
       datapaylod["product_id"] = req.body.product_id;
     }
-    res.status(200).send({ message: "Success" });
+    try {
+      const _obj = {
+        method: "post",
+        url: turl,
+        data: JSON.stringify(datapaylod),
+      };
 
-    const _obj = {
-      method: "post",
-      url: turl,
-      data: datapaylod,
-    };
-    const py1 = {
-      properties: {
-        autocomplete: {
-          type: "text",
-          analyzer: "autocomplete",
-          search_analyzer: "autocomplete_search",
+      const py1 = {
+        properties: {
+          autocomplete: {
+            type: "text",
+            analyzer: "autocomplete",
+            search_analyzer: "autocomplete_search",
+          },
+          sku_url: { type: "text" },
+          product_name: { type: "text" },
         },
-        sku_url: { type: "text" },
-        product_name: { type: "text" },
-      },
-    };
-    const _py1s = {
-      settings: {
-        analysis: {
-          analyzer: {
-            autocomplete: {
-              tokenizer: "autocomplete",
-              filter: ["lowercase"],
+      };
+
+      const _py1s = {
+        settings: {
+          analysis: {
+            analyzer: {
+              autocomplete: {
+                tokenizer: "autocomplete",
+                filter: ["lowercase"],
+              },
+              autocomplete_search: {
+                tokenizer: "lowercase",
+              },
             },
-            autocomplete_search: {
-              tokenizer: "lowercase",
+            tokenizer: {
+              autocomplete: {
+                type: "edge_ngram",
+                min_gram: 2,
+                max_gram: 20,
+                token_chars: ["letter"],
+              },
             },
           },
-          tokenizer: {
-            autocomplete: {
-              type: "edge_ngram",
-              min_gram: 2,
-              max_gram: 20,
-              token_chars: ["letter"],
-            },
+        },
+      };
+
+      const py2 = {
+        properties: {
+          sku_code: {
+            type: "text",
+          },
+          sku_url: {
+            type: "text",
+          },
+          sku_code_prefix: {
+            type: "text",
+          },
+          sku_code_search: {
+            type: "completion",
+            analyzer: "simple",
+            preserve_separators: true,
+            preserve_position_increments: true,
+            max_input_length: 50,
           },
         },
-      },
-    };
-    const py2 = {
-      properties: {
-        sku_code: {
-          type: "text",
-        },
-        sku_url: {
-          type: "text",
-        },
-        sku_code_prefix: {
-          type: "text",
-        },
-        sku_code_search: {
-          type: "completion",
-          analyzer: "simple",
-          preserve_separators: true,
-          preserve_position_increments: true,
-          max_input_length: 50,
-        },
-      },
-    };
-    const py3 = {
-      properties: {
-        seo_url: {
-          type: "text",
-        },
-        seo_search: {
-          type: "completion",
-        },
-      },
-    };
-    let _index = ["product_search", "sku_search", "seo_search"];
-    //   Promise.all([
-    // 	deleteIndex(_index[0]),
-    // 	deleteIndex(_index[1]),
-    // 	deleteIndex(_index[2])
-    //   ])
-    // 	.then(response => {
-    // 	  console.log("» » » Index deleted");
-    // 	  Promise.all([
-    // 		initIndex(_index[0], _py1s),
-    // 		initIndex(_index[1], false),
-    // 		initIndex(_index[2], _py1s)
-    // 	  ]).then(init_index => {
-    // 		console.log("» » » Index created");
-    Promise.all([
-      initMapping(_index[0], "_doc", py1),
-      initMapping(_index[1], "_doc", py2),
-      initMapping(_index[2], "_doc", py3),
-    ])
-      .then((_mapp) => {
-        console.log("» » » Mapping created");
-        axios(_obj)
-          .then(async (response) => {
-            console.log(response["data"]["product_list"].length);
-            let productSearch = response["data"]["product_list"];
-            let skuSearch = response["data"]["sku_list"];
-            let seoSearch = response["data"]["seo_list"];
-            let productArray = [];
-            let skuArray = [];
-            let seoArray = [];
-            let doc_array = [];
-            /* filter response Array to new-one */
-            /*product_search mapper */
-            (async function () {
-              await Promise.all(
-                productSearch.map(async (li) => {
-                  productArray.push({
-                    index: {
-                      _index: "product_search",
-                      _type: "_doc",
-                      _id: uuidv4(),
-                    },
-                  });
-                  productArray.push({
-                    product_name: li.product_name ? li.product_name : "",
-                    sku_url:
-                      li.trans_sku_lists.length > 0
-                        ? li.trans_sku_lists[0]["sku_url"]
-                        : "",
-                    autocomplete: li.product_name ? li.product_name : "",
-                  });
-                })
-              );
-            })();
-            /*sku_code search mapper*/
-            (async function () {
-              await Promise.all(
-                skuSearch.map(async (li) => {
-                  skuArray.push({
-                    index: {
-                      _index: "sku_search",
-                      _type: "_doc",
-                      _id: uuidv4(),
-                    },
-                  });
-                  skuArray.push({
-                    sku_code: li.generated_sku,
-                    sku_url: li.sku_url,
-                    sku_code_prefix: li.generated_sku,
-                    sku_code_search: li.generated_sku
-                      ? li.generated_sku.split(/[ ,]+/)
-                      : "",
-                  });
-                })
-              );
-            })();
-            /*seo_url search mapper*/
-            (async function () {
-              await Promise.all(
-                seoSearch.map(async (yl) => {
-                  seoArray.push({
-                    index: {
-                      _index: "seo_search",
-                      _type: "_doc",
-                      _id: uuidv4(),
-                    },
-                  });
-                  seoArray.push({
-                    seo_url: yl.seo_url ? yl.seo_url : "",
-                    seo_name: yl.seo_text ? yl.seo_text : "",
-                    autocomplete: yl.seo_text ? yl.seo_text : "",
-                  });
-                })
-              );
-            })();
-            skuArray = arrayChunk(skuArray, 30000);
+      };
 
-            skuArray.map((el) => doc_array.push(docBulk(el)));
-            //doc_array.push(deleteIndex(skuArray))
-            doc_array.push(docBulk(productArray));
-            doc_array.push(docBulk(seoArray));
-            console.info("totalPromises12", productArray.length);
-            Promise.all(doc_array)
-              .then((response) => {
-                console.log("» » » Docs Uploaded");
-                console.log("Promises Resolved ", response.length);
+      const py3 = {
+        properties: {
+          seo_url: {
+            type: "text",
+          },
+          seo_search: {
+            type: "completion",
+          },
+        },
+      };
+
+      let _index = ["product_search", "sku_search", "seo_search"];
+
+      Promise.all([
+        deleteIndex(_index[0]),
+        deleteIndex(_index[1]),
+        deleteIndex(_index[2]),
+      ])
+        .then((response) => {
+          console.log("» » » Index deleted");
+          Promise.all([
+            initIndex(_index[0], _py1s),
+            initIndex(_index[1], false),
+            initIndex(_index[2], _py1s),
+          ]).then((init_index) => {
+            console.log("» » » Index created");
+
+            Promise.all([
+              initMapping(_index[0], "_doc", py1),
+              initMapping(_index[1], "_doc", py2),
+              initMapping(_index[2], "_doc", py3),
+            ])
+              .then((_mapp) => {
+                console.log("» » » Mapping created");
+                axios(_obj)
+                  .then(async (response) => {
+                    console.log("» »", response.status);
+                    let productSearch = response["data"]["product_list"];
+                    let skuSearch = response["data"]["sku_list"];
+                    let seoSearch = response["data"]["seo_list"];
+                    
+                    let productArray = [];
+                    let skuArray = [];
+                    let seoArray = [];
+                    let doc_array = [];
+
+                    /* filter response Array to new-one */
+
+                    /*product_search mapper */
+                    (async function () {
+                      await Promise.all(
+                        productSearch.map(async (li) => {
+                          productArray.push({
+                            index: {
+                              _index: "product_search",
+                              _type: "_doc",
+                              _id: uuidv4(),
+                            },
+                          });
+                          productArray.push({
+                            product_name: li.product_name
+                              ? li.product_name
+                              : "",
+                            sku_url:
+                              li.trans_sku_lists.length > 0
+                                ? li.trans_sku_lists[0]["sku_url"]
+                                : "",
+                            autocomplete: li.product_name
+                              ? li.product_name
+                              : "",
+                          });
+                        })
+                      );
+                    })();
+
+                    /*sku_code search mapper*/
+                    (async function () {
+                      await Promise.all(
+                        skuSearch.map(async (li) => {
+                          skuArray.push({
+                            index: {
+                              _index: "sku_search",
+                              _type: "_doc",
+                              _id: uuidv4(),
+                            },
+                          });
+                          skuArray.push({
+                            sku_code: li.generated_sku,
+                            sku_url: li.sku_url,
+                            sku_code_prefix: li.generated_sku,
+                            sku_code_search: li.generated_sku
+                              ? li.generated_sku.split(/[ ,]+/)
+                              : "",
+                          });
+                        })
+                      );
+                    })();
+
+                    /*seo_url search mapper*/
+                    (async function () {
+                      await Promise.all(
+                        seoSearch.map(async (yl) => {
+                          seoArray.push({
+                            index: {
+                              _index: "seo_search",
+                              _type: "_doc",
+                              _id: uuidv4(),
+                            },
+                          });
+                          seoArray.push({
+                            seo_url: yl.seo_url ? yl.seo_url : "",
+                            seo_name: yl.seo_text ? yl.seo_text : "",
+                            autocomplete: yl.seo_text ? yl.seo_text : "",
+                          });
+                        })
+                      );
+                    })();
+                    skuArray = arrayChunk(skuArray, 100);
+                    for (let index = 0; index < skuArray.length; index++) {
+                      const element = skuArray[index];
+                      await docBulk(element);
+                    }
+                    console.log("Completed SKUS");
+                    productArray = arrayChunk(productArray, 100);
+                    for (let index = 0; index < productArray.length; index++) {
+                      const element = productArray[index];
+                      await docBulk(element);
+                    }
+                    console.log("Completed Products");
+                    seoArray = arrayChunk(seoArray, 100);
+                    for (let index = 0; index < seoArray.length; index++) {
+                      const element = seoArray[index];
+                      await docBulk(element);
+                    }
+                    console.log("Completed SEOs");
+                    res
+                      .status(200)
+                      .send({ message: "Successfully reindexed all data!" });
+                    // skuArray.map((el) => doc_array.push(docBulk(el)));
+
+                    // doc_array.push(docBulk(productArray));
+
+                    // doc_array.push(docBulk(seoArray));
+
+                    // console.info("totalPromises", doc_array.length);
+
+                    // Promise.all(doc_array)
+                    //   .then((response) => {
+                    //     console.log("» » » Docs Uploaded");
+                    //     console.log("Promises Resolved ", response.length);
+                    //   })
+                    //   .catch((_e) => {
+                    //     console.log(_e);
+                    //     console.log("Errror");
+                    //   });
+                  })
+                  .catch((fetch_err) => {
+                    console.error(fetch_err);
+                    res.status(500).send({ ...fetch_err });
+                  });
               })
-              .catch((_e) => {
-                console.log(_e.message);
-                console.log("Errror");
+              .catch((init_err) => {
+                console.log(init_err);
+                console.log("Error In Init Index");
+                res.status(500).send({ ...init_err });
               });
-          })
-          .catch((fetch_err) => {
-            console.error(fetch_err);
           });
-        // 	  })
-        // 	  .catch(init_err => {
-        // 		console.log(init_err);
-        // 		console.log("Error In Init Index");
-        // 	  });
-        //   });
-      })
-      .catch((err_del) => {
-        console.log(err_del);
-        console.log("Error In Delete-Index");
-      });
+        })
+        .catch((err_del) => {
+          console.log(err_del);
+          console.log("Error In Delete-Index");
+          res.status(500).send({ ...err_del });
+        });
+    } catch (err) {
+      console.log(
+        new Date().toLocaleString("en-US", {
+          timeZone: "Asia/Calcutta",
+        }) +
+          " - Error message : " +
+          err
+      );
+      res.status(500).send({ ...err });
+    }
   });
   app.post("/reindex", async function (req, res) {
     const { product_id } = req.body;
@@ -960,5 +1010,27 @@ module.exports = function (app) {
         res.status(500).send(error);
       }
     });
+  });
+  const otpController = require("../controller/otpController");
+  app.post("/send_otp", async (req, res) => {
+    try {
+      res.status(200).send(await otpController.sendOtp(req.body));
+    } catch (error) {
+      res.status(error.statusCode || 500).send({ error: true, ...error });
+    }
+  });
+  app.post("/resend_otp", async (req, res) => {
+    try {
+      res.status(200).send(await otpController.resendOtp(req.body));
+    } catch (error) {
+      res.status(error.statusCode || 500).send({ error: true, ...error });
+    }
+  });
+  app.post("/verify_otp", async (req, res) => {
+    try {
+      res.status(200).send(await otpController.verifyOtp(req.body));
+    } catch (error) {
+      res.status(error.statusCode || 500).send({ error: true, ...error });
+    }
   });
 };

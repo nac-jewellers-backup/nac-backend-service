@@ -1,17 +1,17 @@
 const es = require("elasticsearch");
 const esClient = new es.Client({
-  host:
-    "https://search-elastic-server-uguyslt53rg63cttm2b4hgwkb4.ap-south-1.es.amazonaws.com/",
+  host: "https://search-nac-website-pzyrwbnys2czgsok6c37kqhrwq.ap-south-1.es.amazonaws.com/",
+  httpAuth: "root:MyvCAnI&8ngo",
   requestTimeout: Infinity,
-  keepAlive : false
+  keepAlive: false,
   // log: "trace"
 });
 
 module.exports = {
   /* function : Ping esServer */
-  esPing: function() {
+  esPing: function () {
     return new Promise((resolve, reject) => {
-      esClient.ping({ requestTimeout: 30000 }, function(_err) {
+      esClient.ping({ requestTimeout: 30000 }, function (_err) {
         if (_err) {
           return reject({ status: false, message: "elasticServer:Error" });
         } else {
@@ -21,23 +21,23 @@ module.exports = {
     });
   },
   /* delete a _index from cluster  */
-  initIndex: function(indexName, _settings) {
+  initIndex: function (indexName, _settings) {
     return new Promise(async (resolve, reject) => {
       await esClient.indices
         .create({ index: indexName, body: _settings ? _settings : {} })
         .then(
-          async function(_result) {
+          async function (_result) {
             return resolve({ data: true, status: 200, message: _result });
           },
-          function(_err) {
+          function (_err) {
             return reject({ data: false, status: 500, message: _err.message });
           }
         );
     });
   },
-  deleteIndex: async function(indexArray) {
+  deleteIndex: async function (indexArray) {
     return new Promise((resolve, reject) => {
-      esClient.indices.delete({ index: indexArray }, function(_err) {
+      esClient.indices.delete({ index: indexArray }, function (_err) {
         if (_err) {
           return reject({ data: false, status: 500, message: _err.message });
         } else {
@@ -48,32 +48,32 @@ module.exports = {
   },
 
   /*check for Index in cluster  */
-  indexExists: function(indexName) {
+  indexExists: function (indexName) {
     return new Promise((resolve, reject) => {
       esClient.indices.exists({ index: [indexName] }).then(
-        function(resp) {
+        function (resp) {
           return resolve({ data: true, status: 200, message: resp });
         },
-        function(_err) {
+        function (_err) {
           return reject({ data: false, status: 500, message: _err.message });
         }
       );
     });
   },
-  initMapping: function(indexName, docType, payload) {
+  initMapping: function (indexName, docType, payload) {
     return new Promise((resolve, reject) => {
       esClient.indices
         .putMapping({
           include_type_name: true,
           index: indexName,
           type: docType,
-          body: payload
+          body: payload,
         })
         .then(
-          function(resp) {
+          function (resp) {
             return resolve({ data: true, status: 200, message: resp });
           },
-          function(_err) {
+          function (_err) {
             return reject({ data: false, status: 500, message: _err.message });
           }
         );
@@ -87,53 +87,52 @@ module.exports = {
           index: indexName,
           type: docType,
           id: _id,
-          body: payload
+          body: payload,
         })
         .then(
-          function(_res) {
+          function (_res) {
             return resolve({ data: true, status: 200, message: _res });
           },
-          function(_err) {
+          function (_err) {
             return reject({ data: false, status: 500, message: _err.message });
           }
         );
     });
   },
-  esSearch: async function(indexName, docType, payload) {
+  esSearch: async function (indexName, docType, payload) {
     return new Promise(async (resolve, reject) => {
       await esClient
         .search({
           index: indexName,
           type: docType,
-          body: payload
+          body: payload,
         })
         .then(
-          function(resp) {
+          function (resp) {
             return resolve({ data: true, status: 200, message: resp });
           },
-          function(_err) {
+          function (_err) {
             return reject({ data: false, status: 500, message: _err.message });
           }
         );
     });
   },
-  docBulk: function(payload) {
+  docBulk: function (payload) {
     return new Promise((resolve, reject) => {
       esClient
         .bulk({
-          body: payload
+          body: payload,
         })
         .then(
-          function(_res) {
+          function (_res) {
             return resolve({
               data: true,
               status: 200,
               message: _res,
-              extra: "Bulk Insert Done"
+              extra: "Bulk Insert Done",
             });
           },
-          function(_err) {
-            
+          function (_err) {
             return reject({ data: false, status: 500, message: _err.message });
           }
         );
@@ -146,19 +145,19 @@ module.exports = {
         .putSettings({
           index: indexName,
           type: "_doc",
-          body: settings
+          body: settings,
         })
-        .then(_res => {
+        .then((_res) => {
           resolve({ status: "true", response: _res });
         });
     });
   },
 
-  parseSEO: async function(seoArray) {
+  parseSEO: async function (seoArray) {
     let _results = [];
-    seoArray.map(first => {
+    seoArray.map((first) => {
       console.log(first["message"]["suggest"]["seo_search"]["options"]);
-      first["message"]["suggest"]["seo_search"][0]["options"].map(second => {
+      first["message"]["suggest"]["seo_search"][0]["options"].map((second) => {
         second["_source"];
       });
     });
@@ -166,5 +165,5 @@ module.exports = {
     _results.sort((a, b) => a.priority - b.priority);
 
     console.log(_results);
-  }
+  },
 };
