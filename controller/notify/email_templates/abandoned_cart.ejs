@@ -404,7 +404,7 @@
             }
 
             .sub {
-                font-size: 1em;
+                font-size: 1em !important;
             }
 
             .price {
@@ -430,6 +430,7 @@
         .sub {
             color: #B78231;
             margin-top: -14px;
+            font-size: 1.2em;
         }
 
         .summary {
@@ -571,17 +572,17 @@
                             <tr>
                                 <td style="padding-bottom: 30px;">
                                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                                        <td valign="middle" style="width: 45%;">
+                                        <td valign="middle" style="width: 30%;">
                                             <img src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/NAC_EMAIL_TEMPLATE/Bag.png"
                                                 alt="" style="width: 100%; height: 100%;">
                                         </td>
                                         <td valign="middle" width="100%">
                                             <div class="text-blog">
-                                                <h1 class="heading" style="display: inline-block;">Thank you for your
-                                                    order!</h1>
-                                                <h2 class="sub">We’ve got your order!
+                                                <h1 class="heading" style="display: inline-block;">Missing Style Alert
+                                                </h1>
+                                                <h2 class="sub">Looks like you left some items in your cart
                                                     <br />
-                                                    We’ll drop you another email when your order ships.
+                                                    Complete your check-out process to add some glow to your outfits.
                                                 </h2>
 
 
@@ -606,9 +607,9 @@
                                                 <h1 class="heading" style="display: inline-block;">Hello <%=
                                                         address.firstname %>,</h1>
 
-                                                <p style="color: black;margin-top: -20px;">
-                                                    Thank you for placing your order with NAC, your order has been
-                                                    successfully dipatched!
+                                                <p style="color: black;margin-top: -20px;">Have a question about
+                                                    items?React out to our customer care to have your questions
+                                                    answered.
                                                 </p>
 
 
@@ -658,7 +659,8 @@
                                                 <div style="border:1px solid #c1c1c1;margin-right: 12px;" class="image">
                                                     <img src=<%- item.image_url %>
                                                     alt=""
-                                                    style="width: 100%; max-width: 600px; height: 100px;object-fit:
+                                                    style="width: 100%; max-width: 600px;
+                                                    height: 100px;object-fit:
                                                     contain; margin: auto; display: block;">
                                                 </div>
                                                 <br />
@@ -680,8 +682,8 @@
                                             <td valign="middle" class="price">
                                                 <p class="datas">&nbsp;&nbsp;&nbsp;&#8377;<%- item.price%>
                                                 </p>
-                                                <p class="datas">&nbsp;&nbsp;&nbsp;<strike>&#8377;<%-
-                                                            item.discount_price%></strike>
+                                                <p class="datas">
+                                                    &nbsp;&nbsp;&nbsp;<strike>&#8377;<%- item.discount_price%></strike>
                                                 </p>
                                             </td>
 
@@ -702,11 +704,12 @@
                                             <p class="datas">&nbsp;</p>
                                             <p class="datas">SUB TOTAL</p>
                                             <% if (discount) { %>
-                                                <p class="datas" style="margin-top: 12px;white-space: nowrap;">CART
-                                                    DISCOUNT
+                                                <p class="datas" style="margin-top: 12px;white-space: nowrap;">
+                                                    CART DISCOUNT
                                                 </p>
                                                 <% } %>
-                                                    <p class="datas" style="white-space: nowrap;">SHIPPING
+                                                    <p class="datas" style="white-space: nowrap;">
+                                                        SHIPPING
                                                         CHARGES(Standard)
                                                     </p>
                                                     <br />
@@ -717,30 +720,33 @@
 
 
                                         <td valign="middle" align="left" width="100%">
-                                            <p class="datasright">
-                                                <%= gross_total %>
+                                            <p class="datasright">&#8377;&nbsp;<%= gross_total %>
                                             </p>
                                             <% if (discount) { %>
                                                 <p class="datasright" style="margin-top: 12px;">
-                                                    <%= discount %>
+                                                    &#8377;&nbsp;<%= discount %>
                                                 </p>
                                                 <% } %>
-                                                    <p class="datasright">FREE</p>
+                                                    <p class="datasright">
+                                                        &nbsp;&nbsp;&nbsp;&nbsp;FREE</p>
                                         </td>
 
 
                                     </table>
-                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                                        style="border-bottom: 1px solid #c1c1c1">
+                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                         <td valign="middle" class="none">
 
                                         </td>
                                         <td valign="middle" align="left" width="100%">
                                             <p class="datas">&nbsp;</p>
-                                            <h3 class="datas" style="white-space: nowrap;"><b>TOTAL COST</b></h3>
+                                            <h3 class="datas" style="white-space: nowrap;">
+                                                <b>TOTAL COST</b>
+                                            </h3>
                                             <h3 class="datas"
-                                                style="margin-top: 12px;color: #B78231;white-space: nowrap;"><b>GRAND
-                                                    TOTAL</b></h3>
+                                                style="margin-top: 12px;color: #B78231;white-space: nowrap;">
+                                                <b>GRAND
+                                                    TOTAL</b>
+                                            </h3>
                                             <br />
                                         </td>
                                         <td valign="middle" class="show">
@@ -748,16 +754,17 @@
                                         </td>
 
                                         <td valign="middle" width="100%">
-                                            <h3 class="datasright"><b>
-                                                    <%= discounted_price %>
-                                                </b></h3>
-                                            <h3 class="datasright" style="margin-top: 12px;color: #B78231;"><b>
-                                                    <%= discounted_price %>
-                                                </b>
+                                            <h3 class="datasright"><b>&#8377;&nbsp;<%= discounted_price %></b></h3>
+                                            <h3 class="datasright" style="margin-top: 12px;color: #B78231">
+                                                <b>&#8377;&nbsp;<%= discounted_price %></b>
                                             </h3>
                                         </td>
 
                                     </table>
+                                    <div>
+                                        <p align="left" style="color: #000000;text-align: left;">
+                                            *Inclusive of all taxes</p>
+                                    </div>
 
                                 </td>
 
@@ -766,12 +773,14 @@
 
 
                         </table>
+
                     </td>
 
 
                 </tr>
 
                 <br />
+
 
             </table>
             <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
