@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
+    xmlns:o="urn:schemas-microsoft-com:office:office">
+
+<head>
+    <meta charset="utf-8"> <!-- utf-8 works for most cases -->
+    <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
+    <meta name="x-apple-disable-message-reformatting"> <!-- Disable auto-scale in iOS 10 Mail entirely -->
+    <title></title> <!-- The title tag shows in email notifications, like Android 4.4. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href='https://fonts.googleapis.com/css?family=Noto Serif' rel='stylesheet'>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&family=Poppins:wght@300;400&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Josefin+Sans:300,400,600,700|Lato:300,400,700" rel="stylesheet">
+
+    <!-- CSS Reset : BEGIN -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap');
+
+        /* What it does: Remove spaces around the email design added by some email clients. */
+        /* Beware: It can remove the padding / margin and add a background color to the compose a reply window. */
+        html,
+        body {
+            margin: 0 auto !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+            background: #f1f1f1;
+            font-family: 'Nunito Sans', sans-serif !important;
+        }
+
+        /* What it does: Stops email clients resizing small text. */
+        * {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* What it does: Centers email on Android 4.4 */
+        div[style*="margin: 16px 0"] {
+            margin: 0 !important;
+        }
+
+        /* What it does: Stops Outlook from adding extra spacing to tables. */
+        table,
+        td {
+            mso-table-lspace: 0pt !important;
+            mso-table-rspace: 0pt !important;
+        }
+
+        /* What it does: Fixes webkit padding issue. */
+        table {
+            border-spacing: 0 !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            margin: 0 auto !important;
+        }
+
+        /* What it does: Uses a better rendering method when resizing images in IE. */
+        img {
+            -ms-interpolation-mode: bicubic;
+        }
+
+        /* What it does: Prevents Windows 10 Mail from underlining links despite inline CSS. Styles for underlined links should be inline. */
+        a {
+            text-decoration: none;
+        }
+
+        /* What it does: A work-around for email clients meddling in triggered links. */
+        *[x-apple-data-detectors],
+        /* iOS */
+        .unstyle-auto-detected-links *,
+        .aBn {
+            border-bottom: 0 !important;
+            cursor: default !important;
+            color: inherit !important;
+            text-decoration: none !important;
+            font-size: inherit !important;
+
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }
+
+        /* What it does: Prevents Gmail from displaying a download button on large, non-linked images. */
+        .a6S {
+            display: none !important;
+            opacity: 0.01 !important;
+        }
+
+        /* What it does: Prevents Gmail from changing the text color in conversation threads. */
+        .im {
+            color: inherit !important;
+        }
+
+        /* If the above doesn't work, add a .g-img class to any image in question. */
+        img.g-img+div {
+            display: none !important;
+        }
+
+        /* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89  */
+        /* Create one of these media queries for each additional viewport size you'd like to fix */
+
+        /* iPhone 4, 4S, 5, 5S, 5C, and 5SE */
+        @media only screen and (min-device-width: 320px) and (max-device-width: 374px) {
+            u~div .email-container {
+                min-width: 320px !important;
+            }
+        }
+
+        /* iPhone 6, 6S, 7, 8, and X */
+        @media only screen and (min-device-width: 375px) and (max-device-width: 413px) {
+            u~div .email-container {
+                min-width: 375px !important;
+            }
+        }
+
+        /* iPhone 6+, 7+, and 8+ */
+        @media only screen and (min-device-width: 414px) {
+            u~div .email-container {
+                min-width: 414px !important;
+            }
+        }
+    </style>
+
+    <!-- CSS Reset : END -->
+
+    <!-- Progressive Enhancements : BEGIN -->
+    <style>
+        /* What it does: Hover styles for buttons */
+        .primary {
+            background: #448ef6;
+        }
+
+        .bg_white {
+            background: #ffffff;
+        }
+
+        .bg_light {
+            background: #fafafa;
+        }
+
+        .bg_black {
+            background: #000000;
+        }
+
+        .bg_dark {
+            background: rgba(0, 0, 0, .8);
+        }
+
+
+
+        .header {
+            padding: 0.4rem 1.5em;
+            background-image: url("https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Back-Ground.png");
+            background-repeat: no-repeat;
+            background-position: 40%;
+
+        }
+
+        /*BUTTON*/
+        .btn {
+            padding: 5px 15px;
+            display: inline-block;
+        }
+
+        .btn.btn-primary {
+            border-radius: 30px;
+            background: #448ef6;
+            color: #ffffff;
+        }
+
+        .btn.btn-white {
+            border-radius: 30px;
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .btn.btn-white-outline {
+            border-radius: 30px;
+            background: transparent;
+            border: 1px solid #fff;
+            color: #fff;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Nunito Sans', sans-serif;
+            color: #000000;
+            margin-top: 0;
+            font-weight: 400;
+        }
+
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            font-weight: 400;
+            font-size: 15px;
+            line-height: 1.8;
+            color: rgba(0, 0, 0, .4);
+        }
+
+        a {
+            color: #448ef6;
+        }
+
+        table {}
+
+        /*LOGO*/
+
+        .logo {
+            margin: 0;
+            display: inline-block;
+            position: absolute;
+            top: 10px;
+            left: 0;
+            right: 0;
+            margin-bottom: 0;
+        }
+
+        .logo a {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+
+            display: inline-block;
+            border: 2px solid #fff;
+            line-height: 1.3;
+            padding: 10px 15px 4px 15px;
+            margin: 0;
+        }
+
+        .logo h1 a span {
+            line-height: 1;
+        }
+
+        .navigation {
+            padding: 0;
+        }
+
+        .navigation li {
+            list-style: none;
+            display: inline-block;
+            ;
+            margin-left: 5px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .navigation li a {
+            color: rgba(0, 0, 0, .4);
+        }
+
+        /*HERO*/
+        .hero {
+            position: relative;
+            z-index: 0;
+        }
+
+        .hero .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            content: '';
+            width: 100%;
+            background: #000000;
+            z-index: -1;
+            opacity: .3;
+        }
+
+        .hero .text {
+            color: rgba(255, 255, 255, .9);
+        }
+
+        .hero .text h2 {
+            color: #fff;
+            font-size: 40px;
+            margin-bottom: 0;
+            font-weight: 600;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .hero .text h2 span {
+            font-weight: 600;
+            color: #448ef6;
+        }
+
+
+        /*HEADING SECTION*/
+        .heading-section {}
+
+        .heading-section h2 {
+            color: #000000;
+            font-size: 28px;
+            margin-top: 0;
+            line-height: 1.4;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .heading-section .subheading {
+            margin-bottom: 20px !important;
+            display: inline-block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(0, 0, 0, .4);
+            position: relative;
+        }
+
+        .heading-section .subheading::after {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -10px;
+            content: '';
+            width: 100%;
+            height: 2px;
+            background: #448ef6;
+            margin: 0 auto;
+        }
+
+        .heading-section-white {
+            color: rgba(255, 255, 255, .8);
+        }
+
+        .heading-section-white h2 {
+            line-height: 1;
+            padding-bottom: 0;
+        }
+
+        .heading-section-white h2 {
+            color: #ffffff;
+        }
+
+        .heading-section-white .subheading {
+            margin-bottom: 0;
+            display: inline-block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, .4);
+        }
+
+
+        /*BLOG*/
+        .blog-entry {
+            border: 1px solid red;
+            padding-bottom: 30px !important;
+        }
+
+        .text-blog .meta {
+            text-transform: uppercase;
+            font-size: 13px;
+            margin-bottom: 0;
+        }
+
+        /*FOOTER*/
+
+        .footer {
+            color: rgba(255, 255, 255, .5);
+
+        }
+
+        .footer .heading {
+            color: #ffffff;
+            font-size: 20px;
+        }
+
+        .footer ul {
+            margin: 0;
+            padding: 0;
+        }
+
+        .footer ul li {
+            list-style: none;
+            margin-bottom: 10px;
+        }
+
+        .footer ul li a {
+            color: rgba(255, 255, 255, 1);
+        }
+
+        .footerlg {
+            display: block;
+        }
+
+        .footersm {
+            display: none;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .heading {
+                font-size: 1.5em;
+            }
+
+            .sub {
+                font-size: 1em;
+            }
+
+            .price {
+                width: 50%;
+            }
+
+            .details {
+                width: 100%;
+            }
+
+            .pdimg {
+                width: 50%;
+            }
+
+        }
+
+        .heading {
+            color: #2F348B;
+
+            font-family: 'Noto Serif' !important;
+
+        }
+
+        .sub {
+            color: #D85163;
+            margin-top: -14px;
+        }
+
+        .summary {
+            color: #D85163;
+            margin-top: -16px;
+            font-family: 'Noto Serif' !important;
+            font-size: 14px;
+        }
+
+        .data {
+            color: black;
+            margin-top: -16px;
+            font-size: 14px;
+        }
+
+        .datasright {
+            color: gray;
+            margin-top: -16px;
+            margin-left: 10%;
+        }
+
+        .datas {
+            color: gray;
+            margin-top: -16px;
+        }
+
+        .data:last-child {
+
+            color: #D85163;
+
+        }
+
+        .datas:first-child {
+
+            margin-top: auto;
+
+        }
+
+        .datasright:first-child {
+
+            margin-top: auto;
+
+        }
+
+        .padd {
+            padding: 40px;
+            background-color: #3f4491e3;
+            color: white;
+        }
+
+        .padds {
+            padding: 10px 40px;
+
+        }
+
+        .image {
+            width: 45%
+        }
+
+        .none {
+            width: 44%
+        }
+
+        .show {
+            width: 45%;
+
+        }
+
+        @media only screen and (max-width: 600px) {
+            .padd {
+                padding: 20px;
+
+            }
+
+            .padds {
+                padding: 10px 20px;
+            }
+
+            .image {
+                width: 100%
+            }
+
+            .none {
+                width: 0%
+            }
+
+            .show {
+                width: 40%;
+
+            }
+
+            .datasright {
+                text-align: right;
+            }
+
+            .footerlg {
+                display: none;
+            }
+
+            .footersm {
+                display: block;
+            }
+        }
+
+        @media screen and (max-width: 500px) {}
+    </style>
+
+
+</head>
+
+<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #222222;">
+    <center style="width: 100%; background-color: #f1f1f1;">
+
+        <div
+            style="display: none; font-size: 1px;max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
+            &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+        </div>
+        <div style="max-width: 800px; margin: 0 auto;overflow: hidden;" class="email-container">
+            <!-- BEGIN BODY -->
+            <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+                style="margin: auto;">
+                <tr>
+                    <td class="hero bg_white">
+
+                        <table>
+                            <tr>
+                                <td>
+                                    <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Logo.png"
+                                        style="height: 100px;width: 200px;object-fit: cover;" alt="logo" />
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="bg_white header">
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td style="padding-bottom: 30px;">
+                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                        <td valign="middle" style="width: 45%;">
+                                            <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Truck.png"
+                                                alt="" style="width: 100%; height: 100%;">
+                                        </td>
+                                        <td valign="middle" width="100%">
+                                            <div class="text-blog">
+
+                                                <h1 class="heading" style="display: inline-block;">Your Order is On its
+                                                    Way!</h1>
+                                                <h2 class="sub" style="text-align: center;">We're happy to tell you that
+                                                    <br />
+                                                    your order has been shipped
+                                                </h2>
+
+
+                                            </div>
+                                        </td>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="bg_white padds">
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td style="padding-bottom: 0px;">
+                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+
+                                        <td valign="middle" width="100%">
+                                            <div class="text-blog">
+                                                <h1 style="display: inline-block;font-family: 'Noto Serif'">Hello
+                                                    <%= address.firstname %>,
+                                                </h1>
+
+                                                <p style="color: black;margin-top: -20px;">
+                                                    Thank you for placing your order with STYLORI, your order has been
+                                                    successfully dipatched!
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </table>
+                                </td>
+                            </tr>
+
+                        </table>
+                        <br />
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td align="left">
+                                    <p class="summary">ORDER SUMMARY</p>
+
+                                </td>
+                                <td align="right">
+                                    <p class="data" style="color: black;">Order Placed On: <%= order_time %>
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td align="right">
+                                    <p class="data" style="white-space: nowrap;">Payment Method:<%= payment_mode %>
+                                    </p>
+                                    <p class="data" style="white-space: nowrap;">Order Number:#<%= order_id %>9</p>
+                                </td>
+
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+
+                    <td class="bg_white email-section">
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td class="padds">
+                                    <% order_items.forEach(function(item){ %>
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0"
+                                            width="100%" style="border-bottom: 1px solid #c1c1c1">
+
+                                            <td valign="middle" align="right" class="pdimg">
+                                                <div style="border:1px solid #c1c1c1;margin-right: 12px;" class="image">
+                                                    <img src=<%- item.image_url %>
+                                                    alt=""
+                                                    style="width: 100%; max-width: 600px; height: 100px;object-fit:
+                                                    contain; margin: auto; display: block;">
+                                                </div>
+                                                <br />
+                                            </td>
+                                            <td valign="middle" class="details">
+                                                <div class="text-blog" style="text-align: left; padding-left:25px;">
+
+                                                    <p class="datas">
+                                                        <%- item.name %>
+                                                    </p>
+                                                    <p class="datas">#<%- item.sku_id %>
+                                                    </p>
+                                                    <p class="datas">
+                                                        <%- item.ships_by%>
+                                                    </p>
+
+                                                </div>
+                                            </td>
+                                            <td valign="middle" class="price">
+                                                <p class="datas">&nbsp;&nbsp;&nbsp;&#8377;<%- item.price%>
+                                                </p>
+                                                <p class="datas">&nbsp;&nbsp;&nbsp;<strike>&#8377;<%-
+                                                            item.discount_price%></strike>
+                                                </p>
+                                            </td>
+
+                                        </table>
+                                        <% }); %>
+                                </td>
+
+                            </tr>
+
+                            <tr>
+                                <td class="padds">
+                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                                        style="border-bottom: 1px solid #c1c1c1">
+                                        <td valign="middle" class="none">
+
+                                        </td>
+                                        <td valign="middle" align="left" width="100%">
+                                            <p class="datas">&nbsp;</p>
+                                            <p class="datas">SUB TOTAL</p>
+                                            <% if (discount) { %>
+                                                <p class="datas" style="margin-top: 12px;white-space: nowrap;">CART
+                                                    DISCOUNT
+                                                </p>
+                                                <% } %>
+                                                    <p class="datas" style="white-space: nowrap;">SHIPPING
+                                                        CHARGES(Standard)
+                                                    </p>
+                                                    <br />
+                                        </td>
+                                        <td valign="middle" class="show">
+
+                                        </td>
+
+
+                                        <td valign="middle" align="left" width="100%">
+                                            <p class="datasright">&#8377;<%= gross_total %>
+                                            </p>
+                                            <% if (discount) { %>
+                                                <p class="datasright" style="margin-top: 12px;">
+                                                    <%= discount %>
+                                                </p>
+                                                <% } %>
+                                                    <p class="datasright">FREE</p>
+                                        </td>
+
+
+                                    </table>
+                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                                        style="border-bottom: 1px solid #c1c1c1">
+                                        <td valign="middle" class="none">
+
+                                        </td>
+                                        <td valign="middle" align="left" width="100%">
+                                            <p class="datas">&nbsp;</p>
+                                            <h3 class="datas"><b>TOTAL COST</b></h3>
+                                            <h3 class="datas" style="margin-top: 12px;color: #D85163;"><b>GRAND
+                                                    TOTAL</b></h3>
+                                            <br />
+                                        </td>
+                                        <td valign="middle" class="show">
+
+                                        </td>
+
+                                        <td valign="middle" width="100%">
+                                            <h3 class="datasright"><b>&#8377; <%= discounted_price %></b></h3>
+                                            <h3 class="datasright" style="margin-top: 12px;color: #D85163;"><b>&#8377;
+                                                    <%= discounted_price %>
+                                                </b>
+                                            </h3>
+                                        </td>
+
+                                    </table>
+                                    <span style="color: black;">*Inclusive of all taxes.</span>
+                                </td>
+
+
+                            </tr>
+
+
+                        </table>
+                    </td>
+
+                </tr>
+
+                <br />
+
+            </table>
+            <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+                style="margin: auto;">
+                <tr>
+                    <td class="bg_white padd">
+                        <h2 style="color: white;font-family: 'Noto Serif' ;font-weight: bold;margin-bottom: -6px;">
+                            SHIPPING ADDRESS:</h2>
+                        <p
+                            style="text-transform: capitalize;line-height: 15px;margin-top: -8px;text-decoration: none;color: white;">
+                            <%= address.firstname %>
+                                <%= address.lastname %>
+                                    <br />
+                                    <%= address.addressline1 %><br />
+                                        <% if (address.addressline2) { %>
+                                            <%= address.addressline2 %><br />
+                                                <% } %>
+                                                    <%= address.city %>,<%= address.state %><br />
+                                                            <%= address.country %> - <%= address.pincode %>.
+                                                                    <br />
+                                                                    <br />
+                                                                    You can visit
+                                                                    https://www.stylori.com/account-allorders to view
+                                                                    your order status
+                                                                    and to
+                                                                    contact us
+                                                                    regarding this order.
+                                                                    <br />
+                                                                    <br />
+                                                                    Should you find the details of the order incorrect,
+                                                                    please feel free to call us at
+                                                                    99526
+                                                                    25252 or email us at
+                                                                    hello@stylori.com
+                        </p>
+                        <br />
+                        <h3 style="color: white;font-weight: bold;margin-bottom: -6px;">TEAM NAC,</h3>
+                        <h3 style="color: white;font-weight: bold;margin-bottom: -6px;">WITH LOVE</h3>
+                    </td>
+                </tr>
+            </table>
+            <div class="footerlg">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+                    style="margin: auto;">
+                    <tr>
+                        <td class="header ">
+
+                            <table>
+                                <tr>
+                                    <td align="left" style="width: 100%;">
+                                        <p style="display: flex;align-items: center;"><img
+                                                src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Logo_Without-Text.png"
+                                                height="40px" /><span style="color: #D85163;">&nbsp;&nbsp;Tag
+                                                @ nacjewellers to get featured</span></p>
+
+                                    </td>
+                                    <td>
+
+                                    </td>
+
+                                    <td align="right" style="width: 50%;">
+                                        <p style="display: flex;align-items: center;"><span
+                                                style="color: #D85163;">&nbsp;&nbsp;Follow&nbsp;Us</span><img
+                                                src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/FB.png"
+                                                height="40px" />
+                                            <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Twitter.png"
+                                                height="40px" />
+                                            <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Instagram.png"
+                                                height="40px" />
+                                            <span style="color: #D85163;">&nbsp;&nbsp;#&nbsp;nacjewellers</span>
+                                        </p>
+                                    </td>
+
+                                </tr>
+                            </table>
+
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="footersm" style="overflow: hidden;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+                    style="margin: auto;">
+                    <tr>
+                        <td class="header ">
+
+                            <table>
+                                <tr>
+                                    <td align="left" style="width: 100%;">
+                                        <p style="display: flex;align-items: center;"><img
+                                                src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Logo_Without-Text.png"
+                                                height="40px" /><span style="color: #D85163;">&nbsp;&nbsp;Tag
+                                                @ nacjewellers to get featured</span></p>
+
+                                    </td>
+
+
+                                </tr>
+                                <tr>
+
+
+                                    <td align="right" style="width: 100%;">
+                                        <p style="display: flex;align-items: center;"><span
+                                                style="color: #D85163;">&nbsp;&nbsp;Follow&nbsp;Us</span><img
+                                                src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/FB.png"
+                                                height="40px" />
+                                            <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Twitter.png"
+                                                height="40px" />
+                                            <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Instagram.png"
+                                                height="40px" />
+                                            <span style="color: #D85163;">&nbsp;&nbsp;#&nbsp;nacjewellers</span>
+                                        </p>
+                                    </td>
+
+                                </tr>
+                            </table>
+
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+    </center>
+</body>
+
+</html>

@@ -103,6 +103,7 @@ module.exports = function (app) {
   app.post("/generatepaymenturl", cartcontroller.generatepaymenturl);
   app.post("/paymentsuccess", cartcontroller.paymentsuccess);
   app.post("/paymentfailure", cartcontroller.paymentfailure);
+  app.post("/paymentipn", cartcontroller.payment_ipn_callback);
 
   app.post("/updateattributes", productupdatecontroller.updateattributes);
 
@@ -433,7 +434,7 @@ module.exports = function (app) {
                     let productSearch = response["data"]["product_list"];
                     let skuSearch = response["data"]["sku_list"];
                     let seoSearch = response["data"]["seo_list"];
-                    
+
                     let productArray = [];
                     let skuArray = [];
                     let seoArray = [];
@@ -1031,6 +1032,24 @@ module.exports = function (app) {
       res.status(200).send(await otpController.verifyOtp(req.body));
     } catch (error) {
       res.status(error.statusCode || 500).send({ error: true, ...error });
+    }
+  });
+  app.post("/trigger_mail", cartcontroller.trigger_mail);
+  app.post("/send_error_mail", async (req, res) => {
+    try {
+      require("../models")
+        .ui_error_log.insert({
+          ...req.body,
+        })
+        .then((result) => {
+          res.status(200).send({ message: "Successfully Logged!" });
+        })
+        .catch((error) => {
+          res.status(500).send({ message: error.message });
+        });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({ message: error.message });
     }
   });
 };
