@@ -88,18 +88,8 @@ let sendOrderConfirmation = ({ order_id }) => {
           attributes: ["product_name"],
           include: {
             model: models.product_images,
-            attributes: [
-              [
-                models.sequelize.fn(
-                  "concat",
-                  process.env.baseimageurl,
-                  models.sequelize.col("image_url")
-                ),
-                "image_url",
-              ],
-            ],
+            attributes: ["image_url"],
             where: {
-              product_color: element.trans_sku_list.metal_color,
               image_position: 1,
             },
           },
@@ -115,10 +105,7 @@ let sendOrderConfirmation = ({ order_id }) => {
         order_items.push({
           price: element.price,
           sku_id: element.trans_sku_list.generated_sku,
-          image_url: product.product_images[0].image_url.replace(
-            `/product/${element.trans_sku_list.product_id}`,
-            `/product/${element.trans_sku_list.product_id}/500X500`
-          ),
+          image_url: product.product_images[0].image_url,
           name: product.product_name,
           discount_price: element.trans_sku_list.discount_price,
           ships_by,
