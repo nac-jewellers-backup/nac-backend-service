@@ -709,7 +709,9 @@ exports.productesearch = async (req, res) => {
     var products = await models.product_lists.findAll({
       attributes: ["product_id"],
       where: {
-        product_type: producttype_obj.attribute_value,
+        product_type: {
+          [models.Sequelize.Op.iLike]: producttype_obj.attribute_value,
+        },
       },
     });
 
