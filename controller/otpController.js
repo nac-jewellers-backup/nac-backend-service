@@ -1,6 +1,7 @@
 const models = require("../models");
 const { send_sms } = require("./notify/user_notify");
 const uuidv1 = require("uuid/v1");
+var jwt = require("jsonwebtoken");
 
 exports.sendOtp = ({ mobile_no }) => {
   return new Promise(async (resolve, reject) => {
@@ -83,7 +84,7 @@ exports.verifyOtp = ({ mobile_no, otp }) => {
   return new Promise((resolve, reject) => {
     models.user_profiles
       .findOne({
-        attributes: ["id", "otp"],
+        attributes: ["id", "email", "mobile"],
         where: { mobile: mobile_no, otp },
       })
       .then(async (profile) => {
@@ -92,9 +93,14 @@ exports.verifyOtp = ({ mobile_no, otp }) => {
             id: profile.id,
             otp: null,
           });
+          var token = jwt.sign({ id: profile.id }, process.env.SECRET, {
+            expiresIn: "1d", // expires in 24 hours
+          });
           resolve({
             status: 200,
             message: "OTP verified successfully!",
+            accessToken: token,
+            userprofile: profile,
           });
         } else {
           reject({
