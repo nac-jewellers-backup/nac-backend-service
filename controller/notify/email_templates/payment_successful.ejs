@@ -17,6 +17,7 @@
       <link href="https://fonts.googleapis.com/css?family=Josefin+Sans:300,400,600,700|Lato:300,400,700"
             rel="stylesheet">
 
+      <!-- CSS Reset : BEGIN -->
       <style>
             @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap');
 
@@ -124,17 +125,36 @@
             }
       </style>
 
+      <!-- CSS Reset : END -->
+
+      <!-- Progressive Enhancements : BEGIN -->
       <style>
+            /* What it does: Hover styles for buttons */
+            .primary {
+                  background: #448ef6;
+            }
+
             .bg_white {
                   background: #ffffff;
             }
 
+            .bg_light {
+                  background: #fafafa;
+            }
+
+            .bg_black {
+                  background: #000000;
+            }
+
+            .bg_dark {
+                  background: rgba(0, 0, 0, .8);
+            }
 
 
 
             .header {
                   padding: 0.4rem 1.5em;
-                  background-image: url("https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Back-Ground.png");
+                  background-image: url("https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/NAC_EMAIL_TEMPLATE/bgg1.png");
                   background-repeat: no-repeat;
                   background-position: 40%;
 
@@ -409,12 +429,12 @@
             }
 
             .sub {
-                  color: #D85163;
+                  color: #B78231;
                   margin-top: -14px;
             }
 
             .summary {
-                  color: #D85163;
+                  color: #2F348B;
                   margin-top: -16px;
                   font-family: 'Noto Serif' !important;
                   font-size: 14px;
@@ -439,7 +459,7 @@
 
             .data:last-child {
 
-                  color: #D85163;
+                  color: #2F348B;
 
             }
 
@@ -457,7 +477,7 @@
 
             .padd {
                   padding: 40px;
-                  background-color: #3f4491e3;
+                  background-color: #30328C;
                   color: white;
             }
 
@@ -538,8 +558,8 @@
                                     <table>
                                           <tr>
                                                 <td>
-                                                      <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Logo.png"
-                                                            style="height: 100px;width: 200px;object-fit: cover;"
+                                                      <img src="data:image/png;base64,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"
+                                                            style="height: 100px;width: 150px;object-fit: contain;"
                                                             alt="logo" />
                                                 </td>
                                           </tr>
@@ -561,10 +581,10 @@
                                                             <td valign="middle" width="100%">
                                                                   <div class="text-blog">
                                                                         <h1 class="heading"
-                                                                              style="display: inline-block;">
-                                                                              Payment
+                                                                              style="display: inline-block;">Payment
                                                                               Successful</h1>
                                                                         <h2 class="sub">Your order has been confirmed
+                                                                        </h2>
 
 
 
@@ -586,11 +606,9 @@
 
                                                             <td valign="middle" width="100%">
                                                                   <div class="text-blog">
-                                                                        <h1
-                                                                              style="display: inline-block;font-family: 'Noto Serif'">
-                                                                              Hello
-                                                                              <%= address.firstname %>,
-                                                                        </h1>
+                                                                        <h1 class="heading"
+                                                                              style=" color:#2F348B;display: inline-block;">
+                                                                              Hello <%= address.firstname %>,</h1>
 
                                                                         <p
                                                                               style="color: black;margin-top: -20px;font-weight: 600;">
@@ -602,9 +620,11 @@
 
                                                                   </div>
                                                             </td>
+
                                                       </table>
                                                 </td>
                                           </tr>
+
 
                                     </table>
                                     <div style="text-align: center;">
@@ -620,24 +640,21 @@
                                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                           <tr>
                                                 <td align="left">
-                                                      <p class="summary">ORDER SUMMARY</p>
+                                                      <p class="summary" style="color: #2F348B;">ORDER SUMMARY</p>
 
                                                 </td>
                                                 <td align="right">
-                                                      <p class="data" style="color: black;">Order Placed On: <%=
-                                                                  order_time %>
-                                                      </p>
+                                                      <p class="data" style="color: black;">Order Placed On: 22 Mar 2022
+                                                            14:38:39 </p>
                                                 </td>
                                           </tr>
                                           <tr>
                                                 <td></td>
                                                 <td align="right">
-                                                      <p class="data" style="white-space: nowrap;">Payment Method:<%=
-                                                                  payment_mode %>
-                                                      </p>
-                                                      <p class="data" style="white-space: nowrap;">Order Number: #<%=
-                                                                  order_id %>
-                                                      </p>
+                                                      <p class="data" style="white-space: nowrap;">Payment
+                                                            Method:Prepaid</p>
+                                                      <p class="data" style="white-space: nowrap;color: #D85163;">Order
+                                                            Number:#123457679</p>
                                                 </td>
 
                                           </tr>
@@ -650,49 +667,39 @@
                                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                           <tr>
                                                 <td class="padds">
-                                                      <% order_items.forEach(function(item){ %>
-                                                            <table role="presentation" border="0" cellpadding="0"
-                                                                  cellspacing="0" width="100%"
-                                                                  style="border-bottom: 1px solid #c1c1c1">
-                                                                  <td valign="middle" align="right" class="pdimg">
-                                                                        <div style="border:1px solid #c1c1c1;margin-right: 12px;"
-                                                                              class="image">
-                                                                              <img src=<%- item.image_url %>
+                                                      <table role="presentation" border="0" cellpadding="0"
+                                                            cellspacing="0" width="100%"
+                                                            style="border-bottom: 1px solid #c1c1c1">
+                                                            <td valign="middle" align="right" class="pdimg">
+                                                                  <div style="border:1px solid #c1c1c1;margin-right: 12px;"
+                                                                        class="image">
+                                                                        <img src="https://s3-ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/dist/jewellery/collection/youngones/bangle/165205.png"
                                                                               alt=""
-                                                                              style="width: 100%; max-width: 600px;
-                                                                              height:
-                                                                              100px;object-fit:
-                                                                              contain; margin: auto; display: block;">
-                                                                        </div>
-                                                                        <br />
-                                                                  </td>
-                                                                  <td valign="middle" class="details">
-                                                                        <div class="text-blog"
-                                                                              style="text-align: left; padding-left:25px;">
+                                                                              style="width: 100%; max-width: 600px; height: 100px;object-fit: contain; margin: auto; display: block;">
+                                                                  </div>
+                                                                  <br />
+                                                            </td>
+                                                            <td valign="middle" class="details">
+                                                                  <div class="text-blog"
+                                                                        style="text-align: left; padding-left:25px;">
 
-                                                                              <p class="datas">
-                                                                                    <%- item.name %>
-                                                                              </p>
-                                                                              <p class="datas">#<%- item.sku_id %>
-                                                                              </p>
-                                                                              <p class="datas">Expected Delivery -<%-
-                                                                                          item.ships_by%>
-                                                                              </p>
-
-                                                                        </div>
-                                                                  </td>
-                                                                  <td valign="middle" class="price">
-                                                                        <p class="datas">&nbsp;&nbsp;&nbsp;&#8377;&nbsp;
-                                                                              <%- item.price%>
+                                                                        <p class="datas">Winged Desires Diamond Ring
                                                                         </p>
-                                                                        <p class="datas">
-                                                                              &nbsp;&nbsp;&nbsp;<strike>&#8377;&nbsp;<%-
-                                                                                          item.discount_price%></strike>
-                                                                        </p>
-                                                                  </td>
+                                                                        <p class="datas">SR4964-14110000_12</p>
+                                                                        <p class="datas">Expected Delivery -11th to 15th
+                                                                              June</p>
 
-                                                            </table>
-                                                            <% }); %>
+                                                                  </div>
+                                                            </td>
+                                                            <td valign="middle" class="price">
+                                                                  <p class="datas">&nbsp;&nbsp;&nbsp;&#8377;&nbsp;23000
+                                                                  </p>
+                                                                  <p class="datas">
+                                                                        &nbsp;&nbsp;&nbsp;<strike>&#8377;&nbsp;34000</strike>
+                                                                  </p>
+                                                            </td>
+
+                                                      </table>
                                                 </td>
 
                                           </tr>
@@ -709,11 +716,16 @@
                                                                   <p class="datas">&nbsp;</p>
                                                                   <p class="datas">SUB TOTAL</p>
                                                                   <% if (discount) { %>
-                                                                        <p class="datas" style="margin-top: 12px;">
-                                                                              CART&nbsp;DISCOUNT</p>
+                                                                        <p class="datas"
+                                                                              style="margin-top: 12px;white-space: nowrap;">
+                                                                              CART DISCOUNT
+                                                                        </p>
                                                                         <% } %>
-                                                                              <p class="datas">
-                                                                                    SHIPPING&nbsp;CHARGES(Standard)</p>
+                                                                              <p class="datas"
+                                                                                    style="white-space: nowrap;">
+                                                                                    SHIPPING
+                                                                                    CHARGES(Standard)
+                                                                              </p>
                                                                               <br />
                                                             </td>
                                                             <td valign="middle" class="show">
@@ -731,7 +743,6 @@
                                                                         <% } %>
                                                                               <p class="datasright">
                                                                                     &nbsp;&nbsp;&nbsp;&nbsp;FREE</p>
-
                                                             </td>
 
 
@@ -743,10 +754,13 @@
                                                             </td>
                                                             <td valign="middle" align="left" width="100%">
                                                                   <p class="datas">&nbsp;</p>
-                                                                  <h3 class="datas"><b>TOTAL&nbsp;COST</b></h3>
+                                                                  <h3 class="datas" style="white-space: nowrap;">
+                                                                        <b>TOTAL COST</b>
+                                                                  </h3>
                                                                   <h3 class="datas"
-                                                                        style="margin-top: 12px;color: #D85163;">
-                                                                        <b>GRAND&nbsp;TOTAL</b>
+                                                                        style="margin-top: 12px;color: #B78231;white-space: nowrap;">
+                                                                        <b>GRAND
+                                                                              TOTAL</b>
                                                                   </h3>
                                                                   <br />
                                                             </td>
@@ -755,17 +769,20 @@
                                                             </td>
 
                                                             <td valign="middle" width="100%">
-                                                                  <p class="datasright">&#8377;&nbsp;<%=
-                                                                              discounted_price %>
-                                                                  </p>
+                                                                  <h3 class="datasright"><b>&#8377;&nbsp;<%=
+                                                                                    discounted_price %></b></h3>
                                                                   <h3 class="datasright"
-                                                                        style="margin-top: 12px;color: #D85163">
+                                                                        style="margin-top: 12px;color: #B78231">
                                                                         <b>&#8377;&nbsp;<%= discounted_price %></b>
                                                                   </h3>
                                                             </td>
 
                                                       </table>
-                                                      <span style="color: black;">*Inclusive of all taxes.</span>
+                                                      <div>
+                                                            <p align="left" style="color: #000000;text-align: left;">
+                                                                  *Inclusive of all taxes</p>
+                                                      </div>
+
                                                 </td>
 
 
@@ -774,6 +791,7 @@
 
                                     </table>
                               </td>
+
 
                         </tr>
 
@@ -784,9 +802,8 @@
                         style="margin: auto;">
                         <tr>
                               <td class="bg_white padd">
-                                    <h2
-                                          style="color: white;font-family: 'Noto Serif' ;font-weight: bold;margin-bottom: -6px;">
-                                          SHIPPING ADDRESS:</h2>
+                                    <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">SHIPPING ADDRESS:
+                                    </h3>
                                     <p
                                           style="text-transform: capitalize;line-height: 15px;margin-top: -8px;text-decoration: none;color: white;">
                                           <%= address.firstname %>
@@ -804,7 +821,7 @@
                                                                                                       <br />
                                                                                                       <br />
                                                                                                       You can visit
-                                                                                                      https://www.stylori.com/account-allorders
+                                                                                                      https://staging.nacjewellers.net/account-allorders
                                                                                                       to view
                                                                                                       your order status
                                                                                                       and to
@@ -821,11 +838,11 @@
                                                                                                       99526
                                                                                                       25252 or email us
                                                                                                       at
-                                                                                                      hello@stylori.com
+                                                                                                      care@nacjewellers.com
                                     </p>
                                     <br />
-                                    <h3 style="color: white;font-weight: bold;margin-bottom: -6px;">TEAM NAC,</h3>
-                                    <h3 style="color: white;font-weight: bold;margin-bottom: -6px;">WITH LOVE</h3>
+                                    <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">TEAM NAC,</h3>
+                                    <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">WITH LOVE</h3>
                               </td>
                         </tr>
                   </table>
@@ -837,11 +854,11 @@
 
                                           <table>
                                                 <tr>
-                                                      <td align="left" style="width: 100%;">
+                                                      <td align="left" style="width: 50%;">
                                                             <p style="display: flex;align-items: center;"><img
-                                                                        src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Logo_Without-Text.png"
+                                                                        src="https://staging.nacjewellers.net/logflower.svg"
                                                                         height="40px" /><span
-                                                                        style="color: #D85163;">&nbsp;&nbsp;Tag
+                                                                        style="color: #2F348B;">&nbsp;&nbsp;Tag
                                                                         @ nacjewellers to get featured</span></p>
 
                                                       </td>
@@ -851,15 +868,16 @@
 
                                                       <td align="right" style="width: 50%;">
                                                             <p style="display: flex;align-items: center;"><span
-                                                                        style="color: #D85163;">&nbsp;&nbsp;Follow&nbsp;Us</span><img
-                                                                        src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/FB.png"
+                                                                        style="color: #2F348B;">&nbsp;&nbsp;Follow
+                                                                        Us</span><img
+                                                                        src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/NAC_EMAIL_TEMPLATE/FB.png"
                                                                         height="40px" />
-                                                                  <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Twitter.png"
+                                                                  <img src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/NAC_EMAIL_TEMPLATE/Twitter.png"
                                                                         height="40px" />
-                                                                  <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Instagram.png"
+                                                                  <img src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/NAC_EMAIL_TEMPLATE/Instagram.png"
                                                                         height="40px" />
-                                                                  <span
-                                                                        style="color: #D85163;">&nbsp;&nbsp;#&nbsp;nacjewellers</span>
+                                                                  <span style="color: #2F348B;">&nbsp;&nbsp;#
+                                                                        nacjewellers</span>
                                                             </p>
                                                       </td>
 
@@ -870,7 +888,7 @@
                               </tr>
                         </table>
                   </div>
-                  <div class="footersm" style="overflow: hidden;">
+                  <div class="footersm">
                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
                               style="margin: auto;">
                               <tr>
@@ -880,9 +898,9 @@
                                                 <tr>
                                                       <td align="left" style="width: 100%;">
                                                             <p style="display: flex;align-items: center;"><img
-                                                                        src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Logo_Without-Text.png"
+                                                                        src="https://staging.nacjewellers.net/logflower.svg"
                                                                         height="40px" /><span
-                                                                        style="color: #D85163;">&nbsp;&nbsp;Tag
+                                                                        style="color: #2F348B;">&nbsp;&nbsp;Tag
                                                                         @ nacjewellers to get featured</span></p>
 
                                                       </td>
@@ -894,15 +912,16 @@
 
                                                       <td align="right" style="width: 100%;">
                                                             <p style="display: flex;align-items: center;"><span
-                                                                        style="color: #D85163;">&nbsp;&nbsp;Follow&nbsp;Us</span><img
-                                                                        src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/FB.png"
+                                                                        style="color: #2F348B;">&nbsp;&nbsp;Follow
+                                                                        Us</span><img
+                                                                        src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/NAC_EMAIL_TEMPLATE/FB.png"
                                                                         height="40px" />
-                                                                  <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Twitter.png"
+                                                                  <img src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/NAC_EMAIL_TEMPLATE/Twitter.png"
                                                                         height="40px" />
-                                                                  <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/stylori_email_template/Instagram.png"
+                                                                  <img src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/NAC_EMAIL_TEMPLATE/Instagram.png"
                                                                         height="40px" />
-                                                                  <span
-                                                                        style="color: #D85163;">&nbsp;&nbsp;#&nbsp;nacjewellers</span>
+                                                                  <span style="color: #2F348B;">&nbsp;&nbsp;#
+                                                                        nacjewellers</span>
                                                             </p>
                                                       </td>
 
