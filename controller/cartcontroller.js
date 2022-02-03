@@ -1754,7 +1754,7 @@ exports.trigger_mail = async (req, res) => {
   let { order_id, type } = req.body;
   try {
     if (type === "order") {
-      await sendOrderConfirmation({ order_id });
+      await sendorderconformationemail(order_id);
     }
     if (type === "shipping") {
       await sendShippingConfirmation({ order_id });
