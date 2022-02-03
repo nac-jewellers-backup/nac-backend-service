@@ -54,6 +54,11 @@ let product_attributes = {
     requestKey: "hashtags",
     attributes: "hash_tag",
   },
+  product_purities: {
+    models: models.product_purities,
+    requestKey: "purity",
+    attributes: "purity",
+  },
 };
 
 let updateProductAttributes = ({ product_id, data }) => {
@@ -68,7 +73,7 @@ let updateProductAttributes = ({ product_id, data }) => {
               attributes,
             } = product_attributes[item];            
             let attribute_values = data[requestKey]
-              ? data[requestKey].split(",").filter((x) => x.length > 0)
+              ? data[requestKey].toString().split(",").filter((x) => x.length > 0)
               : [];
             if (attribute_values.length > 0) {
               /* Soft delete all attributes */
@@ -212,6 +217,7 @@ let updateTransSkuLists = ({ product_id, data }) => {
       is_ready_to_ship: data.is_ready_to_ship,
       purity: data.purity,
       selling_price: data.selling_price,
+      is_active: data.is_active,
     };
 
     if (data.markup_price) {
@@ -251,6 +257,7 @@ let updateProduct = ({ product_id, data }) => {
     models.product_lists
       .update(
         {
+          product_name: data.name,
           product_category: data["categories"],
           product_type: data["type"],
           length: data["length"] ? Number(data["length"]) : null,
@@ -259,6 +266,7 @@ let updateProduct = ({ product_id, data }) => {
           size_varient: data["size_variant"],
           colour_varient: data["color_varient"],
           gender: data["gender"],
+          isactive: data.is_active,
         },
         {
           where: {
