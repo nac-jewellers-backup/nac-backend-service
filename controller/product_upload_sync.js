@@ -71,9 +71,12 @@ let updateProductAttributes = ({ product_id, data }) => {
               models: model,
               requestKey,
               attributes,
-            } = product_attributes[item];            
+            } = product_attributes[item];
             let attribute_values = data[requestKey]
-              ? data[requestKey].toString().split(",").filter((x) => x.length > 0)
+              ? data[requestKey]
+                  .toString()
+                  .split(",")
+                  .filter((x) => x.length > 0)
               : [];
             if (attribute_values.length > 0) {
               /* Soft delete all attributes */
@@ -206,19 +209,124 @@ let updateDiamondOrGemstones = ({ product_id, data, type }) => {
   });
 };
 
-let updateTransSkuLists = ({ product_id, data }) => {
+let updateInventory = ({ product_id, data }) => {
   return new Promise((resolve, reject) => {
-    let updateData = {
-      item_id: data.item_id,
-      diamond_type: data.diamond_type,
-      metal_color: data.metal_color,
-      minimum_order_quantity: data?.minimum_order_quantity,
-      maximum_order_quantity: data?.maximum_order_quantity,
-      is_ready_to_ship: data.is_ready_to_ship,
-      purity: data.purity,
-      selling_price: data.selling_price,
-      is_active: data.is_active,
-    };
+    models.warehouse
+      .findOne({ where: { name: data.COSTNAME } })
+      .then((warehouse) => {
+        if (warehouse) {
+          models.inventory
+            .findOne({
+              attributes: ["id"],
+              where: {
+                generated_sku: data.SKU,
+                warehouse_id: warehouse.id,
+              },
+            })
+            .then(async (result) => {
+              if (result) {
+                await models.inventory.update(
+                  {
+                    generated_sku: data.SKU,
+                    number_of_items: 1,
+                    warehouse_id: warehouse.id,
+                  },
+                  { where: { id: result.id } }
+                );
+              } else {
+                await models.inventory.create({
+                  id: uuidv1(),
+                  generated_sku: data.SKU,
+                  number_of_items: 1,
+                  warehouse_id: warehouse.id,
+                });
+              }
+              resolve("Inventory Added!");
+            })
+            .catch((err) => {
+              console.log(err);
+              reject(err);
+            });
+        } else {
+          reject("No Such Warehouse");
+        }
+      })
+      .catch((err) => reject(err));
+  });
+};
+
+let updatePricingSkuMetals = ({ product_id, data }) => {
+  return new Promise((resolve, reject) => {
+    Promise.all(
+      [
+        {
+          material_name: "goldprice",
+          rate: data.RATE,
+          selling_price: data.AMOUNT,
+        },
+        { material_name: "makingcharge", rate: 0, selling_price: data.MCAMT },
+        {
+          material_name: "wastage",
+          rate: data.WASTAGE,
+          selling_price: data.WASTAMT,
+        },
+      ].map(async (item) => {
+        models.pricing_sku_metals
+          .findOne({
+            where: { product_sku: data.SKU, material_name: item.material_name },
+          })
+          .then(async (pricing) => {
+            if (pricing) {
+              await models.pricing_sku_metals.update(item, {
+                where: { id: pricing.id },
+              });
+            } else {
+              await models.pricing_sku_metals.create({ ...item, id: uuidv1() });
+            }
+            return Promise.resolve(item.material_name);
+          })
+          .catch((err) => {
+            console.log(err);
+            return Promise.reject(err);
+          });
+      })
+    )
+      .then(resolve)
+      .catch(reject);
+  });
+};
+
+let updateGemStonePrice = ({ product_id, data }) => {
+  return new Promise((resolve, reject) => {});
+};
+
+let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
+  return new Promise((resolve, reject) => {
+    let updateData = {};
+    if (isDefault) {
+      updateData = {
+        item_id: data.item_id,
+        diamond_type: data.diamond_type,
+        metal_color: data.metal_color,
+        minimum_order_quantity: data?.minimum_order_quantity,
+        maximum_order_quantity: data?.maximum_order_quantity,
+        is_ready_to_ship: data.is_ready_to_ship,
+        purity: data.purity,
+        selling_price: data.selling_price,
+        is_active: data.is_ready_to_ship,
+      };
+    } else {
+      updateData = {
+        sku_weight:
+          data.CALCWT == "GROSS" ? Number(data.GRSWT) : Number(data.NETWT),
+        gross_weight: Number(data.GRSWT),
+        net_weight: Number(data.NETWT),
+        calc_type: `${data.CALCWT}-${data.CALCTYPE}`,
+        metal_rate: Number(data.RATE),
+        selling_price: Number(data.SALVALUE) * (1 + 3 / 100),
+        selling_price_tax: Number(data.SALVALUE) * (3 / 100),
+      };
+    }
 
     if (data.markup_price) {
       updateData["markup_price"] = Number(data.markup_price);
@@ -342,6 +450,36 @@ export let product_upload_sync = ({ data, type }) => {
           }
         } else {
           reject(`${data.tag_no} is not synced`);
+        }
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
+
+export let product_pricing_sync = ({ data }) => {
+  return new Promise((resolve, reject) => {
+    getProductId(data)
+      .then(({ product_id }) => {
+        if (product_id) {
+          updateTransSkuLists(
+            {
+              product_id,
+              data: { ...data, tag_no: data.SKU },
+            },
+            false
+          ).then((_) => {
+            Promise.all(
+              [updateInventory, updatePricingSkuMetals].map(async (item) => {
+                return await item({ product_id, data });
+              })
+            )
+              .then(resolve)
+              .catch(reject);
+          });
+        } else {
+          reject(`${data.SKU} is not synced`);
         }
       })
       .catch((err) => {
