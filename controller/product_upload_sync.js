@@ -374,7 +374,7 @@ let updateProduct = ({ product_id, data }) => {
           size_varient: data["size_variant"],
           colour_varient: data["color_varient"],
           gender: data["gender"],
-          isactive: data.is_active,
+          isactive: data.is_ready_to_ship,
         },
         {
           where: {
