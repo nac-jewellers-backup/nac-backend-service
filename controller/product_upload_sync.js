@@ -417,8 +417,8 @@ let getProductId = (data) => {
   });
 };
 
-export let product_upload_sync = ({ data, type }) => {
-  return new Promise((resolve, reject) => {
+export let product_upload_sync = ({ data, type }) => {  
+  return new Promise((resolve, reject) => {    
     getProductId(data)
       .then(({ product_id }) => {
         if (product_id) {
