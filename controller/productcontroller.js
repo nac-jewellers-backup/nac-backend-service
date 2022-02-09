@@ -2262,6 +2262,11 @@ exports.csvDownload = (req, res) => {
             name: hashTag
           }
         }
+        images: productImagesByProductId {
+          nodes {
+            imageUrl
+          }
+        }
         skus: transSkuListsByProductId {
           nodes {
             tagNo: generatedSku
@@ -2386,6 +2391,7 @@ exports.csvDownload = (req, res) => {
                     hashtags: item.hashtags.nodes.map((i) => i.name).join(","),
                     diamonds,
                     gemstones,
+                    images: item.images.nodes.map((i) => i.imageUrl).join(","),
                   });
                 }
               }
