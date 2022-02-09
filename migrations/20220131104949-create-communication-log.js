@@ -15,6 +15,13 @@ module.exports = {
           key: "id",
         },
       },
+      cart_id: {
+        type: Sequelize.UUID,
+        references: {
+          model: "shopping_carts", // name  Source model
+          key: "id",
+        },
+      },
       type: {
         type: Sequelize.STRING,
       },

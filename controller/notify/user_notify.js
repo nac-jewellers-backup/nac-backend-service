@@ -88,7 +88,7 @@ const SendMail = (mails, bodycontent) => {
               },
             ],
             from: {
-              email: "Stylori <alert@stylori.com>", //process.env.senderemail,
+              email: "NAC Jewellers <hello@nacjewellers.com>", //process.env.senderemail,
             },
             subject: mail.subject,
             content: [

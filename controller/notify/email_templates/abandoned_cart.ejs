@@ -604,8 +604,8 @@
 
                                         <td valign="middle" width="100%">
                                             <div class="text-blog">
-                                                <h1 class="heading" style="display: inline-block;">Hello <%=
-                                                        address.firstname %>,</h1>
+                                                <h1 class="heading" style="display: inline-block;">Hello <%= firstname
+                                                        %>,</h1>
 
                                                 <p style="color: black;margin-top: -20px;">Have a question about
                                                     items?React out to our customer care to have your questions
@@ -625,23 +625,13 @@
                         <table border="0" cellpadding="0" cellspacing="0" width="100%">
                             <tr>
                                 <td align="left">
-                                    <p class="summary">ORDER SUMMARY</p>
+                                    <p class="summary">CART SUMMARY</p>
 
                                 </td>
                                 <td align="right">
-                                    <p class="data" style="color: black;">Order Placed On: <%= order_time %>
+                                    <p class="data" style="color: black;">Cart added On: <%= order_time %>
                                     </p>
                                 </td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                                <td align="right">
-                                    <p class="data" style="white-space: nowrap;">Payment Method:<%= payment_mode %>
-                                    </p>
-                                    <p class="data" style="white-space: nowrap;">Order Number:#<%= order_id %>
-                                    </p>
-                                </td>
-
                             </tr>
                         </table>
                     </td>
@@ -787,38 +777,41 @@
                 style="margin: auto;">
                 <tr>
                     <td class="bg_white padd">
-                        <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">SHIPPING ADDRESS:</h3>
-                        <p
-                            style="text-transform: capitalize;line-height: 15px;margin-top: -8px;text-decoration: none;color: white;">
-                            <%= address.firstname %>
-                                <%= address.lastname %>
-                                    <br />
-                                    <%= address.addressline1 %><br />
-                                        <% if (address.addressline2) { %>
-                                            <%= address.addressline2 %><br />
-                                                <% } %>
-                                                    <%= address.city %>,<%= address.state %><br />
-                                                            <%= address.country %> - <%= address.pincode %>.
-                                                                    <br />
-                                                                    <br />
-                                                                    You can visit
-                                                                    https://staging.nacjewellers.net/account-allorders
-                                                                    to view
-                                                                    your order status
-                                                                    and to
-                                                                    contact us
-                                                                    regarding this order.
-                                                                    <br />
-                                                                    <br />
-                                                                    Should you find the details of the order incorrect,
-                                                                    please feel free to call us at
-                                                                    99526
-                                                                    25252 or email us at
-                                                                    care@nacjewellers.com
-                        </p>
-                        <br />
-                        <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">TEAM NAC,</h3>
-                        <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">WITH LOVE</h3>
+                        <% if (address) { %>
+                            <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">SHIPPING ADDRESS:</h3>
+                            <p
+                                style="text-transform: capitalize;line-height: 15px;margin-top: -8px;text-decoration: none;color: white;">
+                                <%= address.firstname %>
+                                    <%= address.lastname %>
+                                        <br />
+                                        <%= address.addressline1 %><br />
+                                            <% if (address.addressline2) { %>
+                                                <%= address.addressline2 %><br />
+                                                    <% } %>
+                                                        <%= address.city %>,<%= address.state %><br />
+                                                                <%= address.country %> - <%= address.pincode %>.
+                                                                        <br />
+                                                                        <br />
+                                                                        <% } %>
+                                                                            You can visit
+                                                                            https://staging.nacjewellers.net/account-allorders
+                                                                            to view
+                                                                            your order status
+                                                                            and to
+                                                                            contact us
+                                                                            regarding this order.
+                                                                            <br />
+                                                                            <br />
+                                                                            Should you find the details of the order
+                                                                            incorrect,
+                                                                            please feel free to call us at
+                                                                            99526
+                                                                            25252 or email us at
+                                                                            care@nacjewellers.com
+                            </p>
+                            <br />
+                            <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">TEAM NAC,</h3>
+                            <h3 style="color: #B78231;font-weight: bold;margin-bottom: -6px;">WITH LOVE</h3>
                     </td>
                 </tr>
             </table>

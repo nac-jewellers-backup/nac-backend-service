@@ -4,6 +4,7 @@ const models = require("./../../../models");
 const moment = require("moment");
 import { getShippingDate } from "../../inventorycontroller";
 const { sendMail } = require("../user_notify");
+var addresstypes = [1, 3];
 
 let createTemplate = ({ type, data }) => {
   return new Promise((resolve, reject) => {
@@ -455,10 +456,145 @@ let sendRateProduct = ({ order_id }) => {
   });
 };
 
+let sendAbandonedCart = ({ cart_id, first_name }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let cart_details = await models.shopping_cart.findOne({
+        attributes: [
+          "createdAt",
+          "gross_amount",
+          "discounted_price",
+          "discount",
+        ],
+        include: [
+          { model: models.user_profiles, attributes: ["email", "first_name"] },
+          {
+            model: models.shopping_cart_item,
+            attributes: ["price"],
+            include: [
+              {
+                model: models.trans_sku_lists,
+                attributes: [
+                  "sku_id",
+                  "discount_price",
+                  "generated_sku",
+                  "metal_color",
+                  "product_id",
+                ],
+              },
+            ],
+          },
+          {
+            model: models.cart_address,
+            required: false,
+            attributes: [
+              "firstname",
+              "lastname",
+              "addressline1",
+              "addressline2",
+              "city",
+              "state",
+              "country",
+              "pincode",
+            ],
+            where: {
+              address_type: {
+                [models.Sequelize.Op.in]: addresstypes,
+              },
+            },
+          },
+        ],
+        where: {
+          id: cart_id,
+        },
+      });
+
+      let order_items = [];
+      for (let i = 0; i < cart_details.shopping_cart_items.length; i++) {
+        let element = cart_details.shopping_cart_items[i];
+        let product = await models.product_lists.findOne({
+          where: { product_id: element.trans_sku_list.product_id },
+          attributes: ["product_name"],
+          include: {
+            model: models.product_images,
+            attributes: ["image_url"],
+            where: {
+              image_position: 1,
+            },
+          },
+        });
+        let ships_by = moment
+          .tz(
+            await getShippingDate({
+              sku_id: element.trans_sku_list.sku_id,
+              current_datetime: new Date(),
+            }).shipping_date
+          )
+          .format("DD MMMM YYYY");
+        order_items.push({
+          price: element.price,
+          sku_id: element.trans_sku_list.generated_sku,
+          image_url: product.product_images[0].image_url,
+          name: product.product_name,
+          discount_price: element.trans_sku_list.discount_price,
+          ships_by,
+        });
+      }
+
+      let email_template_body = {
+        firstname:
+          first_name ||
+          cart_details?.user_profile?.first_name ||
+          cart_details?.cart_addresses?.[0]?.firstname,
+        order_time: moment
+          .tz(cart_details.createdAt, "Asia/Kolkata")
+          .format("DD MMM YYYY HH:mm:ss"),
+        order_items,
+        address: cart_details.cart_addresses[0],
+        gross_total: cart_details.gross_amount,
+        discount: cart_details.discount,
+        discounted_price: cart_details.discounted_price,
+      };
+
+      var emilreceipiants = [
+        {
+          to: cart_details.user_profile.email,
+          subject: "You left some items in your cart",
+        },
+        {
+          to: process.env.adminemail,
+          subject: "You left some items in your cart",
+        },
+      ];
+
+      sendMail(
+        emilreceipiants,
+        await createTemplate({
+          type: "abandoned_cart",
+          data: email_template_body,
+        })
+      ).then(async (result) => {
+        let { response } = result;
+        await models.communication_log.create({
+          cart_id,
+          type: "email",
+          message_type: "abandoned cart",
+          sender_response_id: response[0].message_id,
+        });
+      });
+
+      resolve(cart_details);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 export {
   createTemplate,
   sendOrderConfirmation,
   sendShippingConfirmation,
   sendRateProduct,
   sendPaymentConfimed,
+  sendAbandonedCart,
 };

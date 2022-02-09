@@ -19,6 +19,7 @@ const {
   sendShippingConfirmation,
   sendRateProduct,
   sendPaymentConfimed,
+  sendAbandonedCart,
 } = require("./notify/email_templates");
 import { sendMail } from "./notify/user_notify";
 dotenv.config();
@@ -955,45 +956,78 @@ exports.addtocart = async (req, res) => {
         cart_id = await createNewCart();
       }
 
-      let product_in_cart = await models.shopping_cart_item.findAll({
-        where: {
-          shopping_cart_id: cart_id,
-        },
-      });
-      var cartproducts = [];
-      product_in_cart.forEach((prod_element) => {
-        cartproducts.push(prod_element.product_sku);
-      });
-      let cartlines = [];
-      products.forEach((element) => {
-        // console.log("productscart");
-        // console.log(product_in_cart.length);
+      // let product_in_cart = await models.shopping_cart_item.findAll({
+      //   where: {
+      //     shopping_cart_id: cart_id,
+      //   },
+      // });
+      // var cartproducts = [];
+      // product_in_cart.forEach((prod_element) => {
+      //   cartproducts.push(prod_element.product_sku);
+      // });
+      // let cartlines = [];
 
-        if (cartproducts.indexOf(element.sku_id) == -1) {
-          // console.log("updated");
-          if (element.sku_id) {
-            let prod_count = parseInt(element.qty);
-            const lineobj = {
-              id: uuidv1(),
+      for (let i = 0; i < products.length; i++) {
+        let product = products[i];
+        let trans_sku_list = await models.trans_sku_lists.findOne({
+          attributes: ["markup_price"],
+          where: { generated_sku: product.sku_id },
+        });
+        let cart_item = await models.shopping_cart_item.findOne({
+          where: { shopping_cart_id: cart_id, product_sku: product.sku_id },
+        });
+        if (cart_item) {
+          await models.shopping_cart_item.update(
+            {
               shopping_cart_id: cart_id,
-              product_sku: element.sku_id,
-              qty: element.qty,
-              price: prod_count * element.price,
-            };
-            // console.log(JSON.stringify(lineobj));
-
-            cartlines.push(lineobj);
-          }
+              product_sku: product.sku_id,
+              qty: product.qty,
+              price: Number(product.qty || 1) * trans_sku_list.markup_price,
+            },
+            {
+              where: { shopping_cart_id: cart_id, product_sku: product.sku_id },
+            }
+          );
+        } else {
+          await models.shopping_cart_item.create({
+            id: uuidv1(),
+            shopping_cart_id: cart_id,
+            product_sku: product.sku_id,
+            qty: product.qty,
+            price: Number(product.qty || 1) * trans_sku_list.markup_price,
+          });
         }
-        console.log("cartline length" + cartlines.length);
-      });
+      }
+
+      // products.forEach((element) => {
+      //   // console.log("productscart");
+      //   // console.log(product_in_cart.length);
+
+      //   if (cartproducts.indexOf(element.sku_id) == -1) {
+      //     // console.log("updated");
+      //     if (element.sku_id) {
+      //       let prod_count = parseInt(element.qty);
+      //       const lineobj = {
+      //         id: uuidv1(),
+      //         shopping_cart_id: cart_id,
+      //         product_sku: element.sku_id,
+      //         qty: element.qty,
+      //         price: prod_count * element.price,
+      //       };
+      //       // console.log(JSON.stringify(lineobj));
+
+      //       cartlines.push(lineobj);
+      //     }
+      //   }
+      //   console.log("cartline length" + cartlines.length);
+      // });
 
       // console.log("cartline length");
-      if (cartlines.length > 0) {
-        await models.shopping_cart_item.bulkCreate(cartlines, {
-          individualHooks: true,
-        });
-      }
+      // if (cartlines.length > 0) {
+      //   await models.shopping_cart_item.bulkCreate(cartlines, {
+      //     individualHooks: true,
+      //   });
+      // }
 
       // console.log("cartline length212");
       let gross_amount = await models.shopping_cart_item.findOne({
@@ -1764,6 +1798,11 @@ exports.trigger_mail = async (req, res) => {
     }
     if (type === "payment") {
       await sendPaymentConfimed({ order_id });
+    }
+    if (type === "abandoned_cart") {
+      return res
+        .status(200)
+        .send(await sendAbandonedCart({ cart_id: order_id }));
     }
     res.status(200).send({ message: "mail triggered successfully!" });
   } catch (error) {

@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     "communication_log",
     {
       order_id: DataTypes.UUID,
+      cart_id: DataTypes.UUID,
       type: DataTypes.STRING,
       message_type: DataTypes.STRING,
       sender_response_id: DataTypes.STRING,
