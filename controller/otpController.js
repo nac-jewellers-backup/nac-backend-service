@@ -3,12 +3,42 @@ const { send_sms } = require("./notify/user_notify");
 const uuidv1 = require("uuid/v1");
 var jwt = require("jsonwebtoken");
 
-exports.sendOtp = ({ mobile_no }) => {
+exports.sendOtp = ({ email, mobile_no }) => {
   return new Promise(async (resolve, reject) => {
+    if (!email || !mobile_no || mobile_no.length != 10) {
+      return reject({
+        statusCode: 403,
+        message: "Please check email,mobile_no!",
+      });
+    }
+    let user = await models.users.findOne({
+      where: {
+        email,
+      },
+      plain: true,
+    });
+    let user_id = "";
+    if (user) {
+      user_id = user.id;
+    } else {
+      let user = await models.users.create(
+        {
+          id: uuidv1(),
+          email: email,
+          status: "Active",
+        },
+        {
+          returning: true,
+          plain: true,
+        }
+      );
+      user_id = user.id;
+    }
+
     let otp = Math.floor(100000 + Math.random() * 900000);
     models.user_profiles
       .findOne({
-        where: { mobile: mobile_no },
+        where: { user_id: user_id, mobile: mobile_no },
       })
       .then(async (profile) => {
         try {
@@ -18,14 +48,10 @@ exports.sendOtp = ({ mobile_no }) => {
               otp,
             });
           } else {
-            const user = await models.users.create({
-              id: uuidv1(),
-              mobile: mobile_no,
-              status: "Active",
-            });
             await models.user_profiles.create({
               id: uuidv1(),
-              user_id: user.id,
+              user_id: user_id,
+              email: email,
               mobile: mobile_no,
               otp,
               status: "Active",
@@ -85,6 +111,9 @@ exports.verifyOtp = ({ mobile_no, otp }) => {
     models.user_profiles
       .findOne({
         attributes: ["id", "email", "mobile"],
+        include: {
+          model: models.users,
+        },
         where: { mobile: mobile_no, otp },
       })
       .then(async (profile) => {
@@ -93,7 +122,7 @@ exports.verifyOtp = ({ mobile_no, otp }) => {
             id: profile.id,
             otp: null,
           });
-          var token = jwt.sign({ id: profile.id }, process.env.SECRET, {
+          var token = jwt.sign({ id: profile.user.email }, process.env.SECRET, {
             expiresIn: "1d", // expires in 24 hours
           });
           resolve({

@@ -105,6 +105,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+      metal_rate: {
+        type: DataTypes.DOUBLE,
+      },
+      calc_type: {
+        type: DataTypes.STRING,
+      },
     },
     {
       timestamps: true,

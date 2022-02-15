@@ -68,6 +68,7 @@ let sendOrderConfirmation = ({ order_id }) => {
         where: {
           id: order_id,
         },
+        plain: true,
       });
 
       var emilreceipiants = [

@@ -219,7 +219,7 @@ let updateInventory = ({ product_id, data }) => {
             .findOne({
               attributes: ["id"],
               where: {
-                generated_sku: data.SKU,
+                generated_sku: data.tag_no,
                 warehouse_id: warehouse.id,
               },
             })
@@ -227,7 +227,7 @@ let updateInventory = ({ product_id, data }) => {
               if (result) {
                 await models.inventory.update(
                   {
-                    generated_sku: data.SKU,
+                    generated_sku: data.tag_no,
                     number_of_items: 1,
                     warehouse_id: warehouse.id,
                   },
@@ -236,7 +236,7 @@ let updateInventory = ({ product_id, data }) => {
               } else {
                 await models.inventory.create({
                   id: uuidv1(),
-                  generated_sku: data.SKU,
+                  generated_sku: data.tag_no,
                   number_of_items: 1,
                   warehouse_id: warehouse.id,
                 });
@@ -273,7 +273,10 @@ let updatePricingSkuMetals = ({ product_id, data }) => {
       ].map(async (item) => {
         models.pricing_sku_metals
           .findOne({
-            where: { product_sku: data.SKU, material_name: item.material_name },
+            where: {
+              product_sku: data.tag_no,
+              material_name: item.material_name,
+            },
           })
           .then(async (pricing) => {
             if (pricing) {
@@ -281,7 +284,10 @@ let updatePricingSkuMetals = ({ product_id, data }) => {
                 where: { id: pricing.id },
               });
             } else {
-              await models.pricing_sku_metals.create({ ...item, id: uuidv1() });
+              await models.pricing_sku_metals.create({
+                ...item,
+                product_sku: data.tag_no,
+              });
             }
             return Promise.resolve(item.material_name);
           })
@@ -296,8 +302,43 @@ let updatePricingSkuMetals = ({ product_id, data }) => {
   });
 };
 
-let updateGemStonePrice = ({ product_id, data }) => {
-  return new Promise((resolve, reject) => {});
+let updateTotalStonePrice = ({ product_id, data }) => {
+  return new Promise((resolve, reject) => {
+    Promise.all(
+      [
+        {
+          type: "diamond_total",
+          product_id,
+          product_sku: data.tag_no,
+          selling_price: data.DIAAMT,
+        },
+        {
+          type: "gemstone_total",
+          product_id,
+          product_sku: data.tag_no,
+          selling_price: data.STNAMT,
+        },
+      ].map(async (item) => {
+        let { selling_price, ...rest } = item;
+        models.total_no_stone
+          .findOne({
+            where: { ...rest },
+          })
+          .then(async (result) => {
+            if (result) {
+              await models.total_no_stone.update(item, {
+                where: { id: result.id },
+              });
+            } else {
+              await models.total_no_stone.create(item);
+            }
+          })
+          .catch(reject);
+      })
+    )
+      .then(resolve)
+      .catch(reject);
+  });
 };
 
 let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
@@ -401,7 +442,7 @@ let getProductId = (data) => {
       .findOne({
         attributes: ["product_id"],
         where: {
-          generated_sku: data.tag_no,
+          generated_sku: data.tag_no.toString(),
         },
       })
       .then((result) => {
@@ -417,8 +458,8 @@ let getProductId = (data) => {
   });
 };
 
-export let product_upload_sync = ({ data, type }) => {  
-  return new Promise((resolve, reject) => {    
+export let product_upload_sync = ({ data, type }) => {
+  return new Promise((resolve, reject) => {
     getProductId(data)
       .then(({ product_id }) => {
         if (product_id) {
@@ -460,19 +501,30 @@ export let product_upload_sync = ({ data, type }) => {
 
 export let product_pricing_sync = ({ data }) => {
   return new Promise((resolve, reject) => {
-    getProductId(data)
-      .then(({ product_id }) => {
+    getProductId({ ...data, tag_no: data.SKU })
+      .then((result) => {
+        if (!result) {
+          return reject(`${data.SKU} is not synced`);
+        }
+        let { product_id } = result;
         if (product_id) {
           updateTransSkuLists(
             {
               product_id,
-              data: { ...data, tag_no: data.SKU },
+              data: { ...data, tag_no: data.SKU.toString() },
             },
             false
           ).then((_) => {
             Promise.all(
-              [updateInventory, updatePricingSkuMetals].map(async (item) => {
-                return await item({ product_id, data });
+              [
+                updateInventory,
+                updatePricingSkuMetals,
+                updateTotalStonePrice,
+              ].map(async (item) => {
+                return await item({
+                  product_id,
+                  data: { ...data, tag_no: data.SKU.toString() },
+                });
               })
             )
               .then(resolve)

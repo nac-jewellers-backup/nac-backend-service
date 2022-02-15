@@ -16,6 +16,16 @@ const { fstat } = require("fs");
 const { send_sms } = require("../controller/notify/user_notify");
 const turl = process.env.apibaseurl + "/productesearch";
 const upload = require("../middlewares/multer").single("file");
+const io = require("../socket");
+
+let sendStatus = (token_val, processed_data) => {
+  console.log(token_val, processed_data);
+  try {
+    io.emit(token_val, processed_data);
+  } catch (e) {
+    console.log(e);
+  }
+};
 
 module.exports = function (app) {
   const configurationcontroller = require("../controller/master_configuration.js");
@@ -691,17 +701,6 @@ module.exports = function (app) {
       });
 
     let start_sync = async () => {
-      const io = require("../socket");
-
-      let sendStatus = (token_val, processed_data) => {
-        console.log(token_val, processed_data);
-        try {
-          io.emit(token_val, processed_data);
-        } catch (e) {
-          console.log(e);
-        }
-      };
-
       var totalCount = Product_lists.length;
       var startTime = require("moment")();
       try {
@@ -937,17 +936,6 @@ module.exports = function (app) {
         let workbook = XLSX.readFile(req.file.path);
         let sheetList = workbook.SheetNames;
 
-        const io = require("../socket");
-
-        let sendStatus = (token_val, processed_data) => {
-          console.log(token_val, processed_data);
-          try {
-            io.emit(token_val, processed_data);
-          } catch (e) {
-            console.log(e);
-          }
-        };
-
         Promise.all(
           sheetList.map(async (sheet) => {
             return new Promise(async (resolve, reject) => {
@@ -1051,5 +1039,65 @@ module.exports = function (app) {
       console.log(error);
       res.status(500).send({ message: error.message });
     }
+  });
+  app.post("/file_upload_price_sync", (req, res) => {
+    upload(req, res, async (err) => {
+      if (err) {
+        res.status(400).send({
+          error: err.message,
+        });
+      }
+      var startTime = require("moment")();
+      try {
+        let XLSX = require("xlsx");
+
+        let workbook = XLSX.readFile(req.file.path);
+        let sheetList = workbook.SheetNames;
+        let sampleData = XLSX.utils.sheet_to_json(
+          workbook.Sheets[sheetList[0]],
+          {
+            range: 2,
+          }
+        );
+
+        console.log(sampleData.length);
+        res.status(200).send({
+          status: "Accepted",
+          message: "Process Started!",
+          sampleData,
+        });
+
+        let chunk = 200;
+        let splitArray = arrayChunk(sampleData, chunk);
+        console.log(splitArray.length);
+        for (let index = 0; index < splitArray.length; index++) {
+          const element = splitArray[index];
+          try {
+            await Promise.all(
+              element.map(async (item) => {
+                await require("../controller/product_upload_sync").product_pricing_sync(
+                  { data: item }
+                );
+              })
+            );
+            sendStatus("price_sync", {
+              completed:
+                index * chunk < sampleData.length
+                  ? (index * chunk) / sampleData.length
+                  : 1,
+            });
+          } catch (error) {
+            console.log(error);
+          }
+        }
+        sendStatus("price_sync", {
+          status: "completed",
+          timeElapsed: startTime.fromNow(),
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send(error);
+      }
+    });
   });
 };
