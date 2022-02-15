@@ -1067,7 +1067,7 @@ module.exports = function (app) {
           sampleData,
         });
 
-        let chunk = 200;
+        let chunk = 25;
         let splitArray = arrayChunk(sampleData, chunk);
         console.log(splitArray.length);
         for (let index = 0; index < splitArray.length; index++) {
