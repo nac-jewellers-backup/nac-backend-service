@@ -118,8 +118,9 @@ exports.verifyOtp = ({ mobile_no, otp }) => {
       })
       .then(async (profile) => {
         if (profile) {
+          let { id, email, mobile } = profile;
           await models.user_profiles.upsert({
-            id: profile.id,
+            id,
             otp: null,
           });
           var token = jwt.sign({ id: profile.user.email }, process.env.SECRET, {
@@ -129,7 +130,7 @@ exports.verifyOtp = ({ mobile_no, otp }) => {
             status: 200,
             message: "OTP verified successfully!",
             accessToken: token,
-            userprofile: profile,
+            userprofile: { id, email, mobile },
           });
         } else {
           reject({
