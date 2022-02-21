@@ -1621,6 +1621,7 @@ exports.updateskuinfo = async (req, res) => {
     isdefault,
     isActive,
     isReadyToShip,
+    showPriceBreakup,
   } = req.body;
   let response_obj1 = await models.trans_sku_lists.update(
     // Values to update
@@ -1630,6 +1631,7 @@ exports.updateskuinfo = async (req, res) => {
       is_active: isActive,
       discount_desc: discount,
       is_ready_to_ship: isReadyToShip,
+      show_price_breakup: showPriceBreakup,
     },
     {
       // Clause
