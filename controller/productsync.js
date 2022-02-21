@@ -735,6 +735,57 @@ let verify_pricing_sku_metals = ({ product_id, data }) => {
   });
 };
 
+let verify_total_stone_pricing = ({ product_id, data }) => {
+  return new Promise((resolve, reject) => {
+    models.pricing_sku_materials
+      .findAll({
+        attributes: [
+          [
+            models.sequelize.literal(
+              `case when component ilike 'gemstone%' then 'gemstone_total' else 'diamond_total' end`
+            ),
+            "type",
+          ],
+          "selling_price",
+          ["markup", "markup_price"],
+          "discount_price",
+        ],
+        where: { product_id },
+        group: models.sequelize.literal("type,product_id", "product_sku"),
+        plain: true,
+      })
+      .then((price) => {
+        if (price.length) {
+          Promise.all(
+            price.map(async (item) => {
+              models.total_no_stone
+                .findOne({
+                  where: { type: item.type, product_id },
+                })
+                .then(async (stonePrice) => {
+                  if (stonePrice) {
+                    return await models.total_no_stone.update(
+                      { ...item },
+                      { where: { id: stonePrice.id } }
+                    );
+                  } else {
+                    return await models.total_no_stone.create({ ...item });
+                  }
+                });
+            })
+          )
+            .then(() => resolve("Total pricing updated"))
+            .catch((err) => {
+              reject(err);
+            });
+        }
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
+
 let verify_product_stones = ({ product_id, data }) => {
   return new Promise(async (resolve, reject) => {
     if (data["tagstone"]) {
@@ -1135,6 +1186,7 @@ export let all_process = [
   verify_product_stones,
   verify_pricing_sku_metals,
   verify_pricing_sku_materials,
+  verify_total_stone_pricing,
   verify_master_collections,
   verify_master_occassions,
   verify_master_genders,
@@ -1149,6 +1201,7 @@ var price_sync = [
   verify_trans_sku,
   verify_pricing_sku_metals,
   verify_pricing_sku_materials,
+  verify_total_stone_pricing,
 ];
 
 let verify_product = ({ product_id, data, type, warehouse }) => {

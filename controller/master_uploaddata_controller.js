@@ -257,13 +257,10 @@ exports.viewskupricesummary = async (req, res) => {
   var response = {};
   models.trans_sku_lists
     .findOne({
-      include: [
-        {
-          model: models.product_lists,
-          attributes: ["vendor_code"],
-        },
-      ],
       attributes: [
+        "calc_type",
+        "net_weight",
+        "gross_weight",
         "cost_price",
         "selling_price",
         "markup_price",
@@ -279,145 +276,220 @@ exports.viewskupricesummary = async (req, res) => {
       where: {
         generated_sku: req.params.skuid,
       },
+      raw: true,
     })
-    .then(async (accs) => {
-      response["skuprice"] = accs;
-      var discount_percentage =
-        ((accs.discount_price - accs.markup_price) / accs.discount_price) * 100;
-      response["discount_percentage"] = discount_percentage;
-      if (accs.sku_weight) {
-        // accs['selling_price'] = accs.selling_price + " ( "+ accs.selling_price / accs.sku_weight+" ) ";
-        // accs['cost_price'] = accs.cost_price + " ( "+ accs.cost_price / accs.sku_weight+" ) ";
+    .then((sku) => {
+      if (!sku) {
+        return res.status(204).send({ message: "No such sku found!" });
       }
-      let diamondetaial = await models.product_diamonds.findAll({
-        where: {
-          diamond_type: accs.diamond_type,
-          product_sku: accs.product_id,
-        },
-      });
-      let gemstonedetails = await models.product_gemstones.findAll({
-        where: {
-          product_sku: accs.product_id,
-        },
-      });
-      // return res.send(200,{diamondetaial})
-      models.pricing_sku_materials
-        .findAll({
-          where: {
-            product_sku: req.params.skuid,
-          },
-        })
-        .then((material_price) => {
-          let diamond_count = 0;
-          let material_prices = [];
-          let diamondcount = 0;
-          material_price.forEach((materialobj, index) => {
-            if (materialobj.component.includes("diamond")) {
-              if (diamondetaial[diamond_count]) {
-                diamondcount = diamondcount + 1;
-                console.log("dasdasdas");
-                let diamond_name =
-                  "Diamond " +
-                  diamondetaial[diamond_count].diamond_type +
-                  " " +
-                  diamondcount;
-                console.log(JSON.stringify(diamondetaial[diamond_count]));
-                materialobj["material_name"] =
-                  diamond_name +
-                  " (" +
-                  diamondetaial[diamond_count].stone_weight +
-                  " ~ " +
-                  diamondetaial[diamond_count].stone_count +
-                  " / ct) ";
-                materialobj["cost_price"] =
-                  materialobj.cost_price +
-                  " ( " +
-                  (
-                    materialobj.cost_price /
-                    diamondetaial[diamond_count].stone_weight
-                  ).toFixed(2) +
-                  "  / ct )";
-                materialobj["selling_price"] =
-                  materialobj.selling_price +
-                  " ( " +
-                  (
-                    materialobj.selling_price /
-                    diamondetaial[diamond_count].stone_weight
-                  ).toFixed(2) +
-                  " / ct) ";
-              } else {
-                diamondcount = diamondcount + 1;
-                let diamond_name = "Diamond " + diamondcount;
-
-                materialobj["material_name"] = diamond_name;
-                materialobj["cost_price"] = materialobj.cost_price
-                  ? materialobj.cost_price.toFixed(2)
-                  : 0;
-                materialobj["selling_price"] =
-                  materialobj.selling_price.toFixed(2);
-              }
-
-              diamond_count = diamond_count + 1;
-            } else {
-              let stoneweight =
-                gemstonedetails.length > 0
-                  ? gemstonedetails[0].stone_weight
-                  : 0;
-              let stonecount =
-                gemstonedetails.length > 0 ? gemstonedetails[0].stone_count : 0;
-              let gem_cost_price = materialobj.cost_price;
-              let gem_selling_price = materialobj.selling_price;
-
-              if (stonecount) {
-                gem_cost_price = gem_cost_price / stonecount;
-                gem_selling_price = gem_selling_price / stonecount;
-              }
-
-              if (stoneweight) {
-                gem_cost_price = gem_cost_price / stoneweight;
-                gem_selling_price = gem_selling_price / stoneweight;
-              }
-              materialobj[
-                "cost_price"
-              ] = `${materialobj.cost_price} (${gem_cost_price}) / ct`;
-              materialobj[
-                "selling_price"
-              ] = `${materialobj.selling_price} (${gem_selling_price}) / ct`;
-            }
-            material_prices.push(materialobj);
+      let { calc_type, net_weight, gross_weight, ...rest } = sku;
+      let weightCalculationBy = calc_type;
+      let weight = weightCalculationBy.includes("NET")
+        ? net_weight
+        : gross_weight;
+      response["skuprice"] = rest;
+      response["discount_percentage"] =
+        ((sku.discount_price - sku.markup_price) * 100) / sku.discount_price;
+      response["metals"] = response["materials"] = [];
+      Promise.allSettled(
+        ["pricing_sku_metals", "total_no_stone"].map(async (model) => {
+          let price = await models[model].findAll({
+            where: { product_sku: req.params.skuid },
+            raw: true,
           });
-          response["materials"] = material_prices;
-
-          models.pricing_sku_metals
-            .findAll({
-              where: {
-                product_sku: req.params.skuid,
-              },
-            })
-            .then((metal_price) => {
-              let metal_prices = [];
-              metal_price.forEach((metal) => {
-                // if(metal.material_name.includes('gold'))
-                // {
-                metal["cost_price"] =
-                  metal.cost_price +
-                  " ( " +
-                  (metal.cost_price / accs.sku_weight).toFixed(2) +
-                  "  / gm) ";
-                metal["selling_price"] =
-                  metal.selling_price +
-                  " ( " +
-                  (metal.selling_price / accs.sku_weight).toFixed(2) +
-                  " / gm ) ";
-
-                // }
-                metal_prices.push(metal);
-              });
-              response["metals"] = metal_prices;
-              res.send(200, { price_summary: response });
+          if (model == "pricing_sku_metals") {
+            response.metals = price.map((item) => {
+              return {
+                ...item,
+                selling_price: `${item.selling_price}(${Number(
+                  item.selling_price / weight
+                ).toFixed(2)} / gms)`,
+              };
             });
+          } else if (model == "total_no_stone") {
+            response.materials = price.map((item) => {
+              return {
+                ...item,
+                material_name: item.type.includes("diamond")
+                  ? "Diamond"
+                  : "Gemstone",
+              };
+            });
+          }          
+          return Promise.resolve(price);
+        })
+      )
+        .then(() => {
+          return res.status(200).send({ price_summary: response });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).send({ ...err });
         });
     });
+  // models.trans_sku_lists
+  //   .findOne({
+  //     include: [
+  //       {
+  //         model: models.product_lists,
+  //         attributes: ["vendor_code"],
+  //       },
+  //     ],
+  //     attributes: [
+  //       "cost_price",
+  //       "selling_price",
+  //       "markup_price",
+  //       "discount_price",
+  //       "sku_weight",
+  //       "product_id",
+  //       "cost_price_tax",
+  //       "diamond_type",
+  //       "markup_price_tax",
+  //       "discount_price_tax",
+  //       "margin_on_sale_percentage",
+  //     ],
+  //     where: {
+  //       generated_sku: req.params.skuid,
+  //     },
+  //   })
+  //   .then(async (accs) => {
+  //     response["skuprice"] = accs;
+  //     var discount_percentage =
+  //       ((accs.discount_price - accs.markup_price) / accs.discount_price) * 100;
+  //     response["discount_percentage"] = discount_percentage;
+  //     if (accs.sku_weight) {
+  //       // accs['selling_price'] = accs.selling_price + " ( "+ accs.selling_price / accs.sku_weight+" ) ";
+  //       // accs['cost_price'] = accs.cost_price + " ( "+ accs.cost_price / accs.sku_weight+" ) ";
+  //     }
+  //     let diamondetaial = await models.product_diamonds.findAll({
+  //       where: {
+  //         diamond_type: accs.diamond_type,
+  //         product_sku: accs.product_id,
+  //       },
+  //     });
+  //     let gemstonedetails = await models.product_gemstones.findAll({
+  //       where: {
+  //         product_sku: accs.product_id,
+  //       },
+  //     });
+  //     // return res.send(200,{diamondetaial})
+  //     models.pricing_sku_materials
+  //       .findAll({
+  //         where: {
+  //           product_sku: req.params.skuid,
+  //         },
+  //       })
+  //       .then((material_price) => {
+  //         let diamond_count = 0;
+  //         let material_prices = [];
+  //         let diamondcount = 0;
+  //         material_price.forEach((materialobj, index) => {
+  //           if (materialobj.component.includes("diamond")) {
+  //             if (diamondetaial[diamond_count]) {
+  //               diamondcount = diamondcount + 1;
+  //               console.log("dasdasdas");
+  //               let diamond_name =
+  //                 "Diamond " +
+  //                 diamondetaial[diamond_count].diamond_type +
+  //                 " " +
+  //                 diamondcount;
+  //               console.log(JSON.stringify(diamondetaial[diamond_count]));
+  //               materialobj["material_name"] =
+  //                 diamond_name +
+  //                 " (" +
+  //                 diamondetaial[diamond_count].stone_weight +
+  //                 " ~ " +
+  //                 diamondetaial[diamond_count].stone_count +
+  //                 " / ct) ";
+  //               materialobj["cost_price"] =
+  //                 materialobj.cost_price +
+  //                 " ( " +
+  //                 (
+  //                   materialobj.cost_price /
+  //                   diamondetaial[diamond_count].stone_weight
+  //                 ).toFixed(2) +
+  //                 "  / ct )";
+  //               materialobj["selling_price"] =
+  //                 materialobj.selling_price +
+  //                 " ( " +
+  //                 (
+  //                   materialobj.selling_price /
+  //                   diamondetaial[diamond_count].stone_weight
+  //                 ).toFixed(2) +
+  //                 " / ct) ";
+  //             } else {
+  //               diamondcount = diamondcount + 1;
+  //               let diamond_name = "Diamond " + diamondcount;
+
+  //               materialobj["material_name"] = diamond_name;
+  //               materialobj["cost_price"] = materialobj.cost_price
+  //                 ? materialobj.cost_price.toFixed(2)
+  //                 : 0;
+  //               materialobj["selling_price"] =
+  //                 materialobj.selling_price.toFixed(2);
+  //             }
+
+  //             diamond_count = diamond_count + 1;
+  //           } else {
+  //             let stoneweight =
+  //               gemstonedetails.length > 0
+  //                 ? gemstonedetails[0].stone_weight
+  //                 : 0;
+  //             let stonecount =
+  //               gemstonedetails.length > 0 ? gemstonedetails[0].stone_count : 0;
+  //             let gem_cost_price = materialobj.cost_price;
+  //             let gem_selling_price = materialobj.selling_price;
+
+  //             if (stonecount) {
+  //               gem_cost_price = gem_cost_price / stonecount;
+  //               gem_selling_price = gem_selling_price / stonecount;
+  //             }
+
+  //             if (stoneweight) {
+  //               gem_cost_price = gem_cost_price / stoneweight;
+  //               gem_selling_price = gem_selling_price / stoneweight;
+  //             }
+  //             materialobj[
+  //               "cost_price"
+  //             ] = `${materialobj.cost_price} (${gem_cost_price}) / ct`;
+  //             materialobj[
+  //               "selling_price"
+  //             ] = `${materialobj.selling_price} (${gem_selling_price}) / ct`;
+  //           }
+  //           material_prices.push(materialobj);
+  //         });
+  //         response["materials"] = material_prices;
+
+  //         models.pricing_sku_metals
+  //           .findAll({
+  //             where: {
+  //               product_sku: req.params.skuid,
+  //             },
+  //           })
+  //           .then((metal_price) => {
+  //             let metal_prices = [];
+  //             metal_price.forEach((metal) => {
+  //               // if(metal.material_name.includes('gold'))
+  //               // {
+  //               metal["cost_price"] =
+  //                 metal.cost_price +
+  //                 " ( " +
+  //                 (metal.cost_price / accs.sku_weight).toFixed(2) +
+  //                 "  / gm) ";
+  //               metal["selling_price"] =
+  //                 metal.selling_price +
+  //                 " ( " +
+  //                 (metal.selling_price / accs.sku_weight).toFixed(2) +
+  //                 " / gm ) ";
+
+  //               // }
+  //               metal_prices.push(metal);
+  //             });
+  //             response["metals"] = metal_prices;
+  //             res.send(200, { price_summary: response });
+  //           });
+  //       });
+  //   });
 };
 
 exports.updateproduct_stonecolor = async (req, res) => {

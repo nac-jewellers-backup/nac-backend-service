@@ -1654,6 +1654,7 @@ async function sendorderconformationemail(order_id, res) {
     .then(async (orderdetails) => {
       let {
         id,
+        user_profile: { mobile },
         shopping_cart: { cart_addresses, discounted_price },
       } = orderdetails;
 
@@ -1663,7 +1664,7 @@ async function sendorderconformationemail(order_id, res) {
 
       // console.log(msg_txt);
       let smsResponse = await send_sms({
-        mobile_no: `91${cart_addresses[0].contact_number}`,
+        mobile_no: `91${cart_addresses[0].contact_number || mobile}`,
         msg_txt,
         sender_id: "NACJWL",
       });

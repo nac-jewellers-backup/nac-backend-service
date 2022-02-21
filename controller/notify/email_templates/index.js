@@ -22,7 +22,7 @@ let sendOrderConfirmation = ({ order_id }) => {
       let orderdetails = await models.orders.findOne({
         attributes: ["id", "createdAt", "payment_mode"],
         include: [
-          { model: models.user_profiles, attributes: ["email"] },
+          { model: models.user_profiles, attributes: ["email", "mobile"] },
           {
             model: models.shopping_cart,
             attributes: ["gross_amount", "discount", "discounted_price"],
