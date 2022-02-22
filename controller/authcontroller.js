@@ -7,7 +7,6 @@ const Op = require("sequelize").Op;
 const uuidv1 = require("uuid/v1");
 const emailTemp = require("./notify/Emailtemplate");
 import { sendMail } from "./notify/user_notify";
-import { response } from "express";
 
 exports.signin = (req, res) => {
   models.users
@@ -32,13 +31,11 @@ exports.signin = (req, res) => {
         user.password
       );
       if (!passwordIsValid) {
-        return res
-          .status(401)
-          .send({
-            auth: false,
-            accessToken: null,
-            message: "Invalid Password!",
-          });
+        return res.status(401).send({
+          auth: false,
+          accessToken: null,
+          message: "Invalid Password!",
+        });
       }
 
       var token = jwt.sign({ id: user.email }, process.env.SECRET, {
@@ -115,7 +112,7 @@ exports.fbsignup = async (req, res) => {
       { to: email, subject: "You have successfully registered!" },
     ];
 
-    sendMail(emilreceipiants, emailTemp.getName(firstname));
+    // sendMail(emilreceipiants, emailTemp.getName(firstname));
 
     res.send(200, {
       accessToken: token,
@@ -187,7 +184,7 @@ exports.signup = (req, res) => {
           { to: email, subject: "You have successfully registered!" },
         ];
 
-        sendMail(emilreceipiants, emailTemp.getName(firstname));
+        // sendMail(emilreceipiants, emailTemp.getName(firstname));
 
         res.send(200, {
           accessToken: token,
@@ -211,13 +208,11 @@ exports.changepassword = (req, res) => {
       }
       var passwordIsValid = bcrypt.compareSync(oldpassword, user.password);
       if (!passwordIsValid) {
-        return res
-          .status(401)
-          .send({
-            auth: false,
-            accessToken: null,
-            message: "Invalid Password!",
-          });
+        return res.status(401).send({
+          auth: false,
+          accessToken: null,
+          message: "Invalid Password!",
+        });
       }
       if (newpassword) {
         console.log(JSON.stringify(user));
@@ -386,30 +381,24 @@ exports.forgotpassword = (req, res) => {
           )
         );
         // sendVerificationEmail(user.email, result.token);
-        return res
-          .status(200)
-          .send({
-            message: "Please check your registered email inbox for reset link",
-            status: "success",
-          });
+        return res.status(200).send({
+          message: "Please check your registered email inbox for reset link",
+          status: "success",
+        });
 
         // }
       } else {
-        res
-          .status(404)
-          .send({
-            message: "Email ID not Registered with us",
-            status: "failure",
-          });
-      }
-    })
-    .catch((error) => {
-      res
-        .status(500)
-        .send({
+        res.status(404).send({
           message: "Email ID not Registered with us",
           status: "failure",
         });
+      }
+    })
+    .catch((error) => {
+      res.status(500).send({
+        message: "Email ID not Registered with us",
+        status: "failure",
+      });
     });
 };
 exports.userContent = (req, res) => {
@@ -501,10 +490,10 @@ exports.guestlogin = (req, res) => {
             returning: true,
           })
           .then((guestuser) => {
-            sendMail(
-              emilreceipiants,
-              emailTemp.guestloginTemp("", "manokarantk@gmail.com", otp)
-            );
+            // sendMail(
+            //   emilreceipiants,
+            //   emailTemp.guestloginTemp("", "manokarantk@gmail.com", otp)
+            // );
 
             res.status(200).json({
               description: "User Content Page",
@@ -517,10 +506,10 @@ exports.guestlogin = (req, res) => {
         });
         var emilreceipiants = [{ to: email, subject: "Verify user" }];
 
-        sendMail(
-          emilreceipiants,
-          emailTemp.guestloginTemp("", "manokarantk@gmail.com", otp)
-        );
+        // sendMail(
+        //   emilreceipiants,
+        //   emailTemp.guestloginTemp("", "manokarantk@gmail.com", otp)
+        // );
 
         res.status(200).json({
           description: "User Content Page",
@@ -952,4 +941,77 @@ exports.getuserinfo = async (req, res) => {
   userinfo["wishlists"] = wishlists;
   userinfo["addressess"] = addressess;
   res.status(200).send({ userinfo, userprofile });
+};
+
+exports.mediaSignin = async (req, res) => {
+  let { type, mediaBody } = req.body;
+  let userProfile,
+    token,
+    profileSearch = { email: mediaBody.email };
+  try {
+    //Finding if existing email exists based on social media sigin
+    if (type == "facebook") {
+      profileSearch["facebookid"] = mediaBody.id;
+    } else if (type == "google") {
+      profileSearch["google_id"] = mediaBody.id;
+    }
+    userProfile = await models.user_profiles.findOne({
+      where: {
+        [models.Sequelize.Op.or]: {
+          ...profileSearch,
+        },
+      },
+      order: [["createdAt", "desc"]],
+    });
+    token = jwt.sign({ id: mediaBody.email }, process.env.SECRET, {
+      expiresIn: "1d", // expires in 24 hours
+    });
+    if (userProfile) {
+      if (type == "facebook" && !userProfile.facebookid) {
+        await models.user_profiles.update(
+          { facebookid: mediaBody.id },
+          { where: { id: userProfile.id } }
+        );
+      }
+      if (type == "google" && !userProfile.google_id) {
+        await models.user_profiles.update(
+          { google_id: mediaBody.id },
+          { where: { id: userProfile.id } }
+        );
+      }
+      return res.status(200).send({
+        accessToken: token,
+        userprofile: { id: userProfile.id, email: userProfile.email },
+      });
+    } else {
+      let user,
+        userProfileObj = {
+          ...mediaBody,
+          id: uuidv1(),
+          first_name: mediaBody.fistName,
+          lastName: mediaBody.lastName,
+          isemailverified: true,
+        };
+      user = await models.users.findOne({ where: { email: mediaBody.email } });
+      if (!user) {
+        user = await models.users.create({
+          id: uuidv1(),
+          email: mediaBody.email,
+        });
+      }
+      if (type == "facebook") {
+        userProfileObj["facebookid"] = mediaBody.id;
+      } else if (type == "google") {
+        userProfileObj["google_id"] = mediaBody.id;
+      }
+      userProfile = await models.user_profiles.create(userProfileObj);
+      return res.status(200).send({
+        accessToken: token,
+        userprofile: { id: userProfile.id, email: userProfile.email },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: "Some error occured!", ...error });
+  }
 };

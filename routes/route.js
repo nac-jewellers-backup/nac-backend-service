@@ -69,6 +69,7 @@ module.exports = function (app) {
   app.post("/fbsignin", authcontroller.fbsignin);
   app.post("/fbsignup", authcontroller.fbsignup);
 
+  app.post("/api/auth/mediasignin",authcontroller.mediaSignin)
   app.post("/api/auth/signup", authcontroller.signup);
   app.post("/verification/:email/:token", authcontroller.verification);
   app.post("/forgotpassword", authcontroller.forgotpassword);
