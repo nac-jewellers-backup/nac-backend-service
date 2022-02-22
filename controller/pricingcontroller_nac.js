@@ -57,7 +57,7 @@ exports.priceUpdate = ({ product_id }) => {
               [models.Sequelize.Op.contains]: [product_sku],
             },
           },
-          logging: console.log,
+          order: [["createdAt", "desc"]],
         });
 
         let markup = await models.pricing_markup.findOne({
@@ -81,6 +81,7 @@ exports.priceUpdate = ({ product_id }) => {
                 ),
             },
           },
+          order: [["createdAt", "desc"]],
         });
 
         if (markup && markup.material == "All") {
