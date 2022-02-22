@@ -1,6 +1,16 @@
 const models = require("./../models");
 
-exports.priceUpdate = ({ product_sku }) => {
+exports.createPriceRunHistory = async (priceHistory) => {
+  return await models.price_running_history.create(priceHistory);
+};
+
+exports.updatePriceRunHistory = async (id, updateObj) => {
+  return await models.price_running_history.update(updateObj, {
+    where: { id },
+  });
+};
+
+exports.priceUpdate = ({ product_id }) => {
   return new Promise(async (resolve, reject) => {
     try {
       let product = await models.product_lists.findOne({
@@ -17,21 +27,22 @@ exports.priceUpdate = ({ product_sku }) => {
               "selling_price",
               "attributes",
             ],
-            where: {
-              generated_sku: product_sku,
-            },
           },
           {
             model: models.product_materials,
           },
         ],
+        where: {
+          product_id,
+        },
       });
-
       if (
         product &&
         product.trans_sku_lists &&
         product.trans_sku_lists.length > 0
       ) {
+        let product_sku = product.trans_sku_lists[0]["generated_sku"];
+
         let discount = await models.sale_discount.findOne({
           attributes: [
             "components",
@@ -50,7 +61,7 @@ exports.priceUpdate = ({ product_sku }) => {
         });
 
         let markup = await models.pricing_markup.findOne({
-          where: {      
+          where: {
             selling_price_min: {
               [models.Sequelize.Op.lte]:
                 product.trans_sku_lists[0].selling_price,
@@ -158,6 +169,31 @@ exports.priceUpdate = ({ product_sku }) => {
               await models.pricing_sku_materials.update(
                 {
                   discount_price: models.Sequelize.literal(`(markup)`),
+                },
+                { where: { product_sku } }
+              );
+            }
+            await models.total_no_stone.update(
+              {
+                markup_price: models.Sequelize.literal(
+                  `(selling_price*(1+(${markup.markup_value}::decimal/100)))`
+                ),
+              },
+              { where: { product_sku } }
+            );
+            if (discount && discount.discount_type == 2) {
+              await models.total_no_stone.update(
+                {
+                  discount_price: models.Sequelize.literal(
+                    `(markup_price*(1+(${discount.discount_value}::decimal/100)))`
+                  ),
+                },
+                { where: { product_sku } }
+              );
+            } else {
+              await models.total_no_stone.update(
+                {
+                  discount_price: models.Sequelize.literal(`(markup_price)`),
                 },
                 { where: { product_sku } }
               );

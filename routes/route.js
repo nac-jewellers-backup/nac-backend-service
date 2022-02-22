@@ -69,7 +69,7 @@ module.exports = function (app) {
   app.post("/fbsignin", authcontroller.fbsignin);
   app.post("/fbsignup", authcontroller.fbsignup);
 
-  app.post("/api/auth/mediasignin",authcontroller.mediaSignin)
+  app.post("/api/auth/mediasignin", authcontroller.mediaSignin);
   app.post("/api/auth/signup", authcontroller.signup);
   app.post("/verification/:email/:token", authcontroller.verification);
   app.post("/forgotpassword", authcontroller.forgotpassword);
@@ -891,16 +891,29 @@ module.exports = function (app) {
   });
   app.post("/updatecart_latestprice", cartcontroller.updatecart_latestprice);
   app.post("/price_run_latest", async (req, res) => {
-    let priceUpdate =
-      require("../controller/pricingcontroller_nac").priceUpdate;
-    let { product_sku } = req.body;
+    let {
+      priceUpdate,
+      createPriceRunHistory,
+      updatePriceRunHistory,
+    } = require("../controller/pricingcontroller_nac");
+    let { product_sku, component } = req.body;
     if (Array.isArray(product_sku)) {
+      res.status(200).send({ message: "Successfully Started!" });
+      let price_history = await createPriceRunHistory({
+        pricing_component: component,
+        product_ids: product_sku.join(","),
+        total_product: product_sku.length,
+      });
       for (let i = 0; i < product_sku.length; i++) {
-        await priceUpdate({ product_sku: product_sku[i] });
+        await priceUpdate({ product_id: product_sku[i] });
+        await updatePriceRunHistory(price_history.id, {
+          completed_product_count: i + 1,
+          is_completed: i == product_sku.length - 1,
+          completed_products: product_sku.slice(0, i + 1).join(","),
+        });
       }
-      res.status(200).send({ message: "Successfully Completed!" });
     } else {
-      res.status(200).send(await priceUpdate({ product_sku }));
+      res.status(200).send(await priceUpdate({ product_id: product_sku }));
     }
   });
   app.post("/you_may_like", async (req, res) => {

@@ -313,9 +313,10 @@ exports.viewskupricesummary = async (req, res) => {
                 material_name: item.type.includes("diamond")
                   ? "Diamond"
                   : "Gemstone",
+                markup: item.markup_price,
               };
             });
-          }          
+          }
           return Promise.resolve(price);
         })
       )
