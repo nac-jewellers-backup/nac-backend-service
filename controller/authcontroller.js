@@ -984,15 +984,9 @@ exports.mediaSignin = async (req, res) => {
         userprofile: { id: userProfile.id, email: userProfile.email },
       });
     } else {
-      let user,
-        userProfileObj = {
-          ...mediaBody,
-          id: uuidv1(),
-          first_name: mediaBody.firstName,
-          last_name: mediaBody.lastName,
-          isemailverified: true,
-        };
-      user = await models.users.findOne({ where: { email: mediaBody.email } });
+      let user = await models.users.findOne({
+        where: { email: mediaBody.email },
+      });
       if (!user) {
         user = await models.users.create({
           id: uuidv1(),
@@ -1000,11 +994,19 @@ exports.mediaSignin = async (req, res) => {
           isverified: true,
         });
       }
+      let userProfileObj = {
+        ...mediaBody,
+        id: uuidv1(),
+        user_id: user.id,
+        first_name: mediaBody.firstName,
+        last_name: mediaBody.lastName,
+        isemailverified: true,
+      };
       if (type == "facebook") {
         userProfileObj["facebookid"] = mediaBody.id;
       } else if (type == "google") {
         userProfileObj["google_id"] = mediaBody.id;
-      }
+      }      
       userProfile = await models.user_profiles.create(userProfileObj);
       return res.status(200).send({
         accessToken: token,
