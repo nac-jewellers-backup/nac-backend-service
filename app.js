@@ -23,30 +23,13 @@ app.use(express.urlencoded({ limit: "50mb" }));
 //   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 //   next();
 // });
-const allowedOrigins = [
-  "https://nacjewellers.com",
-  "https://nacjewellers.com/",
-  "https://www.nacjewellers.com",
-  "https://api.nacjewellers.com",
-  "https://console.nacjewellers.com",
-  "https://nacjewellers.net",
-  "https://nacjewellers.net/",
-  "https://www.nacjewellers.net",
-  "https://api.nacjewellers.net",
-  "https://console.nacjewellers.net",
-  "https://price-runner.nacjewellers.com",
-];
 
 app.use(morgan("common"));
 app.use(function (req, res, next) {
   // const origin = req.headers.origin;
   // if (allowedOrigins.includes(origin)) {
   //   res.setHeader("Access-Control-Allow-Origin", origin);
-  // }  
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
+  // }    
   //res.header('Access-Control-Allow-Origin', 'http://127.0.0.1:8020');
   res.header("Access-Control-Allow-Methods", "*");
   res.header("Access-Control-Allow-Headers", "*");
