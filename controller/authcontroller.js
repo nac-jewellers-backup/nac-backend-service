@@ -988,8 +988,8 @@ exports.mediaSignin = async (req, res) => {
         userProfileObj = {
           ...mediaBody,
           id: uuidv1(),
-          first_name: mediaBody.fistName,
-          lastName: mediaBody.lastName,
+          first_name: mediaBody.firstName,
+          last_name: mediaBody.lastName,
           isemailverified: true,
         };
       user = await models.users.findOne({ where: { email: mediaBody.email } });
@@ -997,6 +997,7 @@ exports.mediaSignin = async (req, res) => {
         user = await models.users.create({
           id: uuidv1(),
           email: mediaBody.email,
+          isverified: true,
         });
       }
       if (type == "facebook") {
