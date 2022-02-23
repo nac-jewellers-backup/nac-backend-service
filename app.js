@@ -4,6 +4,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import { postgraphile, makePluginHook } from "postgraphile";
 import PgAggregatesPlugin from "@graphile/pg-aggregates";
+import morgan from "morgan";
 //import Myusers from '../controller/sortbyprice.js';
 const MySchemaExtensionPlugin = require("./controller/sortbyprice.js");
 const user = require("./controller/notify/Emailtemplate");
@@ -22,15 +23,35 @@ app.use(express.urlencoded({ limit: "50mb" }));
 //   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 //   next();
 // });
+const allowedOrigins = [
+  "https://nacjewellers.com",
+  "https://nacjewellers.com/",
+  "https://www.nacjewellers.com",
+  "https://api.nacjewellers.com",
+  "https://console.nacjewellers.com",
+  "https://nacjewellers.net",
+  "https://nacjewellers.net/",
+  "https://www.nacjewellers.net",
+  "https://api.nacjewellers.net",
+  "https://console.nacjewellers.net",
+  "https://price-runner.nacjewellers.com",
+];
 
+app.use(morgan("common"));
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  next();
+  // const origin = req.headers.origin;
+  // if (allowedOrigins.includes(origin)) {
+  //   res.setHeader("Access-Control-Allow-Origin", origin);
+  // }  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  //res.header('Access-Control-Allow-Origin', 'http://127.0.0.1:8020');
+  res.header("Access-Control-Allow-Methods", "*");
+  res.header("Access-Control-Allow-Headers", "*");
+  res.header("Access-Control-Allow-Credentials", true);
+  return next();
 });
 // const config = {
 //     user: 'mac',
@@ -53,7 +74,7 @@ app.use(function (req, res, next) {
 
 app.get("/", (req, res) => {
   console.log("running");
-  res.send("NAC Auth running");
+  res.send("NAC Production Backend running" + new Date());
 });
 app.use(cors());
 app.use(express.json());
@@ -87,7 +108,7 @@ connString = {
 
 app.use(
   postgraphile(connString, {
-    graphiql: true,
+    graphiql: !env.includes("production"),
     live: true,
     watchPg: true,
     appendPlugins: [
