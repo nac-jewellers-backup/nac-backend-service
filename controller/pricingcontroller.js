@@ -2546,7 +2546,7 @@ exports.getaliasproductlist = async (req, res) => {
 
   whereclause = {
     attributes: {
-      [Op.contains]: attrs,
+      [Op.overlap]: attrs,
     },
   };
   console.log(whereclause);

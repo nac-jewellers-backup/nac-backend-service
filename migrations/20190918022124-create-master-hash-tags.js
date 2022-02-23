@@ -9,6 +9,7 @@ module.exports = {
       },
       name: {
         type: Sequelize.STRING,
+        unique: true,
       },
       alias: {
         type: Sequelize.STRING,
