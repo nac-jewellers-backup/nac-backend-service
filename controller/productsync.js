@@ -746,9 +746,35 @@ let verify_total_stone_pricing = ({ product_id, data }) => {
             ),
             "type",
           ],
-          "selling_price",
-          ["markup", "markup_price"],
-          "discount_price",
+          [
+            models.sequelize.fn(
+              "sum",
+              models.sequelize.fn(
+                "COALESCE",
+                models.sequelize.col("selling_price"),
+                0
+              )
+            ),
+            "selling_price",
+          ],
+          [
+            models.sequelize.fn(
+              "sum",
+              models.sequelize.fn("COALESCE", models.sequelize.col("markup"), 0)
+            ),
+            "markup_price",
+          ],
+          [
+            models.sequelize.fn(
+              "sum",
+              models.sequelize.fn(
+                "COALESCE",
+                models.sequelize.col("discount_price"),
+                0
+              )
+            ),
+            "discount_price",
+          ],
         ],
         where: { product_id },
         group: models.sequelize.literal("type,product_id", "product_sku"),
