@@ -2416,7 +2416,7 @@ exports.creatediscount = async (req, res) => {
 exports.getdistinctproduct = async (req, res) => {
   const { vendorid, product_category, product_type } = req.body;
   let whereclause = {
-    isactive: true,
+    // isactive: true, Disabling this to make sure product price run to execute on all products
   };
 
   if (vendorid) {
