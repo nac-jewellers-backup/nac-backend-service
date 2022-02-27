@@ -316,7 +316,7 @@ exports.priceUpdate = ({ product_id }) => {
           },
           order: [["createdAt", "desc"]],
           plain: true,
-        });        
+        });
         let markupCondition = {
           product_sku,
           markup_value: 0,
@@ -356,16 +356,26 @@ exports.priceUpdate = ({ product_id }) => {
         //updating Total Diamond & Gemstone Price
         await updateTotalNoStones({ product_sku });
 
+        let { tax_value } = await models.master_tax_settings.findOne({
+          where: { hsn_number: product.hsn_number || "7713" },
+        });
+
         models.sequelize
           .query(
             `select 
               product_sku,
               sum(subquery.selling_price) as selling_price,
-              round((((sum(subquery.selling_price))*3)/103)::numeric,2) as selling_price_tax,
+              round((((sum(subquery.selling_price))*${tax_value})/${
+              100 + Number(tax_value)
+            })::numeric,2) as selling_price_tax,
               sum(subquery.markup_price) as markup_price,
-              round((((sum(subquery.markup_price))*3)/103)::numeric,2) as markup_price_tax,
+              round((((sum(subquery.markup_price))*${tax_value})/${
+              100 + Number(tax_value)
+            })::numeric,2) as markup_price_tax,
               sum(subquery.discount_price) as discount_price,
-              round((((sum(subquery.discount_price))*3)/103)::numeric,2) as discount_price_tax
+              round((((sum(subquery.discount_price))*${tax_value})/${
+              100 + Number(tax_value)
+            })::numeric,2) as discount_price_tax
               from
               (select 
               product_sku,
