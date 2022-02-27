@@ -1961,11 +1961,15 @@ exports.getproductlist = async (req, res) => {
     };
   }
   if (productcategory) {
-    whereclause["product_category"] = productcategory;
+    whereclause["product_category"] = {
+      [models.Sequelize.Op.iLike]: productcategory,
+    };
   }
 
   if (producttype) {
-    whereclause["product_type"] = producttype;
+    whereclause["product_type"] = {
+      [models.Sequelize.Op.iLike]: producttype,
+    };
   }
 
   let products = await models.product_lists.findAndCountAll({
