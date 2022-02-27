@@ -576,7 +576,7 @@ let verify_master_collections = ({ product_id, data }) => {
 };
 
 let verify_pricing_sku_materials = ({ product_id, data }) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (data["tagstone"]) {
       if (data.tagstone["stone"] && data.tagstone["stone"].length > 0) {
         var stones = data.tagstone.stone;
@@ -625,6 +625,7 @@ let verify_pricing_sku_materials = ({ product_id, data }) => {
         });
       }
     }
+    await verify_total_stone_pricing({ product_id, data, warehouse });
     resolve("Completed product_stones sync");
   });
 };
@@ -1212,7 +1213,7 @@ export let all_process = [
   verify_product_stones,
   verify_pricing_sku_metals,
   verify_pricing_sku_materials,
-  verify_total_stone_pricing,
+  // verify_total_stone_pricing,
   verify_master_collections,
   verify_master_occassions,
   verify_master_genders,
@@ -1227,7 +1228,7 @@ var price_sync = [
   verify_trans_sku,
   verify_pricing_sku_metals,
   verify_pricing_sku_materials,
-  verify_total_stone_pricing,
+  // verify_total_stone_pricing,
 ];
 
 let verify_product = ({ product_id, data, type, warehouse }) => {
