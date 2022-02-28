@@ -369,13 +369,9 @@ exports.priceUpdate = ({ product_id }) => {
               100 + Number(tax_value)
             })::numeric,2) as selling_price_tax,
               sum(subquery.markup_price) as markup_price,
-              round((((sum(subquery.markup_price))*${tax_value})/${
-              100 + Number(tax_value)
-            })::numeric,2) as markup_price_tax,
+              round((sum(subquery.markup_price))*${tax_value}/100,2) as markup_price_tax,
               sum(subquery.discount_price) as discount_price,
-              round((((sum(subquery.discount_price))*${tax_value})/${
-              100 + Number(tax_value)
-            })::numeric,2) as discount_price_tax
+              round((sum(subquery.discount_price))*${tax_value}/100,2) as discount_price_tax
               from
               (select 
               product_sku,
@@ -398,8 +394,13 @@ exports.priceUpdate = ({ product_id }) => {
             if (result.length) {
               let { product_sku, selling_price, selling_price_tax, ...rest } =
                 result[0];
+              console.log(JSON.stringify(rest));
               let updateTransSkuList = {
                 ...rest,
+                markup_price:
+                  Number(rest.markup_price) + Number(rest.markup_price_tax),
+                discount_price:
+                  Number(rest.discount_price) + Number(rest.discount_price_tax),
                 margin_on_sale_percentage: Math.round(
                   ((rest.markup_price - selling_price) * 100) / selling_price,
                   0
