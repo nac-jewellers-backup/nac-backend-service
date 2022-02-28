@@ -199,7 +199,7 @@ let updateDiscountMaterialPrice = ({
     newDiscount = models.sequelize.literal(`(markup*(1+(${discount_value}))`);
   }
   return new Promise((resolve, reject) => {
-    models.pricing_sku_metals
+    models.pricing_sku_materials
       .update(
         {
           discount_price: newDiscount,
