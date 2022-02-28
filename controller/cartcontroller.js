@@ -751,10 +751,22 @@ exports.getsizes = async (req, res) => {
 exports.removecartitem = async (req, res) => {
   try {
     let { cart_id, product_id } = req.body;
+
+    let cart = await models.shopping_cart.findByPk(cart_id);
+
+    if (!cart) {
+      return res.status(403).send({ message: "No Such Cart ID exists!" });
+    } else if (cart.status != "pending") {
+      return res
+        .status(403)
+        .send({ message: "Please check cart it's already submitted" });
+    }
+
     await models.shopping_cart_item.destroy({
       where: {
         shopping_cart_id: cart_id,
         product_sku: product_id,
+        status: "pending",
       },
     });
 
@@ -819,6 +831,16 @@ exports.removecartitem = async (req, res) => {
 exports.updatecartitem = async (req, res) => {
   try {
     let { cart_id, product } = req.body;
+
+    let cart = await models.shopping_cart.findByPk(cart_id);
+
+    if (!cart) {
+      return res.status(403).send({ message: "No Such Cart ID exists!" });
+    } else if (cart.status != "pending") {
+      return res
+        .status(403)
+        .send({ message: "Please check cart it's already submitted" });
+    }
 
     // let product_in_cart = await models.shopping_cart_item.findAll({
     //   where: {
@@ -948,9 +970,11 @@ exports.addtocart = async (req, res) => {
 
     try {
       if (cart_id) {
-        let cartStatus = await models.shopping_cart.findByPk(cart_id);
-        if (!cartStatus) {
-          return res.status(500).send({ message: "Something went wrong!" });
+        let cart = await models.shopping_cart.findByPk(cart_id);
+        if (!cart) {
+          return res.status(403).send({ message: "Something went wrong!" });
+        } else if (cart.status != "pending") {
+          cart_id = await createNewCart();
         }
       } else {
         cart_id = await createNewCart();
@@ -1577,6 +1601,12 @@ exports.removewishlist = async (req, res) => {
 exports.addorder = async (req, res) => {
   try {
     let { user_id, cart_id, payment_mode, voucher_code } = req.body;
+    let orderDetails = await models.orders.findOne({
+      where: {
+        cart_id,
+        payment_mode,
+      },
+    });
     var paymentstatus = "Initiated";
     var orderstatus = "Initiated";
     if (payment_mode === "COD") {
@@ -1600,38 +1630,49 @@ exports.addorder = async (req, res) => {
         id: cart_id,
       },
     });
-    models.orders
-      .create(order_bj, {
-        returning: true,
-      })
-      .then(async function (response) {
-        if (voucher_code) {
-          // let discountendamount  = eligible_amount * discountpercent;
 
-          var query =
-            "UPDATE vouchers SET uses = (uses + 1) where code ='" +
-            voucher_code.toUpperCase() +
-            "'";
-          // console.log("-------");
-          // console.log(query);
-          await models.sequelize.query(query).then(([results, metadata]) => {
-            // Results will be an empty array and metadata will contain the number of affected rows.
-          });
-        }
+    if (orderDetails) {
+      if (payment_mode === "COD") {
+        sendorderconformationemail(orderDetails.id, res);
+      } else {
+        res.status(200).send({
+          message: "Order placed successfully",
+          order: orderDetails,
+        });
+      }
+    } else {
+      models.orders
+        .create(order_bj, {
+          returning: true,
+        })
+        .then(async function (response) {
+          if (voucher_code) {
+            // let discountendamount  = eligible_amount * discountpercent;
 
-        if (payment_mode === "COD") {
-          sendorderconformationemail(order_bj.id, res);
-        } else {
-          res.send(200, {
-            message: "Order placed successfully",
-            order: response,
-          });
-        }
-      })
-      .catch((reason) => {
-        res.send(500, { message: "Error Please try again" });
-        console.log(reason);
-      });
+            var query =
+              "UPDATE vouchers SET uses = (uses + 1) where code ='" +
+              voucher_code.toUpperCase() +
+              "'";
+            // console.log("-------");
+            // console.log(query);
+            await models.sequelize.query(query).then(([results, metadata]) => {
+              // Results will be an empty array and metadata will contain the number of affected rows.
+            });
+          }
+          if (payment_mode === "COD") {
+            sendorderconformationemail(order_bj.id, res);
+          } else {
+            res.send(200, {
+              message: "Order placed successfully",
+              order: response,
+            });
+          }
+        })
+        .catch((reason) => {
+          res.send(500, { message: "Error Please try again" });
+          console.log(reason);
+        });
+    }
   } catch (err) {
     console.log(
       new Date().toLocaleString("en-US", {
