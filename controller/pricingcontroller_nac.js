@@ -170,7 +170,7 @@ let updateDiscountMaterialPrice = ({
     product_sku,
   };
   discountApplicable = discountApplicable.filter((item) =>
-    ["Diamond", "Gemstone"].includes(item)
+    ["Diamond", "Gemstone", "All"].includes(item)
   );
   if (discountApplicable.length <= 0) {
     return Promise.resolve("Not Applicable");
