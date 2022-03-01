@@ -60,7 +60,9 @@ exports.filteroptions = async (req, res) => {
       seofilterattribute.push("Category");
       seofilterattributevalue.push(category);
       category_filter["name"] = category;
-      whereclause["product_category"] = category;
+      whereclause["product_category"] = {
+        [models.Sequelize.Op.iLike]: category,
+      };
     }
   } else {
     seofilterattribute.push("Category");
@@ -267,7 +269,7 @@ exports.filteroptions = async (req, res) => {
     seofilterattributevalue.push(producttype);
 
     whereclause["product_type"] = {
-      [Op.eq]: producttype,
+      [Op.iLike]: producttype,
     };
   }
 
@@ -300,7 +302,7 @@ exports.filteroptions = async (req, res) => {
   products.forEach((element) => {
     product_list.push(element.product_id);
   });
-
+  console.log(">>>>>>>>>>", product_list.length);
   var master_category = await models.master_product_categories.findAll({
     where: category_filter,
   });
@@ -431,7 +433,7 @@ exports.filteroptions = async (req, res) => {
       attributes: ["name"],
       where: {
         name: {
-          [Op.in]: mastervalues,
+          [Op.iLike]: { [Op.any]: mastervalues },
         },
         is_active: true,
         is_filter: true,
