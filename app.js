@@ -26,10 +26,18 @@ app.use(express.urlencoded({ limit: "50mb" }));
 
 app.use(morgan("common"));
 app.use(function (req, res, next) {
-  // const origin = req.headers.origin;
-  // if (allowedOrigins.includes(origin)) {
-  //   res.setHeader("Access-Control-Allow-Origin", origin);
-  // }    
+  const allowedOrigins = [
+    "https://nacjewellers.net",
+    "https://nacjewellers.net/",
+    "https://www.nacjewellers.net",
+    "https://api.nacjewellers.net",
+    "https://console.nacjewellers.net",
+    "https://price-runner.nacjewellers.net",
+  ];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   //res.header('Access-Control-Allow-Origin', 'http://127.0.0.1:8020');
   res.header("Access-Control-Allow-Methods", "*");
   res.header("Access-Control-Allow-Headers", "*");
