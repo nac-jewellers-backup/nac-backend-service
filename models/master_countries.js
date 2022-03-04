@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
       iso3: DataTypes.STRING,
       numcode: DataTypes.STRING,
       phonecode: DataTypes.STRING,
+      currency: DataTypes.STRING,
+      currency_alias: DataTypes.STRING,
+      currency_symbol: DataTypes.STRING,
+      fx_conversion_rate: DataTypes.DOUBLE,
       is_active: DataTypes.BOOLEAN,
     },
     {}

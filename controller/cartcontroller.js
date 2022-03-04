@@ -1,4 +1,4 @@
-import crypto from "crypto-random-string";
+import crypto, { async } from "crypto-random-string";
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
 const models = require("./../models");
@@ -22,6 +22,7 @@ const {
   sendAbandonedCart,
 } = require("./notify/email_templates");
 import { sendMail } from "./notify/user_notify";
+import axios from "axios";
 dotenv.config();
 aws.config.update({
   region: "ap-south-1", // Put your aws region here
@@ -1266,7 +1267,7 @@ async function updateshippingcharge(cart_id, res) {
     charges = JSON.parse(JSON.stringify(charges));
     if (charges) {
       final_shipping_charge = charges.shipment_charge;
-    }    
+    }
     //updating cart with shipping_charge
     await models.shopping_cart.update(
       {
@@ -1730,4 +1731,51 @@ exports.trigger_mail = async (req, res) => {
     console.log(error);
     res.status(500).send({ ...error });
   }
+};
+
+exports.syncFxRate = (req, res) => {
+  let syncSourceURL = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/`;
+  models.master_countries
+    .findAll({
+      attributes: ["id", "currency_alias"],
+      raw: true,
+    })
+    .then((countries) => {
+      Promise.all(
+        countries.map(async ({ id, currency_alias }) => {
+          axios
+            .get(`${syncSourceURL}${currency_alias.toLowerCase()}.json`)
+            .then(async (res) => {
+              if (res.status == 200)
+                await models.master_countries.update(
+                  {
+                    fx_conversion_rate: Number(
+                      res.data[currency_alias.toLowerCase()]["inr"]
+                    ).toFixed(2),
+                  },
+                  {
+                    where: { id },
+                  }
+                );
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+          return Promise.resolve("Completed " + currency_alias + " Sync!");
+        })
+      )
+        .then(() => {
+          res
+            .status(200)
+            .send({ message: "Fx Sync for all countries completed!" });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).send({ ...err });
+        });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send({ ...err });
+    });
 };
