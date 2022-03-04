@@ -1,4 +1,4 @@
-import crypto from "crypto-random-string";
+import crypto, { async } from "crypto-random-string";
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
 const models = require("./../models");
@@ -22,6 +22,7 @@ const {
   sendAbandonedCart,
 } = require("./notify/email_templates");
 import { sendMail } from "./notify/user_notify";
+import axios from "axios";
 dotenv.config();
 aws.config.update({
   region: "ap-south-1", // Put your aws region here
@@ -789,8 +790,9 @@ exports.removecartitem = async (req, res) => {
         .update(
           {
             gross_amount: gross_amount.price,
-            discounted_price: gross_amount.price,
+            net_amount: gross_amount.price,
             discount: 0,
+            discounted_price: gross_amount.price,
           },
           {
             where: { id: cart_id },
@@ -923,8 +925,9 @@ exports.updatecartitem = async (req, res) => {
       .update(
         {
           gross_amount: gross_amount.price,
-          discounted_price: gross_amount.price,
+          net_amount: gross_amount.price,
           discount: 0,
+          discounted_price: gross_amount.price,
         },
         {
           where: { id: cart_id },
@@ -1066,6 +1069,8 @@ exports.addtocart = async (req, res) => {
         .update(
           {
             gross_amount: gross_amount.price,
+            net_amount: gross_amount.price,
+            discount: 0,
             discounted_price: gross_amount.price,
           },
           {
@@ -1213,206 +1218,81 @@ exports.removeaddress = async (req, res) => {
     });
 };
 async function updateshippingcharge(cart_id, res) {
-  let cartaddress = await models.cart_address.findOne({
-    where: {
-      cart_id: cart_id,
-      address_type: 1,
-    },
-  });
-  let shippingcountry = cartaddress.country;
-  let countryid = await models.master_countries.findOne({
-    where: {
-      name: shippingcountry.toUpperCase(),
-    },
-  });
-  let zones = await models.shipping_zone_countries.findAll({
-    where: {
-      country_id: countryid.id,
+  let cart = await models.shopping_cart.findByPk(cart_id, {
+    include: {
+      model: models.cart_address,
+      where: {
+        cart_id,
+        address_type: 1,
+      },
     },
   });
 
-  let zoneids = [];
-  zones.forEach((zoneobj) => {
-    zoneids.push(zoneobj.id);
-  });
-
-  let products = await models.shopping_cart_item.findAll({
-    where: {
-      shopping_cart_id: cart_id,
-    },
-  });
-  if (products.length > 0) {
-    processskus(0);
+  if (!cart) {
+    return res.status(403).send({ message: "No such cart exists!" });
   }
-  async function processskus(skucount) {
-    let attributes_condition = [];
-    let itemobj = products[skucount];
-    let product_attributes1 = await models.product_lists.findOne({
-      hierarchy: true,
-      attributes: ["product_id", "product_category", "product_type"],
-      include: [
-        {
-          model: models.trans_sku_lists,
-          attributes: ["purity", "generated_sku"],
-          include: [
-            {
-              model: models.master_metals_purities,
-              attributes: ["alias"],
-            },
-          ],
+  let charges, final_shipping_charge;
+  if (cart && cart.cart_addresses && cart.cart_addresses.length) {
+    charges = await models.shipping_charges.findOne({
+      attributes: ["shipment_charge"],
+      include: {
+        required: true,
+        attributes: ["name"],
+        model: models.shipping_zones,
+        include: {
+          model: models.master_countries,
+          attributes: [],
+          required: true,
+          through: {
+            attributes: [],
+          },
           where: {
-            generated_sku: itemobj.product_sku,
+            name: {
+              [models.Sequelize.Op.iLike]: cart.cart_addresses[0].country,
+            },
           },
         },
-        {
-          model: models.master_product_categories,
-          attributes: ["alias"],
+      },
+      where: {
+        is_active: true,
+        is_cart: true,
+        range_from: {
+          [models.Sequelize.Op.lte]: cart.net_amount,
         },
-        {
-          model: models.master_product_types,
-          attributes: ["alias"],
+        range_to: {
+          [models.Sequelize.Op.gte]: cart.net_amount,
         },
-        {
-          model: models.product_materials,
-          attributes: ["material_name"],
-          include: [
-            {
-              model: models.master_materials,
-              attributes: ["alias"],
-            },
-          ],
-        },
-        {
-          model: models.product_collections,
-          attributes: ["collection_name"],
-          include: [
-            {
-              model: models.master_collections,
-              attributes: ["alias"],
-            },
-          ],
-        },
-        {
-          model: models.product_occassions,
-          attributes: ["occassion_name"],
-          include: [
-            {
-              model: models.master_occasions,
-              attributes: ["alias"],
-            },
-          ],
-        },
-        {
-          model: models.product_gemstones,
-          attributes: ["gemstone_type"],
-          include: [
-            {
-              model: models.master_gemstones_types,
-              attributes: ["alias"],
-            },
-          ],
-        },
-        {
-          model: models.product_styles,
-          attributes: ["style_name"],
-          include: [
-            {
-              model: models.master_styles,
-              attributes: ["alias"],
-            },
-          ],
-        },
-        {
-          model: models.product_themes,
-          attributes: ["theme_name"],
-          include: [
-            {
-              model: models.master_themes,
-              attributes: ["alias"],
-            },
-          ],
-        },
-        {
-          model: models.product_stonecolor,
-        },
-        {
-          model: models.product_gender,
-        },
-      ],
+      },
     });
-    delete product_attributes1["dataValues"];
-    delete product_attributes1["_previousDataValues"];
-    delete product_attributes1["_modelOptions"];
-    delete product_attributes1["_options"];
-    delete product_attributes1["isNewRecord"];
-    delete product_attributes1["_changed"];
-
-    let keys = Object.keys(product_attributes1);
-    let attributes = {};
-    function isJson(str) {
-      try {
-        JSON.parse(str);
-      } catch (e) {
-        return false;
-      }
-      return true;
+    charges = JSON.parse(JSON.stringify(charges));
+    if (charges) {
+      final_shipping_charge = charges.shipment_charge;
     }
-
-    keys.forEach((element) => {
-      if (product_attributes1[element]) {
-        let attributeobj = product_attributes1[element];
-
-        if (Array.isArray(attributeobj)) {
-          let attributes_value = [];
-
-          attributeobj.forEach((attr_obj) => {
-            delete attr_obj["dataValues"];
-            delete attr_obj["_previousDataValues"];
-            delete attr_obj["_modelOptions"];
-            delete attr_obj["_options"];
-            delete attr_obj["isNewRecord"];
-            delete attr_obj["_changed"];
-            let nestkeys = Object.keys(attr_obj);
-            nestkeys.forEach((aliasobj) => {
-              if (isJson(JSON.stringify(attr_obj[aliasobj]))) {
-                attributes_value.push(attr_obj[aliasobj].alias);
-                // attributes[element+"_key"] = attr_obj[aliasobj]
-              }
-            });
-            // attributes[element] = attr_obj
-          });
-
-          attributes[element] = attributes_value;
-        } else {
-          let attributes_value = [];
-          attributes_value.push(attributeobj.alias);
-          attributes[element] = attributes_value;
-        }
+    //updating cart with shipping_charge
+    await models.shopping_cart.update(
+      {
+        shipping_charge: final_shipping_charge,
+        gross_amount: Number(cart.gross_amount) + Number(final_shipping_charge),
+        discount_price:
+          Number(cart.discount_price) + Number(final_shipping_charge),
+      },
+      {
+        where: { id: cart_id },
       }
-    });
-
-    let attrkeys = Object.keys(attributes);
-    attrkeys.forEach((key) => {
-      let attributeobj = attributes[key];
-      if (Array.isArray(attributeobj)) {
-        if (attributeobj.length > 0) {
-          console.log(attributeobj);
-          let attrobj = {
-            [Op.or]: attributeobj,
-          };
-          attributes_condition.push(attrobj);
-        }
-      }
-    });
-    res.send(200, { attributes });
+    );
   }
+  res.status(200).send({
+    ...charges,
+    shipping_charge:
+      final_shipping_charge == 0 ? "Free" : final_shipping_charge,
+  });
 }
 exports.getshippingcharge = async (req, res) => {
   const { cart_id } = req.body;
 
-  res.send(200, { shipping_charge: "Free" });
+  // res.send(200, { shipping_charge: "Free" });
 
-  //await updateshippingcharge(cart_id,res)
+  await updateshippingcharge(cart_id, res);
 };
 exports.addaddress = async (req, res) => {
   let { user_id, address, cart_id, isguestlogin } = req.body;
@@ -1851,4 +1731,51 @@ exports.trigger_mail = async (req, res) => {
     console.log(error);
     res.status(500).send({ ...error });
   }
+};
+
+exports.syncFxRate = (req, res) => {
+  let syncSourceURL = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/`;
+  models.master_countries
+    .findAll({
+      attributes: ["id", "currency_alias"],
+      raw: true,
+    })
+    .then((countries) => {
+      Promise.all(
+        countries.map(async ({ id, currency_alias }) => {
+          axios
+            .get(`${syncSourceURL}${currency_alias.toLowerCase()}.json`)
+            .then(async (res) => {
+              if (res.status == 200)
+                await models.master_countries.update(
+                  {
+                    fx_conversion_rate: Number(
+                      res.data[currency_alias.toLowerCase()]["inr"]
+                    ).toFixed(2),
+                  },
+                  {
+                    where: { id },
+                  }
+                );
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+          return Promise.resolve("Completed " + currency_alias + " Sync!");
+        })
+      )
+        .then(() => {
+          res
+            .status(200)
+            .send({ message: "Fx Sync for all countries completed!" });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).send({ ...err });
+        });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send({ ...err });
+    });
 };

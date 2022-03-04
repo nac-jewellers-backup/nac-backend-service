@@ -1114,4 +1114,5 @@ module.exports = function (app) {
       }
     });
   });
+  app.post("/fxSynclatest", cartcontroller.syncFxRate);
 };
