@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       gross_amount: DataTypes.DOUBLE,
       tax_amount: DataTypes.DOUBLE,
       net_amount: DataTypes.DOUBLE,
+      shipping_charge: DataTypes.DOUBLE,
       discount: DataTypes.DOUBLE,
       discounted_price: DataTypes.DOUBLE,
       voucher_code: DataTypes.STRING,

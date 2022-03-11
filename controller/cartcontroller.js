@@ -1272,7 +1272,7 @@ async function updateshippingcharge(cart_id, res) {
     await models.shopping_cart.update(
       {
         shipping_charge: final_shipping_charge,
-        gross_amount: Number(cart.gross_amount) + Number(final_shipping_charge),
+        gross_amount: Number(cart.net_amount) + Number(final_shipping_charge),
         discount_price:
           Number(cart.discount_price) + Number(final_shipping_charge),
       },
