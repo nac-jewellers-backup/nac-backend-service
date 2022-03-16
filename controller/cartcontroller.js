@@ -1779,3 +1779,39 @@ exports.syncFxRate = (req, res) => {
       res.status(500).send({ ...err });
     });
 };
+
+exports.getPincodeDetails = ({ pincode }) => {
+  return new Promise((resolve, reject) => {
+    axios
+      .get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${process.env.GOOGLE_GEOLOCATION_KEY}`
+      )
+      .then(async ({ data: { status, results } }) => {
+        if (status == "OK") {
+          let pincode_master = await models.pincode_master.findOne({
+            where: { pincode },
+          });
+          if (!pincode_master) {
+            let { address_components } = results[0];
+            let pincodeObject = {
+              id: uuidv1(),
+              pincode,
+              is_cod: true,
+              is_delivery: true,
+              is_active: true,
+              min_cartvalue: 5000,
+              max_cartvalue: 85000,
+            };
+            ["area", "district", "state", "country"].forEach((item, index) => {
+              pincodeObject[item] = address_components[index + 1].long_name;
+            });
+            await models.pincode_master.create(pincodeObject);
+          }
+          resolve({ status, results });
+        } else {
+          reject({ status });
+        }
+      })
+      .catch(reject);
+  });
+};

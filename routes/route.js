@@ -1115,4 +1115,12 @@ module.exports = function (app) {
     });
   });
   app.post("/fxSynclatest", cartcontroller.syncFxRate);
+  app.get("/get_pincode_details", async (req, res) => {
+    try {
+      res.status(200).send(await cartcontroller.getPincodeDetails(req.query));
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error);
+    }
+  });
 };
