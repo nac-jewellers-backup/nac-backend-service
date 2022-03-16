@@ -1802,9 +1802,19 @@ exports.getPincodeDetails = ({ pincode }) => {
               min_cartvalue: 5000,
               max_cartvalue: 85000,
             };
-            ["area", "district", "state", "country"].forEach((item, index) => {
-              pincodeObject[item] = address_components[index + 1].long_name;
-            });
+            if (address_components.length == 4) {
+              ["district", "state", "country"].forEach((item, index) => {
+                pincodeObject[item] = address_components[index + 1]?.long_name;
+              });
+            } else {
+              ["area", "district", "state", "country"].forEach(
+                (item, index) => {
+                  pincodeObject[item] =
+                    address_components[index + 1]?.long_name;
+                }
+              );
+            }
+
             await models.pincode_master.create(pincodeObject);
           }
           resolve({ status, results });
