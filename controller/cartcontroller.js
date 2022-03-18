@@ -1543,7 +1543,7 @@ exports.addorder = async (req, res) => {
               // Results will be an empty array and metadata will contain the number of affected rows.
             });
           }
-          if (payment_mode === "COD") {
+          if (payment_mode === "COD" || payment_mode == "Offline") {
             sendorderconformationemail(order_bj.id, res);
           } else {
             res.send(200, {
