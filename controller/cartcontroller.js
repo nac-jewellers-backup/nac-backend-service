@@ -1493,6 +1493,10 @@ exports.addorder = async (req, res) => {
       paymentstatus = "Submitted";
       orderstatus = "Submitted";
     }
+    if (payment_mode == "Offline") {
+      paymentstatus = "Submitted";
+      orderstatus = "Submitted";
+    }
     const order_bj = {
       id: uuidv1(),
       cart_id: cart_id,
@@ -1512,7 +1516,7 @@ exports.addorder = async (req, res) => {
     });
 
     if (orderDetails) {
-      if (payment_mode === "COD") {
+      if (payment_mode === "COD" || payment_mode == "Offline") {
         sendorderconformationemail(orderDetails.id, res);
       } else {
         res.status(200).send({
