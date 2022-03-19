@@ -13,7 +13,7 @@ exports.findAppointmentTimeSlot = ({ appointment_date }) => {
           where: {
             id: {
               [models.Sequelize.Op.notIn]: models.sequelize.literal(
-                `(select slot_id from appointments)`
+                `(select slot_id from appointments where slot_id is not null)`
               ),
             },
             is_active: true,
