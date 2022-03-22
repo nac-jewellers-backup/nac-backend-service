@@ -31,6 +31,35 @@ aws.config.update({
 });
 const S3_BUCKET = process.env.AWS_IMAGE_BUCKET_NAME;
 
+const loadCountries = () => {
+  return new Promise((resolve, reject) => {
+    models.master_countries
+      .findAll({
+        attributes: [
+          "id",
+          "name",
+          "nicename",
+          "phonecode",
+          "currency",
+          "currency_alias",
+          "currency_symbol",
+          "fx_conversion_rate",
+        ],
+        raw: true,
+      })
+      .then((countries) => {
+        let result = {};
+        countries.forEach((item) => {
+          result[item.name.toLowerCase()] = {
+            ...item,
+          };
+        });
+        resolve(result);
+      })
+      .catch(reject);
+  });
+};
+
 exports.addgiftwrap = async (req, res) => {
   const { cart_id, gift_from, gift_to, message } = req.body;
 
@@ -1480,13 +1509,31 @@ exports.removewishlist = async (req, res) => {
 };
 exports.addorder = async (req, res) => {
   try {
+    let countries = await loadCountries();
     let { user_id, cart_id, payment_mode, voucher_code } = req.body;
     let orderDetails = await models.orders.findOne({
+      include: {
+        model: models.shopping_cart,
+        include: {
+          model: models.cart_address,
+          where: {
+            address_type: 1,
+          },
+        },
+      },
       where: {
         cart_id,
         payment_mode,
       },
+      plain: true,
     });
+    let address = orderDetails?.shopping_cart?.cart_addresses[0];
+    if (!address) {
+      return res
+        .status(403)
+        .send({ error: true, message: "No Cart Address found!" });
+    }
+    let country_data = countries[address.country.toLowerCase()];
     var paymentstatus = "Initiated";
     var orderstatus = "Initiated";
     if (payment_mode === "COD") {
@@ -1504,6 +1551,8 @@ exports.addorder = async (req, res) => {
       payment_mode: payment_mode,
       payment_status: paymentstatus,
       order_status: orderstatus,
+      currency: country_data.currency_alias,
+      fx_conversion_rate: country_data.fx_conversion_rate,
     };
     const update_cartstatus = {
       status: "submitted",
