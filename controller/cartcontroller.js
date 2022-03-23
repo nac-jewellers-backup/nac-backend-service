@@ -20,6 +20,8 @@ const {
   sendRateProduct,
   sendPaymentConfimed,
   sendAbandonedCart,
+  sendAppointmentOTP,
+  sendAppointmentConfirmation,
 } = require("./notify/email_templates");
 import { sendMail } from "./notify/user_notify";
 import axios from "axios";
@@ -1511,23 +1513,28 @@ exports.addorder = async (req, res) => {
   try {
     let countries = await loadCountries();
     let { user_id, cart_id, payment_mode, voucher_code } = req.body;
-    let orderDetails = await models.orders.findOne({
+
+    //Getting Cart Details and Address Details
+    let cartDetails = await models.shopping_cart.findByPk(cart_id, {
       include: {
-        model: models.shopping_cart,
-        include: {
-          model: models.cart_address,
-          where: {
-            address_type: 1,
-          },
+        model: models.cart_address,
+        where: {
+          address_type: 1,
         },
       },
+      plain: true,
+    });
+
+    //Getting Order Details if already created for this cart to avoid duplicates
+    let orderDetails = await models.orders.findOne({
       where: {
         cart_id,
         payment_mode,
       },
       plain: true,
     });
-    let address = orderDetails?.shopping_cart?.cart_addresses[0];
+    
+    let address = cartDetails?.cart_addresses[0];
     if (!address) {
       return res
         .status(403)
@@ -1778,6 +1785,14 @@ exports.trigger_mail = async (req, res) => {
       return res
         .status(200)
         .send(await sendAbandonedCart({ cart_id: order_id }));
+    }
+    if (type === "appointment_otp") {
+      await sendAppointmentOTP({ ...req.body });
+    }
+    if (type === "appointment_confirmation") {
+      return res
+        .status(200)
+        .send(await sendAppointmentConfirmation({ ...req.body }));
     }
     res.status(200).send({ message: "mail triggered successfully!" });
   } catch (error) {

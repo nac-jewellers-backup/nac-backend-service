@@ -18,6 +18,12 @@ module.exports = (sequelize, DataTypes) => {
   );
   appointment.associate = function (models) {
     // associations can be defined here
+    appointment.belongsTo(models.appointment_date_time_slots, {
+      foreignKey: "slot_id",
+      targetKey: "id",
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
+    });
   };
   return appointment;
 };
