@@ -1,5 +1,9 @@
 const models = require("./../models");
 const { send_sms } = require("./notify/user_notify");
+const {
+  sendAppointmentOTP,
+  sendAppointmentConfirmation,
+} = require("./notify/email_templates");
 
 exports.findAppointmentTimeSlot = ({ appointment_date }) => {
   return new Promise((resolve, reject) => {
@@ -70,6 +74,7 @@ exports.appointment_send_otp = ({ appointment_id }) => {
       .then(async (result) => {
         let { mobile_country_code, mobile } = result[1][0];
         try {
+          await sendAppointmentOTP({ appointment_id });
           await send_sms({
             mobile_no: `${mobile_country_code}${mobile}`,
             sender_id: "NACJWL",
@@ -100,8 +105,9 @@ exports.appointment_verify_otp = ({ appointment_id, mobile_no, otp }) => {
           returning: true,
         }
       )
-      .then((result) => {        
+      .then(async (result) => {
         if (result[0] == 1) {
+          await sendAppointmentConfirmation({ appointment_id });
           resolve({
             statusCode: 200,
             message: `OTP verified successfully!`,
