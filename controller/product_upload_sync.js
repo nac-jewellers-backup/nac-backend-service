@@ -303,7 +303,21 @@ let updatePricingSkuMetals = ({ product_id, data }) => {
 };
 
 let updateTotalStonePrice = ({ product_id, data }) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    await models.pricing_sku_materials.update(
+      {
+        selling_price: null,
+        markup: null,
+        discount_price: null,
+        margin_percentage: null,
+      },
+      {
+        where: {
+          product_id,
+        },
+      }
+    );
+
     Promise.all(
       [
         {
