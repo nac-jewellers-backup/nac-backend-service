@@ -591,6 +591,110 @@ let sendAbandonedCart = ({ cart_id, first_name }) => {
   });
 };
 
+let sendAppointmentOTP = ({ appointment_id }) => {
+  return new Promise((resolve, reject) => {
+    models.appointment
+      .findByPk(appointment_id, { raw: true })
+      .then(async (result) => {
+        var emilreceipiants = [
+          {
+            to: result.email,
+            subject: "You left some items in your cart",
+          },
+          {
+            to: process.env.adminemail,
+            subject: "You left some items in your cart",
+          },
+        ];
+        sendMail(
+          emilreceipiants,
+          await createTemplate({
+            type: "appointment_otp",
+            data: result,
+          })
+        )
+          .then(async (result) => {
+            let { response } = result;
+            await models.communication_log.create({
+              cart_id: null,
+              type: "email",
+              message_type: "appointment_otp",
+              sender_response_id: response[0].message_id,
+            });
+          })
+          .catch((err) => console.log(err));
+        resolve(result);
+      })
+      .catch(reject);
+  });
+};
+
+let sendAppointmentConfirmation = ({ appointment_id }) => {
+  return new Promise((resolve, reject) => {
+    models.appointment
+      .findByPk(appointment_id, {
+        attributes: ["customer_name", "email"],
+        include: {
+          model: models.appointment_date_time_slots,
+          attributes: ["start_time", "end_time"],
+          include: {
+            model: models.appointment_dates,
+            attributes: ["start_date", "end_date"],
+          },
+        },
+        plain: true,
+      })
+      .then(async (result) => {
+        result = JSON.parse(JSON.stringify(result));
+        var emilreceipiants = [
+          {
+            to: result.email,
+            subject: "You left some items in your cart",
+          },
+          {
+            to: process.env.adminemail,
+            subject: "You left some items in your cart",
+          },
+        ];
+        sendMail(
+          emilreceipiants,
+          await createTemplate({
+            type: "appointment_confirmation",
+            data: {
+              customer_name: result.customer_name,
+              appointment_date: moment(
+                result?.appointment_date_time_slot?.appointment_date
+                  ?.start_date,
+                "YYYY-MM-DD"
+              ).format("DD-MM-YYYY"),
+              appointment_time: `${moment(
+                result?.appointment_date_time_slot?.start_time,
+                "HH:mm:ss"
+              ).format("hh:mm A")} - ${moment(
+                result?.appointment_date_time_slot?.end_time,
+                "HH:mm:ss"
+              ).format("hh:mm A")}`,
+            },
+          })
+        )
+          .then(async (result) => {
+            let { response } = result;
+            await models.communication_log.create({
+              cart_id: null,
+              type: "email",
+              message_type: "appointment_confirmation",
+              sender_response_id: response[0].message_id,
+            });
+          })
+          .catch((err) => console.log(err));
+        resolve({
+          ...result,
+        });
+      })
+      .catch(reject);
+  });
+};
+
 export {
   createTemplate,
   sendOrderConfirmation,
@@ -598,4 +702,6 @@ export {
   sendRateProduct,
   sendPaymentConfimed,
   sendAbandonedCart,
+  sendAppointmentOTP,
+  sendAppointmentConfirmation,
 };

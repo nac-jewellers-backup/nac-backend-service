@@ -25,6 +25,7 @@
     "elasticsearch": "^16.6.0",
     "express": "^4.17.1",
     "fs": "0.0.1-security",
+    "geonames.js": "^3.0.6",
     "graphile-utils": "^4.12.2",
     "graphql": "^15.7.2",
     "jsonwebtoken": "^8.5.1",

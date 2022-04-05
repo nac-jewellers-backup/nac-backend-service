@@ -14,9 +14,17 @@ module.exports = {
       email: {
         type: Sequelize.STRING,
       },
+      mobile_country_code: {
+        type: Sequelize.STRING,
+        defaultValue: "+91",
+      },
       mobile: {
         type: Sequelize.STRING,
       },
+      otp: {
+        type: Sequelize.STRING,
+      },
+      is_verified: { type: Sequelize.BOOLEAN },
       appointment_type_id: {
         type: Sequelize.INTEGER,
         onDelete: "CASCADE",
@@ -44,13 +52,16 @@ module.exports = {
           key: "id",
         },
       },
+      is_active: { type: Sequelize.BOOLEAN },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
     });
   },

@@ -1115,4 +1115,67 @@ module.exports = function (app) {
     });
   });
   app.post("/fxSynclatest", cartcontroller.syncFxRate);
+  app.get("/get_pincode_details", async (req, res) => {
+    try {
+      res.status(200).send(await cartcontroller.getPincodeDetails(req.query));
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error);
+    }
+  });
+  // Appointment Routes
+  const appointment_controller = require("../controller/appointment_scheduler");
+
+  app.post("/get_appointment_time_slots", async (req, res) => {
+    try {
+      res
+        .status(200)
+        .send(await appointment_controller.findAppointmentTimeSlot(req.body));
+    } catch (error) {
+      console.log(error);
+      res.status(error.statusCode || 500).send(error);
+    }
+  });
+  app.post("/send_appointment_otp", async (req, res) => {
+    try {
+      res
+        .status(200)
+        .send(await appointment_controller.appointment_send_otp(req.body));
+    } catch (error) {
+      console.log(error);
+      res.status(error.statusCode || 500).send(error);
+    }
+  });
+  app.post("/verify_appointment_otp", async (req, res) => {
+    try {
+      res
+        .status(200)
+        .send(await appointment_controller.appointment_verify_otp(req.body));
+    } catch (error) {
+      console.log(error);
+      res.status(error.statusCode || 500).send(error);
+    }
+  });
+  app.post("/sync_pincode", async (req, res) => {
+    try {
+      res.status(200).send(await cartcontroller.syncPincode(req.body));
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({ ...error });
+    }
+  });
+  app.post("/price_run_new", async (req, res) => {
+    try {
+      res
+        .status(200)
+        .send(
+          await require("../controller/pricingcontroller_with_intermediate").priceUpdate(
+            req.body
+          )
+        );
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({ ...error });
+    }
+  });
 };

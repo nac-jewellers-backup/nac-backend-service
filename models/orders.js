@@ -11,6 +11,8 @@ module.exports = (sequelize, DataTypes) => {
       awb_number: DataTypes.TEXT,
       comments: DataTypes.TEXT,
       payment_id: DataTypes.INTEGER,
+      currency: DataTypes.STRING,
+      fx_conversion_rate: DataTypes.DOUBLE,
     },
     {}
   );

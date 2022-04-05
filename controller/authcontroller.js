@@ -1006,7 +1006,7 @@ exports.mediaSignin = async (req, res) => {
         userProfileObj["facebookid"] = mediaBody.id;
       } else if (type == "google") {
         userProfileObj["google_id"] = mediaBody.id;
-      }      
+      }
       userProfile = await models.user_profiles.create(userProfileObj);
       return res.status(200).send({
         accessToken: token,

@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
   );
   pricing_sku_metals.associate = function (models) {
     // associations can be defined here
-    models.pricing_sku_metals.belongsTo(models.trans_sku_lists, {
+    pricing_sku_metals.belongsTo(models.trans_sku_lists, {
       foreignKey: "product_sku",
       targetKey: "generated_sku",
     });

@@ -20,6 +20,8 @@ const {
   sendRateProduct,
   sendPaymentConfimed,
   sendAbandonedCart,
+  sendAppointmentOTP,
+  sendAppointmentConfirmation,
 } = require("./notify/email_templates");
 import { sendMail } from "./notify/user_notify";
 import axios from "axios";
@@ -30,6 +32,35 @@ aws.config.update({
   secretAccessKey: process.env.AWS_SECRET_KEY,
 });
 const S3_BUCKET = process.env.AWS_IMAGE_BUCKET_NAME;
+
+const loadCountries = () => {
+  return new Promise((resolve, reject) => {
+    models.master_countries
+      .findAll({
+        attributes: [
+          "id",
+          "name",
+          "nicename",
+          "phonecode",
+          "currency",
+          "currency_alias",
+          "currency_symbol",
+          "fx_conversion_rate",
+        ],
+        raw: true,
+      })
+      .then((countries) => {
+        let result = {};
+        countries.forEach((item) => {
+          result[item.name.toLowerCase()] = {
+            ...item,
+          };
+        });
+        resolve(result);
+      })
+      .catch(reject);
+  });
+};
 
 exports.addgiftwrap = async (req, res) => {
   const { cart_id, gift_from, gift_to, message } = req.body;
@@ -767,7 +798,6 @@ exports.removecartitem = async (req, res) => {
       where: {
         shopping_cart_id: cart_id,
         product_sku: product_id,
-        status: "pending",
       },
     });
 
@@ -1272,7 +1302,7 @@ async function updateshippingcharge(cart_id, res) {
     await models.shopping_cart.update(
       {
         shipping_charge: final_shipping_charge,
-        gross_amount: Number(cart.gross_amount) + Number(final_shipping_charge),
+        gross_amount: Number(cart.net_amount) + Number(final_shipping_charge),
         discount_price:
           Number(cart.discount_price) + Number(final_shipping_charge),
       },
@@ -1480,16 +1510,43 @@ exports.removewishlist = async (req, res) => {
 };
 exports.addorder = async (req, res) => {
   try {
+    let countries = await loadCountries();
     let { user_id, cart_id, payment_mode, voucher_code } = req.body;
+
+    //Getting Cart Details and Address Details
+    let cartDetails = await models.shopping_cart.findByPk(cart_id, {
+      include: {
+        model: models.cart_address,
+        where: {
+          address_type: 1,
+        },
+      },
+      plain: true,
+    });
+
+    //Getting Order Details if already created for this cart to avoid duplicates
     let orderDetails = await models.orders.findOne({
       where: {
         cart_id,
         payment_mode,
       },
+      plain: true,
     });
+
+    let address = cartDetails?.cart_addresses[0];
+    if (!address) {
+      return res
+        .status(403)
+        .send({ error: true, message: "No Cart Address found!" });
+    }
+    let country_data = countries[address.country.toLowerCase()];
     var paymentstatus = "Initiated";
     var orderstatus = "Initiated";
     if (payment_mode === "COD") {
+      paymentstatus = "Submitted";
+      orderstatus = "Submitted";
+    }
+    if (payment_mode == "Offline") {
       paymentstatus = "Submitted";
       orderstatus = "Submitted";
     }
@@ -1500,6 +1557,8 @@ exports.addorder = async (req, res) => {
       payment_mode: payment_mode,
       payment_status: paymentstatus,
       order_status: orderstatus,
+      currency: country_data.currency_alias,
+      fx_conversion_rate: country_data.fx_conversion_rate,
     };
     const update_cartstatus = {
       status: "submitted",
@@ -1512,7 +1571,7 @@ exports.addorder = async (req, res) => {
     });
 
     if (orderDetails) {
-      if (payment_mode === "COD") {
+      if (payment_mode === "COD" || payment_mode == "Offline") {
         sendorderconformationemail(orderDetails.id, res);
       } else {
         res.status(200).send({
@@ -1539,7 +1598,7 @@ exports.addorder = async (req, res) => {
               // Results will be an empty array and metadata will contain the number of affected rows.
             });
           }
-          if (payment_mode === "COD") {
+          if (payment_mode === "COD" || payment_mode == "Offline") {
             sendorderconformationemail(order_bj.id, res);
           } else {
             res.send(200, {
@@ -1726,6 +1785,14 @@ exports.trigger_mail = async (req, res) => {
         .status(200)
         .send(await sendAbandonedCart({ cart_id: order_id }));
     }
+    if (type === "appointment_otp") {
+      await sendAppointmentOTP({ ...req.body });
+    }
+    if (type === "appointment_confirmation") {
+      return res
+        .status(200)
+        .send(await sendAppointmentConfirmation({ ...req.body }));
+    }
     res.status(200).send({ message: "mail triggered successfully!" });
   } catch (error) {
     console.log(error);
@@ -1778,4 +1845,119 @@ exports.syncFxRate = (req, res) => {
       console.log(err);
       res.status(500).send({ ...err });
     });
+};
+
+exports.getPincodeDetails = ({ pincode }) => {
+  return new Promise((resolve, reject) => {
+    axios
+      .get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${process.env.GOOGLE_GEOLOCATION_KEY}`
+      )
+      .then(async ({ data: { status, results } }) => {
+        if (status == "OK") {
+          let pincode_master = await models.pincode_master.findOne({
+            where: { pincode },
+          });
+          if (!pincode_master) {
+            let { address_components } = results[0];
+            let pincodeObject = {
+              id: uuidv1(),
+              pincode,
+              is_cod: true,
+              is_delivery: true,
+              is_active: true,
+              min_cartvalue: 5000,
+              max_cartvalue: 85000,
+            };
+            if (address_components.length == 4) {
+              ["district", "state", "country"].forEach((item, index) => {
+                pincodeObject[item] = address_components[index + 1]?.long_name;
+              });
+            } else {
+              ["area", "district", "state", "country"].forEach(
+                (item, index) => {
+                  pincodeObject[item] =
+                    address_components[index + 1]?.long_name;
+                }
+              );
+            }
+
+            await models.pincode_master.create(pincodeObject);
+          }
+          resolve({ status, results });
+        } else {
+          reject({ status });
+        }
+      })
+      .catch(reject);
+  });
+};
+
+const Geonames = require("geonames.js"); /* commonJS */
+const geonames = Geonames({
+  username: "nac_jewellers",
+  lan: "en",
+  encoding: "JSON",
+});
+
+exports.syncPincode = ({ pincode }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // const countryList = await loadCountries();
+      // let countries = await geonames.countryInfo({});
+      // countries = countries.geonames.filter((i) =>
+      //   [
+      //     ,
+      //     // ...Object.keys(countryList)
+      //     "united arab emirates",
+      //   ].includes(i.countryName.toLowerCase())
+      // );
+      // resolve(countries)
+      // let response = {};
+      geonames
+        .postalCodeSearch({
+          postalcode: pincode,
+          countryCode: "AU",
+        })
+        .then((result) => {
+          console.log(result.postalCodes.length);
+          resolve(result);
+        })
+        .catch(reject);
+      // Promise.allSettled(
+      //   countries.map(async (country) => {
+      //     let states = await geonames.children({
+      //       geonameId: country.geonameId,
+      //     });
+      //     await Promise.allSettled(
+      //       states.geonames.map(async (state) => {
+      //         let regions = await geonames.children({
+      //           geonameId: state.geonameId,
+      //         });
+      //         await Promise.allSettled(
+      //           regions.geonames.map(async (region) => {
+      //             const cities = await geonames.children({
+      //               geonameId: region.geonameId,
+      //             });
+      //             if (Array.isArray(response[country.countryCode])) {
+      //               response[country.countryCode].push(cities.geonames);
+      //             } else {
+      //               response[country.countryCode] = [cities.geonames];
+      //             }
+      //           })
+      //         );
+      //       })
+      //     );
+      //   })
+      // )
+      //   .then(() => {
+      //     resolve(response);
+      //   })
+      //   .catch((err) => {
+      //     reject(err);
+      //   });
+    } catch (error) {
+      reject(error);
+    }
+  });
 };
