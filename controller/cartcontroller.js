@@ -1251,9 +1251,12 @@ async function updateshippingcharge(cart_id, res) {
   let cart = await models.shopping_cart.findByPk(cart_id, {
     include: {
       model: models.cart_address,
+      required: false,
       where: {
         cart_id,
-        address_type: 1,
+        address_type: {
+          [models.Sequelize.Op.in]: [1, 3],
+        },
       },
     },
   });
@@ -1310,6 +1313,11 @@ async function updateshippingcharge(cart_id, res) {
         where: { id: cart_id },
       }
     );
+  } else {
+    return res.status(200).send({
+      ...charges,
+      shipping_charge: "Free",
+    });
   }
   res.status(200).send({
     ...charges,
