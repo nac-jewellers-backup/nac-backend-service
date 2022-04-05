@@ -1156,4 +1156,26 @@ module.exports = function (app) {
       res.status(error.statusCode || 500).send(error);
     }
   });
+  app.post("/sync_pincode", async (req, res) => {
+    try {
+      res.status(200).send(await cartcontroller.syncPincode(req.body));
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({ ...error });
+    }
+  });
+  app.post("/price_run_new", async (req, res) => {
+    try {
+      res
+        .status(200)
+        .send(
+          await require("../controller/pricingcontroller_with_intermediate").priceUpdate(
+            req.body
+          )
+        );
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({ ...error });
+    }
+  });
 };

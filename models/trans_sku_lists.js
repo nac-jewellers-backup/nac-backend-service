@@ -128,13 +128,17 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "generated_sku",
       targetKey: "sku_id",
     });
-    models.trans_sku_lists.hasMany(models.pricing_sku_materials, {
+    trans_sku_lists.hasMany(models.pricing_sku_materials, {
       foreignKey: "product_sku",
-      targetKey: "generated_sku",
+      sourceKey: "generated_sku",
     });
-    models.trans_sku_lists.hasMany(models.pricing_sku_metals, {
+    trans_sku_lists.hasMany(models.pricing_sku_metals, {
       foreignKey: "product_sku",
-      targetKey: "generated_sku",
+      sourceKey: "generated_sku",
+    });
+    trans_sku_lists.hasMany(models.total_no_stone, {
+      foreignKey: "product_sku",
+      sourceKey: "generated_sku",
     });
     models.trans_sku_lists.belongsTo(models.product_lists, {
       foreignKey: "product_id",

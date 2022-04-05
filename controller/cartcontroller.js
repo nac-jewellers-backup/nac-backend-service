@@ -798,7 +798,6 @@ exports.removecartitem = async (req, res) => {
       where: {
         shopping_cart_id: cart_id,
         product_sku: product_id,
-        status: "pending",
       },
     });
 
@@ -1533,7 +1532,7 @@ exports.addorder = async (req, res) => {
       },
       plain: true,
     });
-    
+
     let address = cartDetails?.cart_addresses[0];
     if (!address) {
       return res
@@ -1891,5 +1890,74 @@ exports.getPincodeDetails = ({ pincode }) => {
         }
       })
       .catch(reject);
+  });
+};
+
+const Geonames = require("geonames.js"); /* commonJS */
+const geonames = Geonames({
+  username: "nac_jewellers",
+  lan: "en",
+  encoding: "JSON",
+});
+
+exports.syncPincode = ({ pincode }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // const countryList = await loadCountries();
+      // let countries = await geonames.countryInfo({});
+      // countries = countries.geonames.filter((i) =>
+      //   [
+      //     ,
+      //     // ...Object.keys(countryList)
+      //     "united arab emirates",
+      //   ].includes(i.countryName.toLowerCase())
+      // );
+      // resolve(countries)
+      // let response = {};
+      geonames
+        .postalCodeSearch({
+          postalcode: pincode,
+          countryCode: "AU",
+        })
+        .then((result) => {
+          console.log(result.postalCodes.length);
+          resolve(result);
+        })
+        .catch(reject);
+      // Promise.allSettled(
+      //   countries.map(async (country) => {
+      //     let states = await geonames.children({
+      //       geonameId: country.geonameId,
+      //     });
+      //     await Promise.allSettled(
+      //       states.geonames.map(async (state) => {
+      //         let regions = await geonames.children({
+      //           geonameId: state.geonameId,
+      //         });
+      //         await Promise.allSettled(
+      //           regions.geonames.map(async (region) => {
+      //             const cities = await geonames.children({
+      //               geonameId: region.geonameId,
+      //             });
+      //             if (Array.isArray(response[country.countryCode])) {
+      //               response[country.countryCode].push(cities.geonames);
+      //             } else {
+      //               response[country.countryCode] = [cities.geonames];
+      //             }
+      //           })
+      //         );
+      //       })
+      //     );
+      //   })
+      // )
+      //   .then(() => {
+      //     resolve(response);
+      //   })
+      //   .catch((err) => {
+      //     reject(err);
+      //   });
+    } catch (error) {
+      reject(error);
+    }
   });
 };
