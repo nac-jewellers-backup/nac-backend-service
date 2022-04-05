@@ -144,7 +144,7 @@ let updateMarkupMaterialPrice = ({
   } else {
     //Applying Flat Markup
     newMarkup = models.sequelize.literal(
-      `(selling_price*(1+(${markup_value}))`
+      `(selling_price*(1+(${markup_value})))`
     );
   }
   return new Promise((resolve, reject) => {
@@ -196,7 +196,7 @@ let updateDiscountMaterialPrice = ({
     );
   } else {
     //Applying Flat Discount
-    newDiscount = models.sequelize.literal(`(markup*(1+(${discount_value}))`);
+    newDiscount = models.sequelize.literal(`(markup*(1+(${discount_value})))`);
   }
   return new Promise((resolve, reject) => {
     models.pricing_sku_materials
@@ -236,7 +236,7 @@ let updateTotalNoStones = ({
       } else {
         //Applying Flat Markup
         newMarkup = models.sequelize.literal(
-          `(selling_price*(1+(${markup_value}))`
+          `(selling_price*(1+(${markup_value})))`
         );
       }
       if (markupApplicable == "Gemstone") {
@@ -279,7 +279,7 @@ let updateTotalNoStones = ({
         } else {
           //Applying Flat Discount
           newDiscount = models.sequelize.literal(
-            `(markup_price*(1+(${discount_value}))`
+            `(markup_price*(1+(${discount_value})))`
           );
         }
         await models.total_no_stone.update(
