@@ -357,7 +357,9 @@ exports.priceUpdate = ({ product_id }) => {
             },
             category: product.product_category,
             product_type: {
-              [models.Sequelize.Op.contains]: [product.product_type],
+              [models.Sequelize.Op.contains]: [
+                product.product_type.toLowerCase(),
+              ],
             },
             purities: {
               [models.Sequelize.Op.contains]:
