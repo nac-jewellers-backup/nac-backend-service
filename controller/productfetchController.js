@@ -264,7 +264,9 @@ exports.filteroptions = async (req, res) => {
     includeclause.push({
       model: models.product_collections,
       where: {
-        collection_name: collection,
+        collection_name: {
+          [Op.iLike]: collection,
+        },
       },
     });
   }
