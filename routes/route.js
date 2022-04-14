@@ -1164,15 +1164,50 @@ module.exports = function (app) {
       res.status(500).send({ ...error });
     }
   });
+  const {
+    priceUpdate,
+    finalPriceRun,
+    createPriceRunHistory,
+    updatePriceRunHistory,
+  } = require("../controller/pricingcontroller_with_intermediate");
   app.post("/price_run_new", async (req, res) => {
     try {
-      res
-        .status(200)
-        .send(
-          await require("../controller/pricingcontroller_with_intermediate").priceUpdate(
-            req.body
-          )
-        );
+      let { pricing_component, req_product_id } = req.body;
+      if (!req_product_id || req_product_id.length == 0) {
+        throw new Error("req_product_id is required!");
+      }
+      if (!Array.isArray(req_product_id)) {
+        req_product_id = [req_product_id];
+      }
+      let priceHistory = await createPriceRunHistory({
+        pricing_component,
+        product_ids: req_product_id.join(","),
+        total_product: req_product_id.length,
+      });
+      res.status(200).send({ status: "started", priceHistory });
+      const models = require("../models");
+      req_product_id = arrayChunk(req_product_id, 200);
+      Promise.allSettled(
+        req_product_id.map(async (products) => {
+          return await Promise.allSettled(
+            products.map(async (item) => {
+              await priceUpdate({ product_id: item });
+              return await updatePriceRunHistory(priceHistory.id, {
+                completed_product_count: models.sequelize.literal(
+                  `completed_product_count+1`
+                ),
+                completed_products: models.sequelize.literal(
+                  `completed_products || ',' || ${item}`
+                ),
+              });
+            })
+          );
+        })
+      ).then(async () => {
+        await finalPriceRun();
+        await updatePriceRunHistory(priceHistory.id, { is_completed: true });
+        await models.temp_price_list.truncate();
+      });
     } catch (error) {
       console.log(error);
       res.status(500).send({ ...error });

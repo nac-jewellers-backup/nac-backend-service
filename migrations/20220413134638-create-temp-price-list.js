@@ -17,6 +17,7 @@ module.exports = {
       },
       generated_sku: {
         type: Sequelize.STRING,
+        unique: true,
         references: {
           model: "trans_sku_lists", // name of Source model
           key: "generated_sku",
