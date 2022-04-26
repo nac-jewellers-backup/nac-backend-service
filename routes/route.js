@@ -1197,7 +1197,7 @@ module.exports = function (app) {
                   `completed_product_count+1`
                 ),
                 completed_products: models.sequelize.literal(
-                  `completed_products || ',' || ${item}`
+                  `completed_products || ',' || '${item}'`
                 ),
               });
             })
