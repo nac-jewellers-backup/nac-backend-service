@@ -1855,44 +1855,61 @@ exports.syncFxRate = (req, res) => {
     });
 };
 
-exports.getPincodeDetails = ({ pincode }) => {
-  return new Promise((resolve, reject) => {
+exports.getPincodeDetails = ({ pincode, country_short_code }) => {
+  return new Promise(async (resolve, reject) => {
+    let country_master = await models.master_countries.findOne({
+      attributes: ["nicename"],
+      where: {
+        iso: country_short_code,
+        is_active: true,
+      },
+    });
+
     axios
       .get(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${process.env.GOOGLE_GEOLOCATION_KEY}`
+        // `https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${process.env.GOOGLE_GEOLOCATION_KEY}`
+        `https://api.worldpostallocations.com/?postalcode=${pincode}&countrycode=${country_short_code}`
       )
-      .then(async ({ data: { status, results } }) => {
-        if (status == "OK") {
-          let pincode_master = await models.pincode_master.findOne({
-            where: { pincode },
-          });
-          if (!pincode_master) {
-            let { address_components } = results[0];
-            let pincodeObject = {
-              id: uuidv1(),
-              pincode,
-              is_cod: true,
-              is_delivery: true,
-              is_active: true,
-              min_cartvalue: 5000,
-              max_cartvalue: 85000,
-            };
-            if (address_components.length == 4) {
-              ["district", "state", "country"].forEach((item, index) => {
-                pincodeObject[item] = address_components[index + 1]?.long_name;
-              });
-            } else {
-              ["area", "district", "state", "country"].forEach(
-                (item, index) => {
-                  pincodeObject[item] =
-                    address_components[index + 1]?.long_name;
+      .then(async ({ data: { status, result } }) => {
+        if (status == true) {
+          if (result.length > 0) {
+            let item = result[0];
+            let { district, state } = item;
+            models.pincode_master
+              .findOne({
+                attributes: ["id"],
+                where: {
+                  pincode,
+                  country: {
+                    [models.Sequelize.Op.iLike]: country_master?.nicename,
+                  },
+                },
+              })
+              .then(async (result) => {
+                if (result) {
+                  return Promise.resolve(true);
+                } else {
+                  let pincodeObject = {
+                    id: uuidv1(),
+                    pincode,
+                    district: district,
+                    state: state,
+                    country: country_master.nicename,
+                    is_cod: true,
+                    is_delivery: true,
+                    is_active: true,
+                    min_cartvalue: 5000,
+                    max_cartvalue: 85000,
+                  };
+                  await models.pincode_master.create(pincodeObject);
+                  return Promise.resolve(true);
                 }
-              );
-            }
-
-            await models.pincode_master.create(pincodeObject);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
           }
-          resolve({ status, results });
+          resolve({ status, results: [result[0]] });
         } else {
           reject({ status });
         }
