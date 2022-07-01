@@ -64,10 +64,11 @@ exports.filteroptions = async (req, res) => {
         [models.Sequelize.Op.iLike]: category,
       };
     }
-  } else {
-    seofilterattribute.push("Category");
-    seofilterattributevalue.push("Jewellery");
   }
+  // } else {
+  //   seofilterattribute.push("Category");
+  //   seofilterattributevalue.push("Jewellery");
+  // }
   if (bydesign) {
     seofilterattribute.push("By Design");
     seofilterattributevalue.push(bydesign);
@@ -799,6 +800,7 @@ exports.filteroptions = async (req, res) => {
       },
     },
     order: [["priority", "ASC"]],
+    logging: console.log,
   });
   var seourls_arr = [];
   var seotexts_arr = [];
