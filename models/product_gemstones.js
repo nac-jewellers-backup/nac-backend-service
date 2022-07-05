@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       description: DataTypes.STRING,
       stone_amount: DataTypes.DOUBLE,
       stone_rate: DataTypes.DOUBLE,
+      is_active: DataTypes.BOOLEAN,
     },
     { timestamps: false }
   );

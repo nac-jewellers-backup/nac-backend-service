@@ -169,7 +169,6 @@ let updateDiamondOrGemstones = ({ product_id, data, type }) => {
               stone_rate: item.rate,
               stone_count: item.count,
               stone_weight: item.weight,
-              is_active: true,
             };
             if (type === "diamond") {
               tempData = {
@@ -188,12 +187,13 @@ let updateDiamondOrGemstones = ({ product_id, data, type }) => {
                 gemstone_shape: item.shape,
                 gemstone_type: item.type,
                 gemstone_size: item.size,
+                is_active: true,
               };
             }
             return tempData;
           });
           model
-            .bulkCreate(bulkData, { individualHooks: true })
+            .bulkCreate(bulkData)
             .then((_) => {
               resolve("Completed");
             })
@@ -204,8 +204,9 @@ let updateDiamondOrGemstones = ({ product_id, data, type }) => {
         .catch((err) => {
           reject(err);
         });
+    } else {
+      resolve("Completed");
     }
-    resolve("Completed");
   });
 };
 
@@ -460,7 +461,7 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
   });
 };
 
-let updateProduct = ({ product_id, data }) => {  
+let updateProduct = ({ product_id, data }) => {
   return new Promise(async (resolve, reject) => {
     if (product_id) {
       models.product_lists
