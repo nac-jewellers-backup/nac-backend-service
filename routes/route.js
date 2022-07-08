@@ -949,65 +949,57 @@ module.exports = function (app) {
 
         let workbook = XLSX.readFile(req.file.path);
         let sheetList = workbook.SheetNames;
-
-        Promise.all(
-          sheetList.map(async (sheet) => {
-            return new Promise(async (resolve, reject) => {
-              let sampleData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
-              if (!sheet.includes("sku")) {
-                sampleData = require("lodash").groupBy(sampleData, (item) => {
-                  return item.tag_no;
-                });
-
-                let tag_no_list = Object.keys(sampleData);
-
-                for (let index = 0; index < tag_no_list.length; index++) {
-                  const tag_no = tag_no_list[index];
-                  const data = sampleData[tag_no];
-                  try {
-                    await require("../controller/product_upload_sync").product_upload_sync(
-                      {
-                        data,
-                        type: sheet.replace("_list", ""),
-                      }
-                    );
-                  } catch (error) {
-                    console.log(error);
-                  }
-                }
-              } else {
-                for (let index = 0; index < sampleData.length; index++) {
-                  const data = sampleData[index];
-                  try {
-                    await require("../controller/product_upload_sync").product_upload_sync(
-                      {
-                        data,
-                        type: sheet.replace("_list", ""),
-                      }
-                    );
-                  } catch (error) {
-                    console.log(error);
-                  }
-                }
-              }
-              sendStatus(sheet, {
-                completed: 1,
-              });
-              resolve(`Completed Sheet!`);
+        console.log(sheetList);
+        for (let index = 0; index < sheetList.length; index++) {
+          const sheet = sheetList[index];
+          let sampleData = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
+          if (!sheet.includes("sku")) {
+            sampleData = require("lodash").groupBy(sampleData, (item) => {
+              return item.tag_no;
             });
-          })
-        )
-          .then(() => {
-            console.log("Completed Sync!");
-            require("fs").unlink(req.file.path, (err) => {
-              if (err) {
-                console.log(err);
+
+            let tag_no_list = Object.keys(sampleData);
+
+            for (let index = 0; index < tag_no_list.length; index++) {
+              const tag_no = tag_no_list[index];
+              const data = sampleData[tag_no];
+              try {
+                await require("../controller/product_upload_sync").product_upload_sync(
+                  {
+                    data: { tag_no: tag_no, stone: data },
+                    type: sheet.replace("_list", ""),
+                  }
+                );
+              } catch (error) {
+                console.log(error);
               }
-            });
-          })
-          .catch((err) => {
-            console.log(err);
+            }
+          } else {
+            for (let index = 0; index < sampleData.length; index++) {
+              const data = sampleData[index];
+              try {
+                await require("../controller/product_upload_sync").product_upload_sync(
+                  {
+                    data,
+                    type: sheet.replace("_list", ""),
+                  }
+                );
+              } catch (error) {
+                console.log(error);
+              }
+            }
+          }
+          sendStatus(sheet, {
+            completed: 1,
           });
+        }
+
+        console.log("Completed Sync!");
+        require("fs").unlink(req.file.path, (err) => {
+          if (err) {
+            console.log(err);
+          }
+        });
       } catch (error) {
         console.error(error);
         res.status(500).send(error);

@@ -143,6 +143,7 @@ let updateProductAttributes = ({ product_id, data }) => {
 };
 
 let updateDiamondOrGemstones = ({ product_id, data, type }) => {
+  console.log(type, data);
   let model;
   if (type === "diamond") {
     model = models.product_diamonds;
@@ -193,7 +194,7 @@ let updateDiamondOrGemstones = ({ product_id, data, type }) => {
             return tempData;
           });
           model
-            .bulkCreate(bulkData, { individualHooks: true })
+            .bulkCreate(bulkData)
             .then((_) => {
               resolve("Completed");
             })
@@ -359,6 +360,27 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
   return new Promise((resolve, reject) => {
     let updateData = {};
     if (isDefault) {
+      let sku_url = `${
+        data.categories
+          ? `${data.categories.toLowerCase().trim().replace(/ /g, "-")}`
+          : ""
+      }${
+        data["materials"] && data["materials"].split(",").length
+          ? `/${data["materials"]
+              .split(",")[0]
+              .toLowerCase()
+              .trim()
+              .replace(/ /g, "-")}`
+          : ""
+      }${
+        data["type"]
+          ? `/${data.type.toLowerCase().trim().replace(/ /g, "-")}`
+          : ""
+      }${
+        data["name"]
+          ? `/${data["name"].toLowerCase().trim().replace(/ /g, "-")}`
+          : ""
+      }?skuid=${data.tag_no}`;
       updateData = {
         item_id: data.item_id,
         diamond_type: data.diamond_type,
@@ -367,8 +389,14 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
         maximum_order_quantity: data?.maximum_order_quantity,
         is_ready_to_ship: data.is_ready_to_ship,
         purity: data.purity,
-        selling_price: data.selling_price,
-        is_active: data.is_ready_to_ship,
+        selling_price: Number(data.selling_price) * (1 + 3 / 100),
+        selling_price_tax: (Number(data.selling_price) * 3) / 10,
+        generated_sku: data.tag_no.toString(),
+        sku_id: data.tag_no.toString(),
+        sku_url: sku_url,
+        is_active: data.is_active,
+        is_ready_to_ship: data.is_ready_to_ship,
+        isdefault: data.is_default,
       };
     } else {
       updateData = {
@@ -382,33 +410,68 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
         selling_price_tax: Number(data.SALVALUE) * (3 / 100),
       };
     }
-
     if (data.markup_price) {
       updateData["markup_price"] = Number(data.markup_price) * (1 + 3 / 100);
-      updateData["markup_price_tax"] = Number(data.markup_price) * (3 / 100);
+      updateData["markup_price_tax"] = (Number(data.markup_price) * 3) / 100;
+    } else {
+      updateData["markup_price"] = updateData.selling_price;
+      updateData["markup_price_tax"] = updateData.selling_price_tax;
     }
     if (data.discount_price) {
       updateData = {
         ...updateData,
         discount_price: Number(data.discount_price) * (1 + 3 / 100),
-        discount_price_tax: Number(data.discount_price) * (3 / 100),
+        discount_price_tax: (Number(data.discount_price) * 3) / 100,
         discount: Math.round(
           ((data.discount_price - data.markup_price) * 100) /
             data.discount_price,
           0
         ),
       };
+    } else {
+      updateData = {
+        ...updateData,
+        discount_price: updateData.markup_price,
+        discount_price_tax: updateData.markup_price_tax,
+        discount: 0,
+      };
     }
     if (data.vendor_product_code) {
       updateData["vendor_product_code"] = data.vendor_product_code;
     }
-
     models.trans_sku_lists
-      .update(updateData, {
-        where: { generated_sku: data.tag_no },
+      .findOne({
+        attributes: ["id"],
+        where: { generated_sku: data.tag_no.toString() },
       })
-      .then((result) => {
-        resolve(result);
+      .then((sku) => {
+        if (sku) {
+          models.trans_sku_lists
+            .update(updateData, {
+              where: { generated_sku: data.tag_no },
+            })
+            .then((result) => {
+              resolve(result);
+            })
+            .catch((err) => {
+              console.log("Error", err);
+              reject(err);
+            });
+        } else {
+          models.trans_sku_lists
+            .create({
+              id: uuidv1(),
+              ...updateData,
+              product_id,
+            })
+            .then((result) => {
+              resolve(result);
+            })
+            .catch((err) => {
+              console.log("Error", err);
+              reject(err);
+            });
+        }
       })
       .catch((err) => {
         console.log("Error", err);
@@ -418,34 +481,52 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
 };
 
 let updateProduct = ({ product_id, data }) => {
-  return new Promise((resolve, reject) => {
-    models.product_lists
-      .update(
-        {
-          product_name: data.name,
-          product_category: data["categories"],
-          product_type: data["type"],
-          length: data["length"] ? Number(data["length"]) : null,
-          height: data["height"] ? Number(data["height"]) : null,
-          width: data["width"] ? Number(data["width"]) : null,
-          size_varient: data["size_variant"],
-          colour_varient: data["color_varient"],
-          gender: data["gender"],
-          isactive: data.is_ready_to_ship,
-        },
-        {
-          where: {
-            product_id,
-          },
-        }
-      )
-      .then((result) => {
-        resolve(result);
-      })
-      .catch((err) => {
-        console.log("Error", err);
-        reject(err);
-      });
+  let productData = {
+    product_name: data.name,
+    product_category: data["categories"],
+    product_type: data["type"],
+    length: data["length"] ? Number(data["length"]) : null,
+    height: data["height"] ? Number(data["height"]) : null,
+    width: data["width"] ? Number(data["width"]) : null,
+    size_varient: data["size_variant"],
+    colour_varient: data["color_varient"],
+    gender: data["gender"],
+    isactive: data.is_active,
+  };
+  return new Promise(async (resolve, reject) => {
+    if (product_id) {
+      models.product_lists
+        .update(
+          { ...productData },
+          {
+            where: {
+              product_id,
+            },
+          }
+        )
+        .then((_) => {
+          resolve(product_id);
+        })
+        .catch((err) => {
+          console.log("Error", err);
+          reject(err);
+        });
+    } else {
+      try {
+        let [{ product_id }] = await models.sequelize.query(
+          `select product_id from product_lists order by product_id::int desc limit 1`,
+          { type: models.Sequelize.QueryTypes.SELECT }
+        );
+        product_id = (Number(product_id) + 1).toString();
+        await models.product_lists.create({
+          ...productData,
+          product_id: product_id,
+        });
+        resolve(product_id);
+      } catch (error) {
+        reject(error);
+      }
+    }
   });
 };
 
@@ -454,23 +535,27 @@ let getProductId = (data) => {
     if (data["product_id"]) {
       return resolve({ product_id: data["product_id"] });
     }
-    models.trans_sku_lists
-      .findOne({
-        attributes: ["product_id"],
-        where: {
-          generated_sku: data.tag_no.toString(),
-        },
-      })
-      .then((result) => {
-        if (result) {
-          resolve(result);
-        } else {
-          resolve(null);
-        }
-      })
-      .catch((err) => {
-        reject(err);
-      });
+    if (!data.tag_no) {
+      return reject(new Error("No such tag!"));
+    } else {
+      models.trans_sku_lists
+        .findOne({
+          attributes: ["product_id"],
+          where: {
+            generated_sku: data.tag_no.toString(),
+          },
+        })
+        .then((result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            resolve({});
+          }
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    }
   });
 };
 
@@ -478,35 +563,31 @@ export let product_upload_sync = ({ data, type }) => {
   return new Promise((resolve, reject) => {
     getProductId(data)
       .then(({ product_id }) => {
-        if (product_id) {
-          if (type === "sku") {
-            updateProduct({ product_id, data })
-              .then((_) => {
-                updateTransSkuLists({ product_id, data })
-                  .then((_) => {
-                    updateProductAttributes({ product_id, data })
-                      .then((_) => resolve(`${data.tag_no} completed!`))
-                      .catch((err) => {
-                        reject(err);
-                      });
-                  })
-                  .catch((err) => {
-                    reject(err);
-                  });
-              })
-              .catch((err) => {
-                reject(err);
-              });
-          }
-          if (type === "diamond" || type === "gemstone") {
-            updateDiamondOrGemstones({ product_id, data, type })
-              .then((_) => resolve(`${data.tag_no} completed!`))
-              .catch((err) => {
-                reject(err);
-              });
-          }
-        } else {
-          reject(`${data.tag_no} is not synced`);
+        if (type === "sku") {
+          updateProduct({ product_id, data })
+            .then((product_id) => {
+              updateTransSkuLists({ product_id, data })
+                .then((_) => {
+                  updateProductAttributes({ product_id, data })
+                    .then((_) => resolve(`${data.tag_no} completed!`))
+                    .catch((err) => {
+                      reject(err);
+                    });
+                })
+                .catch((err) => {
+                  reject(err);
+                });
+            })
+            .catch((err) => {
+              reject(err);
+            });
+        }
+        if (type === "diamond" || type === "gemstone") {
+          updateDiamondOrGemstones({ product_id, data, type })
+            .then((_) => resolve(`${data.tag_no} completed!`))
+            .catch((err) => {
+              reject(err);
+            });
         }
       })
       .catch((err) => {
