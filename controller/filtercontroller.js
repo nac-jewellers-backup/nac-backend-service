@@ -66,15 +66,9 @@ exports.filteroptions = async (req, res) => {
     }
   }
   // } else {
-<<<<<<< HEAD
-  //     seofilterattribute.push("Category");
-  //     seofilterattributevalue.push("Jewellery");
-  //   }
-=======
   //   seofilterattribute.push("Category");
   //   seofilterattributevalue.push("Jewellery");
   // }
->>>>>>> 66056f2e10a8daf95334811a706c06bc67a8e1d0
   if (bydesign) {
     seofilterattribute.push("By Design");
     seofilterattributevalue.push(bydesign);
