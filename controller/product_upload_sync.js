@@ -385,11 +385,13 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
 
     if (data.markup_price) {
       updateData["markup_price"] = Number(data.markup_price);
+      updateData["markup_price_tax"] = Number(data.markup_price) * (3 / 100);
     }
     if (data.discount_price) {
       updateData = {
         ...updateData,
-        discount: Number(data.discount_price),
+        discount_price: Number(data.discount_price),
+        discount_price_tax: Number(data.discount_price) * (3 / 100),
         discount: Math.round(
           ((data.discount_price - data.markup_price) * 100) /
             data.discount_price,
