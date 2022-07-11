@@ -390,8 +390,8 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
         maximum_order_quantity: data?.maximum_order_quantity,
         is_ready_to_ship: data.is_ready_to_ship,
         purity: data.purity,
-        selling_price: Number(data.selling_price) / 1.03,
-        selling_price_tax: Number(data.selling_price) * 0.03,
+        selling_price: (Number(data.selling_price) / 1.03).toFixed(2),
+        selling_price_tax: (Number(data.selling_price) * 0.03).toFixed(2),
         generated_sku: data.tag_no.toString(),
         sku_id: data.tag_no.toString(),
         sku_url: sku_url,
@@ -412,8 +412,12 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
       };
     }
     if (data.markup_price) {
-      updateData["markup_price"] = Number(data.markup_price) * (1 + 3 / 100);
-      updateData["markup_price_tax"] = (Number(data.markup_price) * 3) / 100;
+      updateData["markup_price"] = (Number(data.markup_price) / 1.03).toFixed(
+        2
+      );
+      updateData["markup_price_tax"] = (
+        Number(data.markup_price) * 0.03
+      ).toFixed(2);
     } else {
       updateData["markup_price"] = updateData.selling_price;
       updateData["markup_price_tax"] = updateData.selling_price_tax;
@@ -421,8 +425,8 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
     if (data.discount_price) {
       updateData = {
         ...updateData,
-        discount_price: Number(data.discount_price) * (1 + 3 / 100),
-        discount_price_tax: (Number(data.discount_price) * 3) / 100,
+        discount_price: (Number(data.discount_price) * 1.03).toFixed(2),
+        discount_price_tax: (Number(data.discount_price) * 0.03).toFixed(2),
         discount: Math.round(
           ((data.discount_price - data.markup_price) * 100) /
             data.discount_price,
