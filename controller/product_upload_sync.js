@@ -384,6 +384,7 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
       updateData = {
         item_id: data.item_id,
         diamond_type: data.diamond_type,
+        weight: data.weight,
         metal_color: data.metal_color,
         minimum_order_quantity: data?.minimum_order_quantity,
         maximum_order_quantity: data?.maximum_order_quantity,
