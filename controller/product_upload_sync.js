@@ -8,7 +8,22 @@ Array.prototype.diff = function (a) {
   });
 };
 
+String.prototype.capitalize = function () {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+};
+
+function capitalize_Words(str) {
+  return str.replace(/\w\S*/g, function (txt) {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  });
+}
+
 let product_attributes = {
+  product_materials: {
+    models: models.product_materials,
+    requestKey: "materials",
+    attributes: "material_name",
+  },
   product_themes: {
     models: models.product_themes,
     requestKey: "themes",
@@ -79,12 +94,18 @@ let updateProductAttributes = ({ product_id, data }) => {
                   .filter((x) => x.length > 0)
               : [];
             if (attribute_values.length > 0) {
+              let condition = {};
+              if (item.includes("materials")) {
+                condition["product_sku"] = product_id;
+              } else {
+                condition["product_id"] = product_id;
+              }
               /* Soft delete all attributes */
               await model.update(
                 { is_active: false },
                 {
                   where: {
-                    product_id,
+                    ...condition,
                   },
                 }
               );
@@ -93,7 +114,7 @@ let updateProductAttributes = ({ product_id, data }) => {
                 { is_active: true },
                 {
                   where: {
-                    product_id,
+                    ...condition,
                     [attributes]: {
                       [Op.iLike]: {
                         [Op.any]: attribute_values,
@@ -114,7 +135,7 @@ let updateProductAttributes = ({ product_id, data }) => {
                     {
                       return {
                         id: uuidv1(),
-                        product_id,
+                        ...condition,
                         [attributes]: item,
                         is_active: true,
                       };
@@ -143,7 +164,6 @@ let updateProductAttributes = ({ product_id, data }) => {
 };
 
 let updateDiamondOrGemstones = ({ product_id, data, type }) => {
-  console.log(type, data);
   let model;
   if (type === "diamond") {
     model = models.product_diamonds;
@@ -170,7 +190,6 @@ let updateDiamondOrGemstones = ({ product_id, data, type }) => {
               stone_rate: item.rate,
               stone_count: item.count,
               stone_weight: item.weight,
-              is_active: true,
             };
             if (type === "diamond") {
               tempData = {
@@ -189,6 +208,7 @@ let updateDiamondOrGemstones = ({ product_id, data, type }) => {
                 gemstone_shape: item.shape,
                 gemstone_type: item.type,
                 gemstone_size: item.size,
+                is_active: true,
               };
             }
             return tempData;
@@ -356,8 +376,128 @@ let updateTotalStonePrice = ({ product_id, data }) => {
   });
 };
 
+let get_purity = (purity) => {
+  if (purity.includes("14 KT")) return "14KT";
+  if (purity.includes("18 KT")) return "18KT";
+  if (purity.includes("21 KT")) return "21KT";
+  if (purity.includes("22 KT")) return "22KT";
+  return null;
+};
+
+let getAttributes = ({ data }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      //Default Attribute
+      let attributes = [`category-${data?.categories?.toLowerCase()}`];
+      //materials from data source
+      let materials = [];
+      if (data.METALID == "G") {
+        materials.push("gold");
+      }
+      if (data.METALID == "P") {
+        materials.push("platinum");
+      }
+      if (data.METALID == "S") {
+        materials.push("silver");
+      }
+
+      if (Number(data.DIAAMT) > 0) {
+        materials.push("diamond");
+      }
+      if (Number(data.STNAMT) > 0) {
+        materials.push("gemstone");
+      }
+
+      let purity = get_purity(data["purity"]);
+      if (data.METALID == "P") {
+        purity = "950";
+      }
+      let condition = [];
+      if (data["collections"]) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Collection",
+            name: {
+              [models.Sequelize.Op.in]: data["collections"]
+                .split(",")
+                .map((i) => capitalize_Words(i) || ""),
+            },
+          },
+        });
+      }
+      if (data["occasions"]) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Occasion",
+            name: {
+              [models.Sequelize.Op.in]: data["occasions"]
+                .split(",")
+                .map((i) => capitalize_Words(i) || ""),
+            },
+          },
+        });
+      }
+      if (data["gender"]) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Gender",
+            name: {
+              [models.Sequelize.Op.in]: data["gender"]
+                .split(",")
+                .map((i) => capitalize_Words(i) || ""),
+            },
+          },
+        });
+      }
+      if (data["type"]) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Product Type",
+            name: capitalize_Words(data["type"]),
+          },
+        });
+      }
+      if (purity) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Metal Purity",
+            name: purity,
+          },
+        });
+      }
+      if (materials) {
+        condition.push({
+          [models.Sequelize.Op.and]: {
+            type: "Material",
+            name: {
+              [models.Sequelize.Op.in]: materials,
+            },
+          },
+        });
+      }
+      //Fetching attribute short_code
+      if (condition.length) {
+        let attributeShortCodes = await models.Attribute_master.findAll({
+          attributes: ["short_code"],
+          where: {
+            [models.Sequelize.Op.or]: condition,
+          },
+          order: ["type"],
+          raw: true,
+        });
+        attributes.push(...attributeShortCodes.map((i) => i.short_code));
+      }
+      //returning attributes
+      resolve(attributes);
+    } catch (error) {
+      console.log(error);
+      reject(error);
+    }
+  });
+};
+
 let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let updateData = {};
     if (isDefault) {
       let sku_url = `${
@@ -385,6 +525,10 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
         item_id: data.item_id,
         diamond_type: data.diamond_type,
         sku_weight: data.weight,
+        gross_weight: Number(data.GRSWT),
+        net_weight: Number(data.NETWT),
+        calc_type: `${data.CALCWT}-${data.CALCTYPE}`,
+        metal_rate: Number(data.RATE),
         metal_color: data.metal_color,
         minimum_order_quantity: data?.minimum_order_quantity,
         maximum_order_quantity: data?.maximum_order_quantity,
@@ -401,6 +545,7 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
         is_active: data.is_active,
         is_ready_to_ship: data.is_ready_to_ship,
         isdefault: data.is_default,
+        attributes: await getAttributes({ data }),
       };
     } else {
       updateData = {
@@ -579,7 +724,20 @@ export let product_upload_sync = ({ data, type }) => {
               updateTransSkuLists({ product_id, data })
                 .then((_) => {
                   updateProductAttributes({ product_id, data })
-                    .then((_) => resolve(`${data.tag_no} completed!`))
+                    .then((_) => {
+                      Promise.all(
+                        [updatePricingSkuMetals, updateTotalStonePrice].map(
+                          async (item) => {
+                            return await item({
+                              product_id,
+                              data: { ...data, tag_no: data.tag_no.toString() },
+                            });
+                          }
+                        )
+                      )
+                        .then((_) => resolve(`${data.tag_no} completed!`))
+                        .catch(reject);
+                    })
                     .catch((err) => {
                       reject(err);
                     });
