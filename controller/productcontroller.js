@@ -7,6 +7,15 @@ import apidata from "./apidata.json";
 const axios = require("axios");
 import moment from "moment";
 const uuidv1 = require("uuid/v1");
+String.prototype.capitalize = function () {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+};
+
+function capitalize_Words(str) {
+  return str.replace(/\w\S*/g, function (txt) {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  });
+}
 exports.priceupdate = async (req, res) => {
   // request({
   //     url: 'http://localhost:8000/updatepricelist',
@@ -495,6 +504,113 @@ exports.updateproductattr_bk = async (req, res) => {
 
     // )
   }
+};
+exports.updateproductattr_new = async (req, res) => {
+  let { product_ids } = req.body;
+  let mapper = {
+    product_materials: "material_name",
+    product_collections: "collection_name",
+    product_occassions: "occassion_name",
+    product_genders: "gender_name",
+  };
+  Promise.all(
+    product_ids
+      .map((product_id) => {
+        product_id = product_id.toString();
+        models.product_lists
+          .findOne({
+            attributes: ["product_category", "product_type"],
+            include: [
+              {
+                model: models.trans_sku_lists,
+                attributes: ["purity", "sku_id"],
+              },
+              {
+                model: models.product_materials,
+                attributes: ["material_name"],
+              },
+              {
+                model: models.product_collections,
+                attributes: ["collection_name"],
+              },
+              {
+                model: models.product_occassions,
+                attributes: ["occassion_name"],
+              },
+              {
+                model: models.product_gender,
+                attributes: ["gender_name"],
+              },
+            ],
+            where: { product_id },
+          })
+          .then(async (product) => {
+            //Default Attribute
+            let attributes = [
+              `category-${product?.product_category?.toLowerCase()}`,
+            ];
+            let condition = [];
+            if (product["product_type"]) {
+              condition.push({
+                [models.Sequelize.Op.and]: {
+                  type: "Product Type",
+                  name: capitalize_Words(product["product_type"]),
+                },
+              });
+            }
+
+            for (const iterator of Object.keys(mapper)) {
+              condition.push({
+                [models.Sequelize.Op.and]: {
+                  type: capitalize_Words(
+                    iterator.replace("product_", "").slice(0, -1)
+                  ),
+                  name: {
+                    [models.Sequelize.Op.in]: product[iterator].map(
+                      (i) => capitalize_Words(i) || ""
+                    ),
+                  },
+                },
+              });
+            }
+            if (product?.trans_sku_lists?.[0]?.purity) {
+              condition.push({
+                [models.Sequelize.Op.and]: {
+                  type: "Metal Purity",
+                  name: product?.trans_sku_lists?.[0]?.purity,
+                },
+              });
+            }
+            //Fetching attribute short_code
+            if (condition.length) {
+              let attributeShortCodes = await models.Attribute_master.findAll({
+                attributes: ["short_code"],
+                where: {
+                  [models.Sequelize.Op.or]: condition,
+                },
+                order: ["type"],
+                raw: true,
+              });
+              attributes.push(...attributeShortCodes.map((i) => i.short_code));
+              await models.trans_sku_lists.update(
+                { attributes: attributes },
+                { where: { product_id } }
+              );
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+            res.status(500).send(error);
+          });
+      })
+      .then(() => {
+        res.status(200).send("done");
+      })
+      .catch((error) => {
+        console.log(error);
+        res.status(500).send(error);
+      })
+  );
 };
 exports.productupload = async (req, res) => {
   var apidata = req.body;
