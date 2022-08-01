@@ -1130,7 +1130,10 @@ exports.uploadimage = (req, res) => {
   console.log(req.body);
   const { foldername } = req.body;
   let extension = req.body.image;
-  let basefolder = "base_images";
+  
+  let basefolder = `products`;
+  basefolder = `${process.env.NODE_ENV}/${basefolder}`  
+
   if (foldername) {
     basefolder = foldername;
   }
