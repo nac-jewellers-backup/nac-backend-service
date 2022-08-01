@@ -1268,9 +1268,7 @@ exports.productupload = async (req, res) => {
   //  res.send(200, { submitted: true })
 };
 exports.updateproductimage = async (req, res) => {
-  const { imageobj, isedit } = req.body;
-
-  console.log(JSON.stringify(req.body));
+  const { imageobj, isedit } = req.body;  
   let imgurl = imageobj.imageUrl;
   if (isedit) {
     let response_obj1 = await models.product_images.update(
@@ -1296,8 +1294,14 @@ exports.updateproductimage = async (req, res) => {
       isdefault: imageobj.imagePosition == 1 ? true : false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
-    let successmessage = await models.product_images.create(newimage);
+    };    
+    try {
+      let successmessage = await models.product_images.create(newimage);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send(error.message || "Failed to create image");
+      throw error;
+    }
   }
   res.send(200, { message: "Success" });
 };
