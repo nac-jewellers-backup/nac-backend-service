@@ -27,7 +27,7 @@ import { sendMail } from "./notify/user_notify";
 import axios from "axios";
 dotenv.config();
 aws.config.update({
-  region: "ap-south-1", // Put your aws region here
+  region: "ap-southeast-1", // Put your aws region here
   accessKeyId: process.env.AWS_ACCESS_KEY,
   secretAccessKey: process.env.AWS_SECRET_KEY,
 });
