@@ -1133,7 +1133,7 @@ exports.uploadimage = (req, res) => {
 
   let basefolder = `products`;
   basefolder = `${process.env.NODE_ENV}/${basefolder}`;
-
+  
   if (foldername) {
     basefolder = foldername;
   }
