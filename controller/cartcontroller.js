@@ -1858,22 +1858,21 @@ exports.syncFxRate = (req, res) => {
     });
 };
 
-exports.getPincodeDetails = ({ pincode, country_short_code }) => {
+exports.getPincodeDetails = ({ pincode /* country_short_code */ }) => {
   return new Promise(async (resolve, reject) => {
-    let country_master = await models.master_countries.findOne({
-      attributes: ["nicename"],
-      where: {
-        iso: country_short_code,
-        is_active: true,
-      },
-    });
-
+    // let country_master = await models.master_countries.findOne({
+    //   attributes: ["nicename"],
+    //   where: {
+    //     iso: country_short_code,
+    //     is_active: true,
+    //   },
+    // });
     axios
       .get(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${process.env.GOOGLE_GEOLOCATION_KEY}`
         // `https://api.worldpostallocations.com/?postalcode=${pincode}&countrycode=${country_short_code}`
       )
-      .then(async ({ data: { status, result } }) => {
+      .then(async ({ data: { status, results } }) => {
         if (status == "OK") {
           let pincode_master = await models.pincode_master.findOne({
             where: { pincode },
