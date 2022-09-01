@@ -1208,4 +1208,5 @@ module.exports = function (app) {
     "/banner_image_upload",
     require("../controller/image_controller").banner_image_uploder
   );
+  app.use("/appointment", require("./appointment_routes"));
 };
