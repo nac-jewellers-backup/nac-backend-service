@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
       appointment_date_id: {
         type: DataTypes.UUID,
       },
+      appointment_type_id: {
+        type: DataTypes.INTEGER,        
+      },
       start_time: {
         type: DataTypes.TIME,
       },

@@ -5,7 +5,10 @@ const {
   sendAppointmentConfirmation,
 } = require("./notify/email_templates");
 
-exports.findAppointmentTimeSlot = ({ appointment_date }) => {
+exports.findAppointmentTimeSlot = ({
+  appointment_date,
+  appointment_type_id,
+}) => {
   return new Promise((resolve, reject) => {
     models.appointment_dates
       .findOne({
@@ -20,6 +23,7 @@ exports.findAppointmentTimeSlot = ({ appointment_date }) => {
                 `(select slot_id from appointments where slot_id is not null)`
               ),
             },
+            appointment_type_id,
             is_active: true,
           },
         },
