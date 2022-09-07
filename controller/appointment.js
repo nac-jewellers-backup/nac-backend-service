@@ -1,3 +1,5 @@
+import { sendAppointmentOTP } from "./notify/email_templates";
+
 const models = require("../models");
 const { send_sms } = require("./notify/user_notify");
 
@@ -21,6 +23,7 @@ export const send_appoinment_otp = ({
       .then(async (res) => {
         try {
           let { otp, id, ...rest } = res;
+          await sendAppointmentOTP({ appointment_id: id });
           let status = await send_sms({
             mobile_no: `+91${mobile}`,
             sender_id: "NACJWL",
@@ -60,6 +63,7 @@ export const resend_appointment_otp = ({
       .then(async (res) => {
         if (res) {
           let { otp, ...rest } = res;
+          await sendAppointmentOTP({ appointment_id });
           let status = await send_sms({
             mobile_no: `+91${res.mobile}`,
             sender_id: "NACJWL",
@@ -96,7 +100,7 @@ export const verify_appointment_otp = ({ appointment_id, otp }) => {
       .findOne({
         where: {
           id: appointment_id,
-          otp,          
+          otp,
         },
       })
       .then(async (res) => {

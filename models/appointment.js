@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
     });
+    appointment.belongsTo(models.appointment_type_master, {
+      foreignKey: "appointment_type_id",
+      targetKey: "id",
+    });
   };
   return appointment;
 };
