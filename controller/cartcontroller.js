@@ -1163,7 +1163,7 @@ exports.uploadimage = (req, res) => {
     // Data payload of what we are sending back, the url of the signedRequest and a URL where we can access the content after its saved.
     const returnData = {
       signedRequest: data,
-      url: `https://${S3_BUCKET}.s3.amazonaws.com/${fileName}`,
+      url: `https://s3.ap-southeast-1.amazonaws.com/${S3_BUCKET}/${fileName}`,
       filepath: `${fileName}`,
     };
     // Send it all back
