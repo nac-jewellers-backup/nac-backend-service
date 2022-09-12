@@ -594,16 +594,19 @@ let sendAbandonedCart = ({ cart_id, first_name }) => {
 let sendAppointmentOTP = ({ appointment_id }) => {
   return new Promise((resolve, reject) => {
     models.appointment
-      .findByPk(appointment_id, { raw: true })
+      .findByPk(appointment_id, {
+        plain: true,
+      })
       .then(async (result) => {
-        var emilreceipiants = [
+        const subject = `OTP for your appointment @NAC Jwellers`;
+        let emilreceipiants = [
           {
             to: result.email,
-            subject: "You left some items in your cart",
+            subject,
           },
           {
             to: process.env.adminemail,
-            subject: "You left some items in your cart",
+            subject,
           },
         ];
         sendMail(
