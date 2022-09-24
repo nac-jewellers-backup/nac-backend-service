@@ -408,9 +408,15 @@ let getAttributes = ({ data }) => {
         materials.push("gemstone");
       }
 
-      let purity = get_purity(data["purity"]);
+      let purity = "";
+      if (!["P", "S"].includes(data.METALID)) {
+        purity = get_purity(data["purity"]);
+      }
       if (data.METALID == "P") {
         purity = "950";
+      }
+      if (data.METALID == "S") {
+        purity = "92.5";
       }
       let condition = [];
       if (data["collections"]) {

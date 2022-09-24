@@ -185,7 +185,7 @@ exports.filteroptions = async (req, res) => {
     seofilterattributevalue.push(material);
 
     whereclause["$product_materials.material_name$"] = {
-      [Op.eq]: material,
+      [Op.iLike]: material,
     };
     includeclause.push({
       model: models.product_materials,
