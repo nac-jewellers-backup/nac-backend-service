@@ -1,4 +1,7 @@
-import { sendAppointmentOTP } from "./notify/email_templates";
+import {
+  sendAppointmentConfirmation,
+  sendAppointmentOTP,
+} from "./notify/email_templates";
 
 const models = require("../models");
 const { send_sms } = require("./notify/user_notify");
@@ -106,7 +109,7 @@ export const verify_appointment_otp = ({ appointment_id, otp }) => {
       .then(async (res) => {
         if (res) {
           await models.appointment.update(
-            { is_verified: true, is_active: true, status: "Booked" },
+            { is_verified: true, is_active: true, status: "Submitted" },
             {
               where: {
                 id: appointment_id,
@@ -123,6 +126,28 @@ export const verify_appointment_otp = ({ appointment_id, otp }) => {
             message: `Please check OTP`,
           });
         }
+      })
+      .catch(reject);
+  });
+};
+
+export const send_invitation_link = ({ appointment_id, meeting_link }) => {
+  return new Promise((resolve, reject) => {
+    models.appointment
+      .update(
+        { meeting_link },
+        {
+          where: {
+            id: appointment_id,
+          },
+        }
+      )
+      .then(async () => {
+        await sendAppointmentConfirmation({
+          appointment_id,
+          isMeetingLink: true,
+        });
+        resolve({ message: "Email Sent successfully!" });
       })
       .catch(reject);
   });

@@ -13,6 +13,15 @@ module.exports = (sequelize, DataTypes) => {
       slot_id: DataTypes.UUID,
       location_id: DataTypes.INTEGER,
       is_active: DataTypes.BOOLEAN,
+      metal_type: DataTypes.ARRAY(DataTypes.STRING),
+      product_category: DataTypes.ARRAY(DataTypes.STRING),
+      special_requests: DataTypes.STRING,
+      is_IT_required: DataTypes.BOOLEAN,
+      is_online: DataTypes.BOOLEAN,
+      status: DataTypes.STRING,
+      comments: DataTypes.STRING,
+      meeting_link: DataTypes.STRING,
+      are_more_members_joining: DataTypes.BOOLEAN,
     },
     {}
   );

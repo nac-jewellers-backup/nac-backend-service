@@ -632,11 +632,14 @@ let sendAppointmentOTP = ({ appointment_id }) => {
   });
 };
 
-let sendAppointmentConfirmation = ({ appointment_id }) => {
+let sendAppointmentConfirmation = ({
+  appointment_id,
+  isMeetingLink = false,
+}) => {
   return new Promise((resolve, reject) => {
     models.appointment
       .findByPk(appointment_id, {
-        attributes: ["customer_name", "email"],
+        attributes: ["customer_name", "email", "meeting_link"],
         include: {
           model: models.appointment_date_time_slots,
           attributes: ["start_time", "end_time"],
@@ -649,20 +652,27 @@ let sendAppointmentConfirmation = ({ appointment_id }) => {
       })
       .then(async (result) => {
         result = JSON.parse(JSON.stringify(result));
+        let subject = "You left some items in your cart";
+        let type = "appointment_confirmation";
+        if (isMeetingLink) {
+          subject = "NAC - Meeting Invitation";
+          type = "appointment_invite";
+        }
+        console.log(JSON.stringify())
         var emilreceipiants = [
           {
             to: result.email,
-            subject: "You left some items in your cart",
+            subject,
           },
           {
             to: process.env.adminemail,
-            subject: "You left some items in your cart",
+            subject,
           },
         ];
         sendMail(
           emilreceipiants,
           await createTemplate({
-            type: "appointment_confirmation",
+            type,
             data: {
               customer_name: result.customer_name,
               appointment_date: moment(
@@ -677,15 +687,16 @@ let sendAppointmentConfirmation = ({ appointment_id }) => {
                 result?.appointment_date_time_slot?.end_time,
                 "HH:mm:ss"
               ).format("hh:mm A")}`,
+              meeting_link: result.meeting_link,
             },
           })
         )
           .then(async (result) => {
             let { response } = result;
-            await models.communication_log.create({
-              cart_id: null,
-              type: "email",
-              message_type: "appointment_confirmation",
+            await models.appointment_communication_log.create({
+              appointment_id: appointment_id,
+              communication_type: `email`,
+              type,
               sender_response_id: response[0].message_id,
             });
           })
