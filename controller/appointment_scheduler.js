@@ -1,9 +1,12 @@
+import { async } from "crypto-random-string";
+import moment from "moment";
 const models = require("./../models");
 const { send_sms } = require("./notify/user_notify");
 const {
   sendAppointmentOTP,
   sendAppointmentConfirmation,
 } = require("./notify/email_templates");
+const { groupBy } = require("lodash");
 
 exports.findAppointmentTimeSlot = ({
   appointment_date,
@@ -125,4 +128,115 @@ exports.appointment_verify_otp = ({ appointment_id, mobile_no, otp }) => {
       })
       .catch(reject);
   });
+};
+
+const DATE_FORMATS = ["DD-MM-YYYY", "YYYY-MM-DD", "DD/MM/YYYY", "YYYY/MM/DD"];
+
+let APPOINTMENT_MASTERS = {};
+
+const loadAppointmentMasters = async () => {
+  let result = await models.appointment_type_master.findAll();
+  APPOINTMENT_MASTERS = result.reduce((preV, curV) => {
+    preV[curV.name.toLowerCase()] = curV.id;
+    return preV;
+  }, {});
+};
+
+const checkAppoitmentDate = ({ start_date, end_date }) => {
+  return new Promise((resolve, reject) => {
+    models.appointment_dates
+      .findOne({
+        where: { start_date, end_date },
+      })
+      .then(async (result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          resolve(
+            await models.appointment_dates.create({
+              start_date,
+              end_date,
+              start_date_time: start_date,
+              end_date_time: end_date,
+              is_active: true,
+            })
+          );
+        }
+      })
+      .catch(reject);
+  });
+};
+
+const upsertAppointmentDateTimeSlot = ({
+  start_time,
+  end_time,
+  appointment_type_id,
+  appointment_date_id,
+}) => {
+  return new Promise((resolve, reject) => {
+    models.appointment_date_time_slots
+      .findOne({
+        where: {
+          start_time,
+          end_time,
+          appointment_type_id,
+          appointment_date_id,
+        },
+      })
+      .then(async (result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          resolve(
+            await models.appointment_date_time_slots.create({
+              start_time,
+              end_time,
+              appointment_type_id,
+              appointment_date_id,
+              is_active: true,
+            })
+          );
+        }
+      })
+      .catch(reject);
+  });
+};
+
+exports.uploadSchedulerData = async (data) => {
+  await loadAppointmentMasters();
+
+  data = data.map((item) => {
+    return {
+      ...item,
+      appointment_type_id:
+        APPOINTMENT_MASTERS[item?.appointment_type.toLowerCase()],
+    };
+  });
+
+  let groupByStartDate = groupBy(data, (i) => {
+    return `${moment(i.start_date, DATE_FORMATS).format("YYYY-MM-DD")},${moment(
+      i.end_date,
+      DATE_FORMATS
+    ).format("YYYY-MM-DD")}`;
+  });
+
+  for (const key in groupByStartDate) {
+    let elements = groupByStartDate[key];
+    let [start_date, end_date] = key.split(",");
+    let appointment_date = await checkAppoitmentDate({ start_date, end_date });
+    await Promise.all(
+      elements.map(async (item) => {
+        try {
+          await upsertAppointmentDateTimeSlot({
+            ...item,
+            appointment_date_id: appointment_date?.id,
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      })
+    );
+  }
+
+  return { statusCode: 200, message: "Completed successfully!" };
 };

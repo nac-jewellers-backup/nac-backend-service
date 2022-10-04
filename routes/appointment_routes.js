@@ -6,6 +6,9 @@ const {
   send_invitation_link,
 } = require("../controller/appointment");
 
+const scheduler = require("../controller/appointment_scheduler");
+const upload = require("../middlewares/multer").single("file");
+
 const routes = Router();
 
 routes.post("/send_otp", async (req, res) => {
@@ -42,6 +45,33 @@ routes.post("/send_invite", async (req, res) => {
     console.log(error);
     res.status(500).send(error);
   }
+});
+
+routes.post("/upload_schedule", async (req, res) => {
+  upload(req, res, (err) => {
+    if (err) {
+      res.status(400).send({
+        error: err.message,
+      });
+    }
+    const csv = require("csvtojson");
+    csv()
+      .fromFile(req.file.path)
+      .then(async (data) => {
+        try {
+          res.status(200).send(await scheduler.uploadSchedulerData(data));
+        } catch (err) {
+          res.status(400).send({
+            error: err.message,
+          });
+        }
+      })
+      .catch((err) => {
+        res.status(400).send({
+          error: err.message,
+        });
+      });
+  });
 });
 
 module.exports = routes;
