@@ -658,7 +658,7 @@ let sendAppointmentConfirmation = ({
           subject = "NAC - Meeting Invitation";
           type = "appointment_invite";
         }
-        console.log(JSON.stringify())
+        console.log(JSON.stringify());
         var emilreceipiants = [
           {
             to: result.email,
@@ -709,6 +709,54 @@ let sendAppointmentConfirmation = ({
   });
 };
 
+let sendEnquiry = ({ appointment_id }) => {
+  return new Promise((resolve, reject) => {
+    models.appointment
+      .findByPk(appointment_id, {
+        attributes: ["customer_name", "email", "mobile", "comments"],
+        plain: true,
+      })
+      .then(async (result) => {
+        result = JSON.parse(JSON.stringify(result));
+        let subject = "NAC Query";
+        let type = "nac_query_template";
+        var emilreceipiants = [
+          {
+            to: result.email,
+            subject,
+          },
+          {
+            to: process.env.adminemail,
+            subject,
+          },
+        ];
+        sendMail(
+          emilreceipiants,
+          await createTemplate({
+            type,
+            data: {
+              ...result,
+            },
+          })
+        )
+          .then(async (result) => {
+            let { response } = result;
+            await models.appointment_communication_log.create({
+              appointment_id: appointment_id,
+              communication_type: `email`,
+              type,
+              sender_response_id: response[0].message_id,
+            });
+          })
+          .catch((err) => console.log(err));
+        resolve({
+          ...result,
+        });
+      })
+      .catch(reject);
+  });
+};
+
 export {
   createTemplate,
   sendOrderConfirmation,
@@ -718,4 +766,5 @@ export {
   sendAbandonedCart,
   sendAppointmentOTP,
   sendAppointmentConfirmation,
+  sendEnquiry,
 };

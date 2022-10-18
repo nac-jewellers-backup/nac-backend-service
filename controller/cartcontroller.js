@@ -22,6 +22,7 @@ const {
   sendAbandonedCart,
   sendAppointmentOTP,
   sendAppointmentConfirmation,
+  sendEnquiry,
 } = require("./notify/email_templates");
 import { sendMail } from "./notify/user_notify";
 import axios from "axios";
@@ -1133,7 +1134,7 @@ exports.uploadimage = (req, res) => {
 
   let basefolder = `products`;
   basefolder = `${process.env.NODE_ENV}/${basefolder}`;
-  
+
   if (foldername) {
     basefolder = foldername;
   }
@@ -1803,6 +1804,9 @@ exports.trigger_mail = async (req, res) => {
       return res
         .status(200)
         .send(await sendAppointmentConfirmation({ ...req.body }));
+    }
+    if (type === "send_enquiry") {
+      return res.status(200).send(await sendEnquiry(req.body));
     }
     res.status(200).send({ message: "mail triggered successfully!" });
   } catch (error) {
