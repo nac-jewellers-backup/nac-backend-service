@@ -639,26 +639,31 @@ let sendAppointmentConfirmation = ({
   return new Promise((resolve, reject) => {
     models.appointment
       .findByPk(appointment_id, {
-        attributes: ["customer_name", "email", "meeting_link"],
-        include: {
-          model: models.appointment_date_time_slots,
-          attributes: ["start_time", "end_time"],
-          include: {
-            model: models.appointment_dates,
-            attributes: ["start_date", "end_date"],
+        attributes: ["customer_name", "email", "meeting_link", "mobile"],
+        include: [
+          { model: models.appointment_type_master, attributes: ["name"] },
+          {
+            model: models.appointment_date_time_slots,
+            attributes: ["start_time", "end_time"],
+            include: {
+              model: models.appointment_dates,
+              attributes: ["start_date", "end_date"],
+            },
           },
-        },
-        plain: true,
+        ],
+        // plain: true,
       })
       .then(async (result) => {
         result = JSON.parse(JSON.stringify(result));
-        let subject = "You left some items in your cart";
+        let subject = "NAC | Appointment";
         let type = "appointment_confirmation";
-        if (isMeetingLink) {
+        if (isMeetingLink || result.meeting_link) {
           subject = "NAC - Meeting Invitation";
           type = "appointment_invite";
         }
-        console.log(JSON.stringify());
+        if (result?.appointment_type_master?.name?.toLowerCase() == "alive") {
+          type = "alive_page";
+        }
         var emilreceipiants = [
           {
             to: result.email,
@@ -675,6 +680,7 @@ let sendAppointmentConfirmation = ({
             type,
             data: {
               customer_name: result.customer_name,
+              mobile: result.mobile,
               appointment_date: moment(
                 result?.appointment_date_time_slot?.appointment_date
                   ?.start_date,
