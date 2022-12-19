@@ -17,6 +17,7 @@ const { send_sms } = require("../controller/notify/user_notify");
 const turl = process.env.apibaseurl + "/productesearch";
 const upload = require("../middlewares/multer").single("file");
 const io = require("../socket");
+const { uploadResumetoAWS } = require("../controller/career_controllers");
 
 let sendStatus = (token_val, processed_data) => {
   console.log(token_val, processed_data);
@@ -1208,5 +1209,15 @@ module.exports = function (app) {
     "/banner_image_upload",
     require("../controller/image_controller").banner_image_uploder
   );
+  app.post("/apply_career", (req, res) => {
+    upload(req, res, (err) => {
+      if (err) {
+        return res.status(400).send({
+          error: err.message,
+        });
+      }
+      uploadResumetoAWS(req, res);
+    });
+  });
   app.use("/appointment", require("./appointment_routes"));
 };
