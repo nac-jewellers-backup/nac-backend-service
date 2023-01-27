@@ -8,9 +8,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
       },
-      user_id: {
-        type: DataTypes.UUID,
-      },
       start_date: {
         type: DataTypes.DATEONLY,
       },
@@ -38,7 +35,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
       },
     },
-    {}
+    {
+      timestamps: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+    }
   );
   appointment_dates.associate = function (models) {
     // associations can be defined here
@@ -49,12 +50,6 @@ module.exports = (sequelize, DataTypes) => {
     });
     appointment_dates.belongsTo(models.user_profiles, {
       foreignKey: "updated_by",
-      onUpdate: "CASCADE",
-      onDelete: "CASCADE",
-    });
-    appointment_dates.belongsTo(models.user_profiles, {
-      as: "appointment_date_user_id",
-      foreignKey: "user_id",
       onUpdate: "CASCADE",
       onDelete: "CASCADE",
     });
