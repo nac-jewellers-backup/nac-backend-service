@@ -31,7 +31,7 @@ export const addResume = ({ name, email_id, mobile_no, resume_url }) => {
             subject,
           },
           {
-            to: process.env.adminemail,
+            to: "care@nacjewellers.com",
             subject,
           },
         ];
@@ -43,6 +43,7 @@ export const addResume = ({ name, email_id, mobile_no, resume_url }) => {
               name,
               email_id,
               mobile_no,
+              resume_url,
             },
           })
         );
