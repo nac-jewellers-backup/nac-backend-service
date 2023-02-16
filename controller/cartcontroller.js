@@ -701,10 +701,9 @@ exports.sendtoairpay = async (req, res) => {
     }
     if (cartvalueobj.shopping_cart) {
       if (process.env.NODE_ENV == "production") {
-        cartval = cartvalueobj.shopping_cart.discounted_price; //Cart Value To Be greater than 1 in production!
+        cartval = Number(cartvalueobj.shopping_cart.gross_amount).toFixed(2); //Cart Value To Be greater than 1 in production!
       }
     }
-  } else {
   }
   var md5 = require("md5");
   var sha256 = require("sha256");
