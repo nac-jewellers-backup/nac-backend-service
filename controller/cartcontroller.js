@@ -701,7 +701,7 @@ exports.sendtoairpay = async (req, res) => {
     }
     if (cartvalueobj.shopping_cart) {
       if (process.env.NODE_ENV == "production") {
-        cartval = Number(cartvalueobj.shopping_cart.gross_amount).toFixed(2); //Cart Value To Be greater than 1 in production!
+        cartval = cartvalueobj.shopping_cart.discounted_price; //Cart Value To Be greater than 1 in production!
       }
     }
   }
@@ -1309,8 +1309,11 @@ async function updateshippingcharge(cart_id, res) {
       {
         shipping_charge: final_shipping_charge,
         gross_amount: Number(cart.net_amount) + Number(final_shipping_charge),
-        discount_price:
-          Number(cart.discount_price) + Number(final_shipping_charge),
+        discount_price: (
+          Number(cart.net_amount) -
+          Number(cart.discount_price) +
+          Number(final_shipping_charge)
+        ).toFixed(2),
       },
       {
         where: { id: cart_id },
