@@ -118,68 +118,89 @@ exports.priceUpdate = ({ product_id }) => {
             order: [["createdAt", "desc"]],
             raw: true,
           });
-          // Checking if all exists in markup and applying accordingly!
-          let arrayOfMarkupTypes = markup.map((i) => i.material);
-          if (arrayOfMarkupTypes.includes("All")) {
-            markup = markup.filter((i) => {
-              return i.material == "All";
-            });
-            [
-              "pricing_sku_materials",
-              "total_no_stones",
-              "pricing_sku_metals",
-            ].map((priceElement) => {
-              sku[priceElement] = sku[priceElement].map((item) => {
-                let markup_price = applyMarkupOrDiscount({
-                  price: item.selling_price,
-                  value: markup[0]?.markup_value,
-                  type: markup[0]?.markup_type,
-                });
-                return {
-                  ...item,
-                  markup_price,
-                  discount_price: markup_price,
-                };
+          if (markup.length) {
+            // Checking if all exists in markup and applying accordingly!
+            let arrayOfMarkupTypes = markup.map((i) => i.material);
+            if (arrayOfMarkupTypes.includes("All")) {
+              markup = markup.filter((i) => {
+                return i.material == "All";
               });
-            });
-          } else {
-            markup = markup.filter((i) => {
-              return i.material !== "All";
-            });
-            markup.map((i) => {
               [
                 "pricing_sku_materials",
                 "total_no_stones",
                 "pricing_sku_metals",
               ].map((priceElement) => {
                 sku[priceElement] = sku[priceElement].map((item) => {
-                  let markup_price = item?.selling_price;
-                  if (
-                    item["material_name"]?.includes(i.material.toLowerCase()) ||
-                    item["component"]?.includes(i.material.toLowerCase()) ||
-                    item["type"]?.includes(i.material.toLowerCase())
-                  ) {
-                    markup_price = applyMarkupOrDiscount({
-                      price: item.selling_price,
-                      value: i?.markup_value,
-                      type: i?.markup_type,
-                    });
-                  } else if (
-                    i.material.toLowerCase().includes("making charge") &&
-                    ["wastage", "makingcharge"].includes(item["material_name"])
-                  ) {
-                    markup_price = applyMarkupOrDiscount({
-                      price: item.selling_price,
-                      value: i?.markup_value,
-                      type: i?.markup_type,
-                    });
-                  }
+                  let markup_price = applyMarkupOrDiscount({
+                    price: item.selling_price,
+                    value: markup[0]?.markup_value,
+                    type: markup[0]?.markup_type,
+                  });
                   return {
                     ...item,
                     markup_price,
                     discount_price: markup_price,
                   };
                 });
+              });
+            } else {
+              markup = markup.filter((i) => {
+                return i.material !== "All";
+              });
+              markup.map((i) => {
+                [
+                  "pricing_sku_materials",
+                  "total_no_stones",
+                  "pricing_sku_metals",
+                ].map((priceElement) => {
+                  sku[priceElement] = sku[priceElement].map((item) => {
+                    let markup_price = item?.selling_price;
+                    if (
+                      item["material_name"]?.includes(
+                        i.material.toLowerCase()
+                      ) ||
+                      item["component"]?.includes(i.material.toLowerCase()) ||
+                      item["type"]?.includes(i.material.toLowerCase())
+                    ) {
+                      markup_price = applyMarkupOrDiscount({
+                        price: item.selling_price,
+                        value: i?.markup_value,
+                        type: i?.markup_type,
+                      });
+                    } else if (
+                      i.material.toLowerCase().includes("making charge") &&
+                      ["wastage", "makingcharge"].includes(
+                        item["material_name"]
+                      )
+                    ) {
+                      markup_price = applyMarkupOrDiscount({
+                        price: item.selling_price,
+                        value: i?.markup_value,
+                        type: i?.markup_type,
+                      });
+                    }
+                    return {
+                      ...item,
+                      markup_price,
+                      discount_price: markup_price,
+                    };
+                  });
+                });
+              });
+            }
+          } else {
+            [
+              "pricing_sku_materials",
+              "total_no_stones",
+              "pricing_sku_metals",
+            ].map((priceElement) => {
+              sku[priceElement] = sku[priceElement].map((item) => {
+                let markup_price = item.selling_price;
+                return {
+                  ...item,
+                  markup_price,
+                  discount_price: markup_price,
+                };
               });
             });
           }
@@ -254,8 +275,8 @@ exports.priceUpdate = ({ product_id }) => {
             "pricing_sku_metals",
           ].map((i) => {
             sku[i].map((item) => {
-              markup_price += Number(item?.markup_price || 0);
-              discount_price += Number(item?.discount_price || 0);
+              markup_price += Number(item?.markup_price);
+              discount_price += Number(item?.discount_price);
             });
           });
 
