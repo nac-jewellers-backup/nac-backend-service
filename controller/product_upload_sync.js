@@ -410,7 +410,7 @@ let getAttributes = ({ data }) => {
 
       let purity = "";
       if (!["P", "S"].includes(data.METALID)) {
-        purity = get_purity(data["purity"]);
+        purity = get_purity(data["purity"].toString());
       }
       if (data.METALID == "P") {
         purity = "950";
@@ -600,6 +600,8 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
     if (data.vendor_product_code) {
       updateData["vendor_product_code"] = data.vendor_product_code;
     }
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>");
+    console.log(data.tag_no, updateData);
     models.trans_sku_lists
       .findOne({
         attributes: ["id"],
