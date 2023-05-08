@@ -111,6 +111,12 @@ module.exports = (sequelize, DataTypes) => {
       calc_type: {
         type: DataTypes.STRING,
       },
+      is_orderable: {
+        type: DataTypes.BOOLEAN,
+      },
+      order_shipping_days: {
+        type: DataTypes.INTEGER,
+      },
     },
     {
       timestamps: true,
