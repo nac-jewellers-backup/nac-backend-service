@@ -1268,7 +1268,7 @@ exports.productupload = async (req, res) => {
   //  res.send(200, { submitted: true })
 };
 exports.updateproductimage = async (req, res) => {
-  const { imageobj, isedit } = req.body;  
+  const { imageobj, isedit } = req.body;
   let imgurl = imageobj.imageUrl;
   if (isedit) {
     let response_obj1 = await models.product_images.update(
@@ -1294,7 +1294,7 @@ exports.updateproductimage = async (req, res) => {
       isdefault: imageobj.imagePosition == 1 ? true : false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };    
+    };
     try {
       let successmessage = await models.product_images.create(newimage);
     } catch (error) {
@@ -1742,6 +1742,8 @@ exports.updateskuinfo = async (req, res) => {
     isActive,
     isReadyToShip,
     showPriceBreakup,
+    isOrderable,
+    orderShippingDays,
   } = req.body;
   let response_obj1 = await models.trans_sku_lists.update(
     // Values to update
@@ -1752,6 +1754,8 @@ exports.updateskuinfo = async (req, res) => {
       discount_desc: discount,
       is_ready_to_ship: isReadyToShip,
       show_price_breakup: showPriceBreakup,
+      is_orderable: isOrderable,
+      order_shipping_days: orderShippingDays,
     },
     {
       // Clause
