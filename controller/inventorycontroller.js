@@ -93,7 +93,13 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
   return new Promise(async (resolve, reject) => {
     models.trans_sku_lists
       .findOne({
-        attributes: ["is_ready_to_ship", "is_active", "vendor_delivery_time"],
+        attributes: [
+          "is_ready_to_ship",
+          "is_active",
+          "vendor_delivery_time",
+          "is_orderable",
+          "order_shipping_days",
+        ],
         include: [
           { model: models.product_lists, attributes: ["isreorderable"] },
           {
@@ -126,6 +132,13 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
 
         if (!result.is_active) {
           resolve({ status: "Enquire Now", shipping_date: null });
+        }
+        
+        if (!result.is_ready_to_ship && result.is_orderable) {
+          resolve({
+            status: "Make an Order",
+            shipping_days: result.order_shipping_days,
+          });
         }
 
         if (result.is_active) {
