@@ -18,6 +18,7 @@ const turl = process.env.apibaseurl + "/productesearch";
 const upload = require("../middlewares/multer").single("file");
 const io = require("../socket");
 const { uploadResumetoAWS } = require("../controller/career_controllers");
+const { displayComboOffer, upsertComboOffers } = require("../controller/combo_offers");
 
 let sendStatus = (token_val, processed_data) => {
   console.log(token_val, processed_data);
@@ -1220,4 +1221,46 @@ module.exports = function (app) {
     });
   });
   app.use("/appointment", require("./appointment_routes"));
+  app.post("/bulk_upload_combo", async (req, res) => {
+    try {
+      upload(req, res, (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send(err);
+        }
+        res
+          .status(200)
+          .send({ status: true, message: "File processing started!" });
+        upsertComboOffers({ filepath: req?.file?.path });
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({
+        error: true,
+        message: error?.message || "Something went wrong!",
+      });
+    }
+  });
+  app.post("/fetch_combo_offer", async (req, res) => {
+    try {
+      res.status(200).send(await displayComboOffer(req.body));
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({
+        error: true,
+        message: error?.message || "Something went wrong!",
+      });
+    }
+  });
+  app.post("/fetch_cart_details", async (req, res) => {
+    try {
+      res.status(200).send(await cartcontroller.fetchCartDetails(req.body));
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({
+        error: true,
+        message: error?.message || "Something went wrong!",
+      });
+    }
+  });
 };

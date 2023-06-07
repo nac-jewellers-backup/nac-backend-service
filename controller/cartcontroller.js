@@ -26,6 +26,10 @@ const {
 } = require("./notify/email_templates");
 import { sendMail } from "./notify/user_notify";
 import axios from "axios";
+import {
+  checkCartAndApplyCombo,
+  checkExistingCartAndUpdateLatestPrice,
+} from "./combo_offers";
 dotenv.config();
 aws.config.update({
   region: "ap-southeast-1", // Put your aws region here
@@ -999,7 +1003,7 @@ exports.addtocart = async (req, res) => {
       });
     };
 
-    let { user_id, products, cart_id } = req.body;
+    let { user_id, products, cart_id, combo_products } = req.body;
 
     try {
       if (cart_id) {
@@ -1012,17 +1016,6 @@ exports.addtocart = async (req, res) => {
       } else {
         cart_id = await createNewCart();
       }
-
-      // let product_in_cart = await models.shopping_cart_item.findAll({
-      //   where: {
-      //     shopping_cart_id: cart_id,
-      //   },
-      // });
-      // var cartproducts = [];
-      // product_in_cart.forEach((prod_element) => {
-      //   cartproducts.push(prod_element.product_sku);
-      // });
-      // let cartlines = [];
 
       for (let i = 0; i < products.length; i++) {
         let product = products[i];
@@ -1056,44 +1049,23 @@ exports.addtocart = async (req, res) => {
         }
       }
 
-      // products.forEach((element) => {
-      //   // console.log("productscart");
-      //   // console.log(product_in_cart.length);
+      if (combo_products && combo_products.length) {
+        await Promise.all(
+          combo_products.map(async (cartComboRequested) => {
+            await checkCartAndApplyCombo({
+              cartID: cart_id,
+              cartComboRequested,
+            });
+          })
+        );
+      }
 
-      //   if (cartproducts.indexOf(element.sku_id) == -1) {
-      //     // console.log("updated");
-      //     if (element.sku_id) {
-      //       let prod_count = parseInt(element.qty);
-      //       const lineobj = {
-      //         id: uuidv1(),
-      //         shopping_cart_id: cart_id,
-      //         product_sku: element.sku_id,
-      //         qty: element.qty,
-      //         price: prod_count * element.price,
-      //       };
-      //       // console.log(JSON.stringify(lineobj));
-
-      //       cartlines.push(lineobj);
-      //     }
-      //   }
-      //   console.log("cartline length" + cartlines.length);
-      // });
-
-      // console.log("cartline length");
-      // if (cartlines.length > 0) {
-      //   await models.shopping_cart_item.bulkCreate(cartlines, {
-      //     individualHooks: true,
-      //   });
-      // }
-
-      // console.log("cartline length212");
       let gross_amount = await models.shopping_cart_item.findOne({
         attributes: [[squelize.literal("SUM(price)"), "price"]],
         where: {
           shopping_cart_id: cart_id,
         },
       });
-      // console.log("cartline length");
 
       await models.shopping_cart
         .update(
@@ -1745,16 +1717,18 @@ exports.updatecart_latestprice = async (req, res) => {
       return;
     }
 
-    /* Update Cart Items to latest price based on SKUs*/
+    /* Update Cart Items to latest price based on SKUs Except Combo Offer*/
     await models.sequelize.query(`update shopping_cart_items i 
-      set price = qty * (select markup_price from trans_sku_lists t
-      where i.product_sku = t.generated_sku)
-      where shopping_cart_id = '${cart.id}'`);
+     set price = qty * (select markup_price from trans_sku_lists t
+     where i.product_sku = t.generated_sku)
+     where shopping_cart_id = '${cart.id}' and is_combo_offer is false`);
+    /* Updating cart with Combo Offer if any exists */
+    await checkExistingCartAndUpdateLatestPrice({ cartID: cart.id });
     /* Update Cart with latest prices*/
     await models.sequelize.query(`update shopping_carts c set 
-      gross_amount = (select sum(price) from shopping_cart_items i where i.shopping_cart_id = '${cart.id}'),
-      discounted_price = (select sum(price) from shopping_cart_items i where i.shopping_cart_id = '${cart.id}')
-      where id = '${cart.id}'`);
+     gross_amount = (select sum(price) from shopping_cart_items i where i.shopping_cart_id = '${cart.id}'),
+     discounted_price = (select sum(price) from shopping_cart_items i where i.shopping_cart_id = '${cart.id}')+shipping_charge-COALESCE(discount,0)
+     where id = '${cart.id}'`);
 
     res.status(200).send({ message: "Cart Updated Successfully!" });
   } catch (error) {
@@ -1988,6 +1962,90 @@ exports.syncPincode = ({ pincode }) => {
       //   .catch((err) => {
       //     reject(err);
       //   });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+export const fetchCartDetails = ({ cart_id, combo_products, products }) => {
+  return new Promise(async (resolve, reject) => {
+    let response = [];
+    try {
+      let tempComboProducts = {};
+      let tempProducts = [];
+      if (Boolean(cart_id)) {
+        let cart_items = await models.shopping_cart_item.findAll({
+          include: {
+            model: models.trans_sku_lists,
+            attributes: ["product_id"],
+          },
+          where: { shopping_cart_id: cart_id },
+        });
+        if (cart_items && cart_items.length) {
+          for (let index = 0; index < cart_items.length; index++) {
+            const element = cart_items[index];
+            if (element.is_combo_offer) {
+              if (!tempComboProducts[element.combo_main_product]) {
+                tempComboProducts[element.combo_main_product] = [];
+              }
+              tempComboProducts[element.combo_main_product] = [
+                ...tempComboProducts[element.combo_main_product],
+                { product_id: element.trans_sku_list.product_id },
+              ];
+            } else {
+              tempProducts.push(element.product_sku);
+            }
+          }
+        }
+        combo_products = {
+          ...combo_products,
+          ...tempComboProducts,
+        };
+        products = [...products, ...tempProducts];
+      }
+      if (products.length) {
+        await Promise.all(
+          products.map(async (product_sku) => {
+            let { markup_price } = await models.trans_sku_lists.findOne({
+              attributes: ["markup_price"],
+              where: { generated_sku: product_sku },
+            });
+            response.push({
+              qty: 1,
+              productSku: product_sku,
+              price: markup_price,
+              isComboOffer: false,
+              comboMainProduct: null,
+            });
+          })
+        );
+      }
+      let tempMainProducts = Object.keys(combo_products);
+      if (tempMainProducts.length) {
+        await Promise.all(
+          tempMainProducts.map(async (main_product) => {
+            let { totalPrice, offerPrice, comboProducts } =
+              await checkCartAndApplyCombo({
+                cartComboRequested: {
+                  main_product,
+                  combo_products: combo_products[main_product],
+                },
+              });
+            comboProducts.forEach((item) => {
+              response.push({
+                qty: 1,
+                productSku: item.generated_sku,
+                price: item.offerPrice,
+                markup_price: item.markup_price,
+                isComboOffer: true,
+                comboMainProduct: main_product,
+              });
+            });
+          })
+        );
+      }
+      resolve(response);
     } catch (error) {
       reject(error);
     }
