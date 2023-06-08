@@ -284,12 +284,25 @@ let updatePricingSkuMetals = ({ product_id, data }) => {
           material_name: "goldprice",
           rate: data.RATE,
           selling_price: data.AMOUNT,
+          markup: data.AMOUNT,
+          discount_price: data.AMOUNT,
+          margin_percentage: 0,
         },
-        { material_name: "makingcharge", rate: 0, selling_price: data.MCAMT },
+        {
+          material_name: "makingcharge",
+          rate: 0,
+          selling_price: data.MCAMT,
+          markup: data.MCAMT,
+          discount_price: data.MCAMT,
+          margin_percentage: 0,
+        },
         {
           material_name: "wastage",
           rate: data.WASTAGE,
           selling_price: data.WASTAMT,
+          markup: data.WASTAMT,
+          discount_price: data.WASTAMT,
+          margin_percentage: 0,
         },
       ].map(async (item) => {
         models.pricing_sku_metals
@@ -338,7 +351,6 @@ let updateTotalStonePrice = ({ product_id, data }) => {
         },
       }
     );
-
     Promise.all(
       [
         {
@@ -346,15 +358,27 @@ let updateTotalStonePrice = ({ product_id, data }) => {
           product_id,
           product_sku: data.tag_no,
           selling_price: data.DIAAMT,
+          markup_price: data.DIAAMT,
+          discount_price: data.DIAAMT,
+          margin_percentage: 0,
         },
         {
           type: "gemstone_total",
           product_id,
           product_sku: data.tag_no,
           selling_price: data.STNAMT,
+          markup_price: data.STNAMT,
+          discount_price: data.STNAMT,
+          margin_percentage: 0,
         },
       ].map(async (item) => {
-        let { selling_price, ...rest } = item;
+        let {
+          selling_price,
+          markup_price,
+          discount_price,
+          margin_percentage,
+          ...rest
+        } = item;
         models.total_no_stone
           .findOne({
             where: { ...rest },
@@ -599,9 +623,7 @@ let updateTransSkuLists = ({ product_id, data }, isDefault = true) => {
     }
     if (data.vendor_product_code) {
       updateData["vendor_product_code"] = data.vendor_product_code;
-    }
-    console.log(">>>>>>>>>>>>>>>>>>>>>>>");
-    console.log(data.tag_no, updateData);
+    }    
     models.trans_sku_lists
       .findOne({
         attributes: ["id"],
