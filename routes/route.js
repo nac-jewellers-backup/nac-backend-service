@@ -16,18 +16,12 @@ const { fstat } = require("fs");
 const { send_sms } = require("../controller/notify/user_notify");
 const turl = process.env.apibaseurl + "/productesearch";
 const upload = require("../middlewares/multer").single("file");
-const io = require("../socket");
+const { sendStatus } = require("../middlewares/socket");
 const { uploadResumetoAWS } = require("../controller/career_controllers");
-const { displayComboOffer, upsertComboOffers } = require("../controller/combo_offers");
-
-let sendStatus = (token_val, processed_data) => {
-  console.log(token_val, processed_data);
-  try {
-    io.emit(token_val, processed_data);
-  } catch (e) {
-    console.log(e);
-  }
-};
+const {
+  displayComboOffer,
+  upsertComboOffers,
+} = require("../controller/combo_offers");
 
 module.exports = function (app) {
   const configurationcontroller = require("../controller/master_configuration.js");

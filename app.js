@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import { postgraphile, makePluginHook } from "postgraphile";
 import PgAggregatesPlugin from "@graphile/pg-aggregates";
 import morgan from "morgan";
+import { socket } from "./middlewares/socket/index.js";
 //import Myusers from '../controller/sortbyprice.js';
 const MySchemaExtensionPlugin = require("./controller/sortbyprice.js");
 const user = require("./controller/notify/Emailtemplate");
@@ -117,8 +118,8 @@ app.use(
   })
 );
 
-const io = require("./socket");
-io.attach(
+
+socket.attach(
   app.listen(process.env.PORT, () =>
     console.log(`NAC Ecommerce running ${process.env.PORT}!`)
   ),
