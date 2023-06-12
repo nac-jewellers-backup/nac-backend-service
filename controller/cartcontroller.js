@@ -818,6 +818,13 @@ exports.removecartitem = async (req, res) => {
       },
     });
 
+    let gross_amount = await models.shopping_cart_item.findOne({
+      attributes: [[squelize.literal("SUM(price)"), "price"]],
+      where: {
+        shopping_cart_id: cart_id,
+      },
+    });
+    
     let updateCartObj = {};
 
     if (totalCartItems) {
