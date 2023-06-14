@@ -10,6 +10,29 @@ const DISCOUNT_TYPE = {
   FLAT: "FLAT",
 };
 
+const getProductID = async (tag_no) => {
+  let condition = {
+    sku_id: { [models.Sequelize.Op.iLike]: tag_no },
+  };
+  if (Array.isArray(tag_no)) {
+    condition["sku_id"] = {
+      [models.Sequelize.Op.iLike]: { [models.Sequelize.Op.any]: tag_no },
+    };
+  }
+  let skus = await models.trans_sku_lists.findAll({
+    attributes: ["product_id"],
+    where: {
+      ...condition,
+    },
+  });
+  if (!Array.isArray(tag_no)) {
+    console.log(skus);
+    return skus[0].product_id;
+  } else {
+    return skus.map((i) => i.product_id);
+  }
+};
+
 export const upsertComboOffers = ({ filepath }) => {
   let comboArray = [];
   return new Promise((resolve, reject) => {
@@ -27,20 +50,26 @@ export const upsertComboOffers = ({ filepath }) => {
           comboArray = arrayChunk(comboArray, 500);
           for (let index = 0; index < comboArray.length; index++) {
             let element = comboArray[index];
-            element = element.map((i) => {
-              if (i.discount_type) {
-                Object.keys(DISCOUNT_TYPE).forEach((type) => {
-                  if (
-                    i.discount_type
-                      .toLowerCase()
-                      .includes(DISCOUNT_TYPE[type].toLowerCase())
-                  )
-                    i.discount_type = DISCOUNT_TYPE[type];
-                });
-              }
-              i.offered_products = i.offered_products?.split(",");
-              return i;
-            });
+            element = await Promise.all(
+              element.map(async (i) => {
+                if (i.discount_type) {
+                  Object.keys(DISCOUNT_TYPE).forEach((type) => {
+                    if (
+                      i.discount_type
+                        .toLowerCase()
+                        .includes(DISCOUNT_TYPE[type].toLowerCase())
+                    )
+                      i.discount_type = DISCOUNT_TYPE[type];
+                  });
+                }
+                i.main_product = await getProductID(i.main_product);               
+                i.offered_products = await getProductID(
+                  i.offered_products.split(",")
+                );
+                return i;
+              })
+            );
+            element = element.filter((i) => Boolean(i.main_product));            
             await models.product_combo_offer.bulkCreate(element, {
               updateOnDuplicate: ["main_product"],
             });
