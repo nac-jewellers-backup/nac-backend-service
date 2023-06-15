@@ -26,7 +26,6 @@ const getProductID = async (tag_no) => {
     },
   });
   if (!Array.isArray(tag_no)) {
-    console.log(skus);
     return skus[0].product_id;
   } else {
     return skus.map((i) => i.product_id);

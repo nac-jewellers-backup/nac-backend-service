@@ -1,4 +1,3 @@
-import { async } from "crypto-random-string";
 import moment from "moment";
 const models = require("./../models");
 const { send_sms } = require("./notify/user_notify");
@@ -212,7 +211,6 @@ exports.uploadSchedulerData = async (data) => {
         APPOINTMENT_MASTERS[item?.appointment_type.toLowerCase()],
     };
   });
-
   let groupByStartDate = groupBy(data, (i) => {
     return `${moment(i.start_date, DATE_FORMATS).format("YYYY-MM-DD")},${moment(
       i.end_date,
