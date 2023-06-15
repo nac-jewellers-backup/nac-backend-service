@@ -129,7 +129,13 @@ exports.appointment_verify_otp = ({ appointment_id, mobile_no, otp }) => {
   });
 };
 
-const DATE_FORMATS = ["DD-MM-YYYY", "YYYY-MM-DD", "DD/MM/YYYY", "YYYY/MM/DD"];
+const DATE_FORMATS = [
+  "DD-MM-YYYY",
+  "YYYY-MM-DD",
+  "DD/MM/YYYY",
+  "YYYY/MM/DD",
+  "MM/DD/YYYY",
+];
 
 let APPOINTMENT_MASTERS = {};
 
