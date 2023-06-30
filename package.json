@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Nac authentication server",
   "scripts": {
-    "start": "forever start -c babel-node --spinSleepTime 5000 --minUptime 1000 app.js"
+    "start": "nodemon --expose-gc --max-old-space-size=4096 --exec babel-node app.js"
   },
   "engines": {
     "npm": ">=8.0.0 <9.0.0",
@@ -29,7 +29,6 @@
     "ejs": "^3.1.6",
     "elasticsearch": "^16.6.0",
     "express": "^4.17.1",
-    "forever": "^4.0.3",
     "fs": "0.0.1-security",
     "geonames.js": "^3.0.6",
     "graphile-utils": "^4.12.2",
