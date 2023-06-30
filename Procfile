@@ -1,1 +1,1 @@
-web: nodemon --expose-gc --max-old-space-size=4096 --exec babel-node app.js
+web: npm start
