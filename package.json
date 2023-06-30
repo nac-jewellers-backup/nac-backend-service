@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Nac authentication server",
   "scripts": {
-    "start": "pm2 start --interpreter babel-node app.js"
+    "start": "forever start -c babel-node app.js"
   },
   "engines": {
     "npm": ">=8.0.0 <9.0.0",
