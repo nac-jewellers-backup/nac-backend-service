@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Nac authentication server",
   "scripts": {
-    "start": "nodemon --expose-gc --max-old-space-size=4096 --exec babel-node app.js"
+    "start": "pm2 start app.js --node-args='--expose-gc --max-old-space-size=4096 --interpreter babel-node'"
   },
   "engines": {
     "npm": ">=8.0.0 <9.0.0",
