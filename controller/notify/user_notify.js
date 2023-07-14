@@ -9,7 +9,7 @@ aws.config.update({
 // Instantiate SES.
 var ses = new aws.SES();
 const sendMail = async (mails, bodycontent) => {
-  console.log("i am here for test");
+    
   return new Promise(async (resolve, rejects) => {
     if (Array.isArray(mails)) {
       Promise.all(

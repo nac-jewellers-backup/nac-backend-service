@@ -618,7 +618,7 @@ exports.randomProducts = ({ sku_id }) => {
     try {
       if (!sku_id) {
         reject({ error: true, message: "sku_id is mandatory!" });
-      }
+      }      
       let randomSkus = await models.sequelize.query(
         `select p.product_type,array_agg(t.sku_id ) as skus from product_lists p, trans_sku_lists t
       where random() < 0.03 and p.product_id = t.product_id and
@@ -626,8 +626,7 @@ exports.randomProducts = ({ sku_id }) => {
       p.product_type is not null and t.sku_id not in ('${sku_id}')
       group by p.product_type`,
         { type: sequelize.QueryTypes.SELECT }
-      );
-
+      );      
       let result = await models.trans_sku_lists.findAll({
         where: {
           sku_id: {
