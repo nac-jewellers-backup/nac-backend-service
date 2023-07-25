@@ -2297,151 +2297,292 @@ exports.productdetails = async (req, res) => {
 
 exports.csvDownload = (req, res) => {
   let { type, include } = req.body;
+  console.log(type,"type",include,"include")
   if (!type || type == "" || type.includes("%")) {
     return res.status(400).send({ message: "type is mandatory!" });
   }
-  let query = `query($after: Cursor, $type: String!) {
-    product: allProductLists(
-      first: 10000
-      after: $after
-      ${!include ? `condition: { isactive: true }` : ``}
-      filter: { productType: { likeInsensitive: $type } }
-      orderBy: CREATED_AT_DESC
-    ) {
-      nodes {
-        productId
-        productName
-        productCategory
-        productType
-        length
-        height
-        width
-        defaultWeight
-        sizeVarient
-        colourVarient
-        earringBacking
-        gender
-        productVendorCode
-        isactive
-        materials: productMaterialsByProductSku {
-          nodes {
-            name: materialName
-          }
-        }
-        collections: productCollectionsByProductId(
-          condition: { isActive: true }
-        ) {
-          nodes {
-            name: collectionName
-          }
-        }
-        occasions: productOccassionsByProductId(condition: { isActive: true }) {
-          nodes {
-            name: occassionName
-          }
-        }
-        themes: productThemesByProductId(condition: { isActive: true }) {
-          nodes {
-            name: themeName
-          }
-        }
-        stoneColor: productStonecolorsByProductId {
-          nodes {
-            color: stonecolor
-          }
-        }
-        styles: productStylesByProductId(condition: { isActive: true }) {
-          nodes {
-            name: styleName
-          }
-        }
-        stoneCount: productStonecountsByProductId {
-          nodes {
-            count: stonecount
-          }
-        }
-        metal_colours: productMetalcoloursByProductId {
-          nodes {
-            name: productColor
-          }
-        }
-        diamonds: productDiamondsByProductSku {
-          nodes {
-            diamondClarity
-            diamondColour
-            diamondSettings
-            diamondShape
-            diamondType
-            stoneCount
-            stoneWeight
-          }
-        }
-        gemstones: productGemstonesByProductSku {
-          nodes {
-            gemstoneSetting
-            gemstoneShape
-            gemstoneSize
-            gemstoneType
-            gemstonsSize
-            stoneCount
-            stoneWeight
-          }
-        }
-        hashtags: productHashTagsByProductId(condition: { isActive: true }) {
-          nodes {
-            name: hashTag
-          }
-        }
-        images: productImagesByProductId {
-          nodes {
-            imageUrl
-          }
-        }
-        skus: transSkuListsByProductId {
-          nodes {
-            tagNo: generatedSku
-            itemId
-            diamondType
-            metalColor
-            purity
-            isdefault
-            isReadyToShip
-            costPrice
-            sellingPrice
-            markupPrice
-            discountPrice
-            discount
-            discountDesc
-            skuWeight
-            vendorDeliveryTime
-            transSkuDescriptionsBySkuId {
-              nodes {
-                skuDescription
-                certificate
-                ringsizeImage
-              }
+  if(type == "All"){
+    var vaRiable = {};
+    var query = `query {
+      product: allProductLists(
+        orderBy: CREATED_AT_DESC
+      ) {
+        nodes {
+          productId
+          productName
+          productCategory
+          productType
+          length
+          height
+          width
+          defaultWeight
+          sizeVarient
+          colourVarient
+          earringBacking
+          gender
+          productVendorCode
+          isactive
+          materials: productMaterialsByProductSku {
+            nodes {
+              name: materialName
             }
-            productRecordDate
-            updatedAt
-            minOrderQty
-            maxOrderQty
-            showPriceBreakup
+          }
+          collections: productCollectionsByProductId(
+            condition: { isActive: true }
+          ) {
+            nodes {
+              name: collectionName
+            }
+          }
+          occasions: productOccassionsByProductId(condition: { isActive: true }) {
+            nodes {
+              name: occassionName
+            }
+          }
+          themes: productThemesByProductId(condition: { isActive: true }) {
+            nodes {
+              name: themeName
+            }
+          }
+          stoneColor: productStonecolorsByProductId {
+            nodes {
+              color: stonecolor
+            }
+          }
+          styles: productStylesByProductId(condition: { isActive: true }) {
+            nodes {
+              name: styleName
+            }
+          }
+          stoneCount: productStonecountsByProductId {
+            nodes {
+              count: stonecount
+            }
+          }
+          metal_colours: productMetalcoloursByProductId {
+            nodes {
+              name: productColor
+            }
+          }
+          diamonds: productDiamondsByProductSku {
+            nodes {
+              diamondClarity
+              diamondColour
+              diamondSettings
+              diamondShape
+              diamondType
+              stoneCount
+              stoneWeight
+            }
+          }
+          gemstones: productGemstonesByProductSku {
+            nodes {
+              gemstoneSetting
+              gemstoneShape
+              gemstoneSize
+              gemstoneType
+              gemstonsSize
+              stoneCount
+              stoneWeight
+            }
+          }
+          hashtags: productHashTagsByProductId(condition: { isActive: true }) {
+            nodes {
+              name: hashTag
+            }
+          }
+          images: productImagesByProductId {
+            nodes {
+              imageUrl
+            }
+          }
+          skus: transSkuListsByProductId {
+            nodes {
+              tagNo: generatedSku
+              itemId
+              diamondType
+              metalColor
+              purity
+              isdefault
+              isReadyToShip
+              costPrice
+              sellingPrice
+              markupPrice
+              discountPrice
+              discount
+              discountDesc
+              skuWeight
+              vendorDeliveryTime
+              transSkuDescriptionsBySkuId {
+                nodes {
+                  skuDescription
+                  certificate
+                  ringsizeImage
+                }
+              }
+              productRecordDate
+              updatedAt
+              minOrderQty
+              maxOrderQty
+              showPriceBreakup
+            }
           }
         }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
       }
-      pageInfo {
-        endCursor
-        hasNextPage
+    }`;    
+  }
+  else{   
+    var query = `query($after: Cursor, $type: String!) {
+      product: allProductLists(
+        first: 10000
+        after: $after
+        ${!include ? `condition: { isactive: true }` : ``}
+        filter: { productType: { likeInsensitive: $type } }
+        orderBy: CREATED_AT_DESC
+      ) {
+        nodes {
+          productId
+          productName
+          productCategory
+          productType
+          length
+          height
+          width
+          defaultWeight
+          sizeVarient
+          colourVarient
+          earringBacking
+          gender
+          productVendorCode
+          isactive
+          materials: productMaterialsByProductSku {
+            nodes {
+              name: materialName
+            }
+          }
+          collections: productCollectionsByProductId(
+            condition: { isActive: true }
+          ) {
+            nodes {
+              name: collectionName
+            }
+          }
+          occasions: productOccassionsByProductId(condition: { isActive: true }) {
+            nodes {
+              name: occassionName
+            }
+          }
+          themes: productThemesByProductId(condition: { isActive: true }) {
+            nodes {
+              name: themeName
+            }
+          }
+          stoneColor: productStonecolorsByProductId {
+            nodes {
+              color: stonecolor
+            }
+          }
+          styles: productStylesByProductId(condition: { isActive: true }) {
+            nodes {
+              name: styleName
+            }
+          }
+          stoneCount: productStonecountsByProductId {
+            nodes {
+              count: stonecount
+            }
+          }
+          metal_colours: productMetalcoloursByProductId {
+            nodes {
+              name: productColor
+            }
+          }
+          diamonds: productDiamondsByProductSku {
+            nodes {
+              diamondClarity
+              diamondColour
+              diamondSettings
+              diamondShape
+              diamondType
+              stoneCount
+              stoneWeight
+            }
+          }
+          gemstones: productGemstonesByProductSku {
+            nodes {
+              gemstoneSetting
+              gemstoneShape
+              gemstoneSize
+              gemstoneType
+              gemstonsSize
+              stoneCount
+              stoneWeight
+            }
+          }
+          hashtags: productHashTagsByProductId(condition: { isActive: true }) {
+            nodes {
+              name: hashTag
+            }
+          }
+          images: productImagesByProductId {
+            nodes {
+              imageUrl
+            }
+          }
+          skus: transSkuListsByProductId {
+            nodes {
+              tagNo: generatedSku
+              itemId
+              diamondType
+              metalColor
+              purity
+              isdefault
+              isReadyToShip
+              costPrice
+              sellingPrice
+              markupPrice
+              discountPrice
+              discount
+              discountDesc
+              skuWeight
+              vendorDeliveryTime
+              transSkuDescriptionsBySkuId {
+                nodes {
+                  skuDescription
+                  certificate
+                  ringsizeImage
+                }
+              }
+              productRecordDate
+              updatedAt
+              minOrderQty
+              maxOrderQty
+              showPriceBreakup
+            }
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
       }
-    }
-  }`;
+    }`;
+  }
+  
   let responseArrays = [];
   const axios = require("axios");
-  function loadData({ cursor }) {
+  function loadData({ cursor }) { 
+    if(type !== "All"){
+      var vaRiable = { after: cursor, type };
+    }
     axios
-      .post(`${process.env.apiurl}/graphql`, {
+      .post(`http://localhost:${process.env.PORT}/graphql`, {
         query,
-        variables: { after: cursor, type },
+        variables: vaRiable,
       })
       .then(
         ({
