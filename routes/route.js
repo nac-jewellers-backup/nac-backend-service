@@ -663,6 +663,9 @@ module.exports = function (app) {
         seo_results = seo_results.map((_obj) => {
           return _obj._source;
         });
+        console.log(product_results,'product_results',
+          sku_results,'sku_results',
+          seo_results,'seo_results')
         return res.json({
           product_results,
           sku_results,
@@ -670,7 +673,7 @@ module.exports = function (app) {
         });
       })
       .catch((err) => {
-        console.log("err", err);
+        console.log("err\n elastic search", err);
         return res.json(err);
       });
   });

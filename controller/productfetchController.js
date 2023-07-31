@@ -614,7 +614,7 @@ exports.filteroptions = async (req, res) => {
 };
 
 exports.randomProducts = ({ sku_id }) => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {    
     try {
       if (!sku_id) {
         reject({ error: true, message: "sku_id is mandatory!" });
@@ -651,7 +651,6 @@ exports.randomProducts = ({ sku_id }) => {
           },
         ],
       });
-
       resolve(result);
     } catch (error) {
       reject(error);

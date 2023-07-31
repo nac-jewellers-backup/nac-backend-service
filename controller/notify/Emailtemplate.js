@@ -250,7 +250,7 @@ const getName = (username) => {
       <div style="width:600px;background:#fff;">
       <table style="width:600px">
           <thead>
-              <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/images/templates/cash-on-deli-hdr.jpg" />
+              <img src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/email/logo.png" />
           </thead>
           <tbody>
               <tr>

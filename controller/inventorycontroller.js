@@ -122,7 +122,7 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
         ],
       })
       .then(async (result) => {
-        result = JSON.parse(JSON.stringify(result));
+        result = JSON.parse(JSON.stringify(result));        
         if (!result) {
           resolve({ status: "Enquire Now", shipping_date: null });
         }
@@ -158,11 +158,14 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
                 shippingDate.add(holidayCount, "days");
               }
               if (result.is_ready_to_ship) {
+                console.log(shippingDate,"---shippingDate")
                 resolve({ status: "Buy Now", shipping_date: shippingDate });
               } else {
                 if (result.product_list.isreorderable) {
+                  console.log(shippingDate,"###shippingDate")
                   resolve({ status: "Buy Now", shipping_date: shippingDate });
                 } else {
+                  console.log(shippingDate,"***shippingDate")
                   resolve({ status: "Enquire Now", shipping_date: null });
                 }
               }
@@ -194,7 +197,7 @@ let getShippingDate = async ({ sku_id, current_datetime }) => {
                   totalDaysToShip,
                   "d"
                 );
-                console.log(shippingDate);
+                console.log(shippingDate,"00000");
                 var holidayCount = getHolidayCount(
                   moment(current_datetime),
                   shippingDate

@@ -2206,7 +2206,7 @@ exports.getorderdetails = async (req, res) => {
 
 exports.getproducturl = async (req, res) => {
   const { productid } = req.body;
-
+  console.log(productid,"888")
   let sku_details = await models.trans_sku_lists.findOne({
     attributes: ["sku_url"],
     where: {
@@ -2219,7 +2219,7 @@ exports.getproducturl = async (req, res) => {
   res.status(200).send({ url: url });
 };
 
-exports.productdetails = async (req, res) => {
+exports.productdetails = async (req, res) => {  
   const {
     size,
     offset,
@@ -2268,6 +2268,19 @@ exports.productdetails = async (req, res) => {
   });
   var res_json = [];
   products.forEach((prod) => {
+    //done by kiki
+    var sku_desc="NA"
+    if (
+      prod &&
+      prod.trans_sku_lists &&
+      prod.trans_sku_lists.length > 0 &&
+      prod.trans_sku_lists[0].trans_sku_description &&
+      prod.trans_sku_lists[0].trans_sku_description.sku_description
+    ) {
+      
+      sku_desc = prod.trans_sku_lists[0].trans_sku_description.sku_description;
+      
+    }
     let materials = [];
     prod.product_materials.forEach((mat_obj) => {
       materials.push(mat_obj.material_name);
@@ -2275,7 +2288,7 @@ exports.productdetails = async (req, res) => {
     var res_json_obj = {
       id: prod.trans_sku_lists[0].generated_sku,
       description:
-        prod.trans_sku_lists[0].trans_sku_description.sku_description,
+      sku_desc,
       google_product_category: prod.product_category,
       product_type: prod.product_type,
       link: prod.trans_sku_lists[0].sku_url,
@@ -2303,10 +2316,8 @@ exports.csvDownload = (req, res) => {
   }
   if(type == "All"){
     var vaRiable = {};
-    var query = `query {
-      product: allProductLists(
-        orderBy: CREATED_AT_DESC
-      ) {
+    var query = `{
+      product: allProductLists(orderBy: CREATED_AT_DESC) {
         nodes {
           productId
           productName
@@ -2327,19 +2338,17 @@ exports.csvDownload = (req, res) => {
               name: materialName
             }
           }
-          collections: productCollectionsByProductId(
-            condition: { isActive: true }
-          ) {
+          collections: productCollectionsByProductId(condition: {isActive: true}) {
             nodes {
               name: collectionName
             }
           }
-          occasions: productOccassionsByProductId(condition: { isActive: true }) {
+          occasions: productOccassionsByProductId(condition: {isActive: true}) {
             nodes {
               name: occassionName
             }
           }
-          themes: productThemesByProductId(condition: { isActive: true }) {
+          themes: productThemesByProductId(condition: {isActive: true}) {
             nodes {
               name: themeName
             }
@@ -2349,7 +2358,7 @@ exports.csvDownload = (req, res) => {
               color: stonecolor
             }
           }
-          styles: productStylesByProductId(condition: { isActive: true }) {
+          styles: productStylesByProductId(condition: {isActive: true}) {
             nodes {
               name: styleName
             }
@@ -2386,7 +2395,7 @@ exports.csvDownload = (req, res) => {
               stoneWeight
             }
           }
-          hashtags: productHashTagsByProductId(condition: { isActive: true }) {
+          hashtags: productHashTagsByProductId(condition: {isActive: true}) {
             nodes {
               name: hashTag
             }
@@ -2425,6 +2434,7 @@ exports.csvDownload = (req, res) => {
               minOrderQty
               maxOrderQty
               showPriceBreakup
+              skuUrl
             }
           }
         }
@@ -2433,7 +2443,8 @@ exports.csvDownload = (req, res) => {
           hasNextPage
         }
       }
-    }`;    
+    }
+    `;    
   }
   else{   
     var query = `query($after: Cursor, $type: String!) {
@@ -2562,6 +2573,7 @@ exports.csvDownload = (req, res) => {
               minOrderQty
               maxOrderQty
               showPriceBreakup
+              skuUrl
             }
           }
         }
@@ -2599,6 +2611,13 @@ exports.csvDownload = (req, res) => {
           if (nodes && nodes.length > 0) {
             for (let index = 0; index < nodes.length; index++) {
               let item = nodes[index];
+              var site=process.env.DB_HOST.includes("production")
+              if(site){
+                var site_print="https://www.nacjewellers.com/"
+              }
+              else{
+                var site_print="https://staging.nacjewellers.net/"                
+              }
               let diamonds = JSON.stringify(item.diamonds.nodes);
               let gemstones = JSON.stringify(item.gemstones.nodes);
               for (let i = 0; i < item.skus.nodes.length; i++) {
@@ -2607,6 +2626,8 @@ exports.csvDownload = (req, res) => {
                   responseArrays.push({
                     name: item.productName,
                     product_id: item.productId,
+                    images: item.images.nodes.map((i) => i.imageUrl).join(","),
+                    skuurl:site_print+sku.skuUrl,
                     tag_no: sku.tagNo,
                     item_id: sku.itemId,
                     categories: item.productCategory,
@@ -2661,8 +2682,7 @@ exports.csvDownload = (req, res) => {
                       .join(","),
                     hashtags: item.hashtags.nodes.map((i) => i.name).join(","),
                     diamonds,
-                    gemstones,
-                    images: item.images.nodes.map((i) => i.imageUrl).join(","),
+                    gemstones                    
                   });
                 }
               }
