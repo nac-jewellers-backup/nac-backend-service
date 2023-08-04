@@ -1005,7 +1005,7 @@ module.exports = function (app) {
     });
   });
   const otpController = require("../controller/otpController");
-  app.post("/send_otp", async (req, res) => {
+  app.post("/send_otp", async (req, res) => {        
     try {
       res.status(200).send(await otpController.sendOtp(req.body));
     } catch (error) {

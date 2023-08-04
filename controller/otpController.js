@@ -4,6 +4,7 @@ const uuidv1 = require("uuid/v1");
 var jwt = require("jsonwebtoken");
 
 exports.sendOtp = ({ email, mobile_no }) => {
+  console.log("kkk")
   return new Promise(async (resolve, reject) => {
     if (!email || !mobile_no || mobile_no.length != 10) {
       return reject({
@@ -80,6 +81,7 @@ exports.sendOtp = ({ email, mobile_no }) => {
 
 exports.resendOtp = ({ mobile_no }) => {
   return new Promise((resolve, reject) => {
+    console.log("jhg")
     models.user_profiles
       .findOne({
         attributes: ["otp"],
