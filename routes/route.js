@@ -611,7 +611,7 @@ module.exports = function (app) {
   });
   app.post("/auto_complete", async function (req, res) {
     let { search_text } = req.body;
-    console.log("====", search_text);
+    console.log("durga!!", search_text);
     let product_search = {
       query: {
         match: {

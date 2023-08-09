@@ -368,7 +368,7 @@ const getName = (username) => {
       <div style="width:600px;background:#fff;">
       <table style="width:600px">
           <thead>
-              <img src="https://styloriimages.s3.ap-south-1.amazonaws.com/images/templates/cash-on-deli-hdr.jpg" />
+              <img src="https://s3.ap-southeast-1.amazonaws.com/media.nacjewellers.com/resources/email/logo.png" />
           </thead>
           <tbody>
               <tr>
@@ -398,7 +398,7 @@ const getName = (username) => {
        <div style="position: relative;min-height: 1px;padding-right: 15px;padding-left: 15px;width: 100%;background: rgba(215,221,249,1.00);padding: 10px 0px 20px 0px;">
                   <p style="padding: 0px 15px;font-family: 'Arial', sans-serif;font-size: 12px;font-weight: 400;color: rgba(88,89,91,1.00);width: 45%;float: left;margin: 0;">Customer Care: 1800-102-0330</p>
                   <p style="padding: 0px 15px;font-family: 'Arial', sans-serif;font-size: 12px;font-weight: 400;color: rgba(88,89,91,1.00);width: 24%;float: left;margin: 0;padding-left:0;position: relative;left: 130px;">
-                  Contact: hello@stylori.com</p>
+                  Contact: hello@nacjewellers.com</p>
               </div>
       </div>
       
